@@ -5,6 +5,7 @@ import hashlib
 import re
 import struct
 import sys
+import zlib
 from pathlib import Path
 
 RULES = (
@@ -25,14 +26,48 @@ def text_warnings(content):
     return result
 
 def png_info(path):
-    # Only the PNG signature and IHDR are examined: this is NOT a full decode.
+    """Stream PNG chunks and verify CRCs; this does not decode pixels."""
     with path.open('rb') as f:
-        header=f.read(24)
-    if len(header)<24 or header[:8]!=b'\x89PNG\r\n\x1a\n' or header[8:16]!=b'\x00\x00\x00\rIHDR':
-        raise ValueError('не найден корректный заголовок PNG')
-    w,h=struct.unpack('>II',header[16:24])
-    if not w or not h: raise ValueError('нулевой размер PNG')
-    return w,h,path.stat().st_size
+        if f.read(8) != b'\x89PNG\r\n\x1a\n':
+            raise ValueError('неверная сигнатура PNG')
+        width = height = None
+        saw_data = False
+        index = 0
+        while True:
+            header = f.read(8)
+            if len(header) != 8:
+                raise ValueError('повреждён или оборван блок PNG')
+            length, kind = struct.unpack('>I4s', header)
+            if index == 0 and (kind != b'IHDR' or length != 13):
+                raise ValueError('отсутствует корректный IHDR')
+            if kind == b'IHDR' and index != 0:
+                raise ValueError('повторный IHDR')
+            if kind == b'IEND' and length != 0:
+                raise ValueError('неверный IEND')
+            crc = zlib.crc32(kind)
+            remaining = length
+            first = b''
+            while remaining:
+                data = f.read(min(remaining, 1024 * 1024))
+                if not data:
+                    raise ValueError('оборваны данные PNG')
+                if kind == b'IHDR': first += data
+                crc = zlib.crc32(data, crc)
+                remaining -= len(data)
+            checksum = f.read(4)
+            if len(checksum) != 4 or struct.unpack('>I', checksum)[0] != crc & 0xffffffff:
+                raise ValueError('неверная контрольная сумма PNG')
+            if kind == b'IHDR':
+                width, height = struct.unpack('>II', first[:8])
+                if not width or not height:
+                    raise ValueError('нулевой размер PNG')
+            if kind == b'IDAT': saw_data = True
+            if kind == b'IEND':
+                if not saw_data: raise ValueError('отсутствует IDAT')
+                if f.read(1): raise ValueError('лишние данные после IEND')
+                break
+            index += 1
+    return width, height, path.stat().st_size
 
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
@@ -57,7 +92,7 @@ def main(argv=None):
                 print(f'{path}: {w}×{h}, {size} байт; SHA-256 {digest[:12]}')
                 if digest in seen: print(f'  Полный дубликат: {seen[digest]}')
                 else: seen[digest]=path
-                print('  Проверен только заголовок PNG; визуал и отображение в VK проверяются вручную.')
+                print('  Проверены блоки и CRC, но не декодирование пикселей; визуал и отображение в VK проверяются вручную.')
         except (OSError,UnicodeError,ValueError) as exc:
             failures+=1; print(f'{path}: ошибка чтения: {exc}',file=sys.stderr)
     return 1 if failures else 0

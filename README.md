@@ -5,7 +5,7 @@
 ## Текущее состояние
 
 - Обложка [`redaktor/oblozhka-zhivaya.png`](redaktor/oblozhka-zhivaya.png) и аватар [`logo-02.png`](proekt/07-upakovka-soobshchestva/logo-02.png) утверждены и установлены.
-- Пять утверждённых рамок сохранены в [`proekt/07-upakovka-soobshchestva/`](proekt/07-upakovka-soobshchestva/); [редактор](redaktor/README.md) остаётся доступен.
+- Пять утверждённых рамок сохранены в [`proekt/07-upakovka-soobshchestva/`](proekt/07-upakovka-soobshchestva/); [мастерская](redaktor/README.md) позволяет работать со слоями, сохранять проект вручную и экспортировать PNG. Предпросмотр ВК приблизительный.
 - Первый пост сделан по сообщению пользователя: [статус и карточки](proekt/03-chernoviki/pervyj-post/tekst.md). Подпись решено пока оставить пустой; публикация и ссылка не подтверждены.
 - Пользовательские [визуальные референсы](proekt/07-upakovka-soobshchestva/referensy/) сохранены для анализа, не для публикации.
 
