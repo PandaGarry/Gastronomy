@@ -9,6 +9,9 @@ desktop.ini
 *.swp
 
 # Временное
+__pycache__/
+*.py[cod]
+.venv/
 *.tmp
 *.bak
 _scratch/

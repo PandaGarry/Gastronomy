@@ -6,13 +6,16 @@
 
 - Обложка [`redaktor/oblozhka-zhivaya.png`](redaktor/oblozhka-zhivaya.png) и аватар [`logo-02.png`](proekt/07-upakovka-soobshchestva/logo-02.png) утверждены и установлены.
 - Пять утверждённых рамок сохранены в [`proekt/07-upakovka-soobshchestva/`](proekt/07-upakovka-soobshchestva/); [редактор](redaktor/README.md) остаётся доступен.
-- Первый пост создаётся заново по этапам. [Рабочая основа и статус](proekt/03-chernoviki/pervyj-post/01-osnova.md). Прежние отклонённые черновики и изображения удалены из рабочей версии; публикации первого поста ещё нет.
+- Первый пост сделан по сообщению пользователя: [статус и карточки](proekt/03-chernoviki/pervyj-post/tekst.md). Подпись решено пока оставить пустой; публикация и ссылка не подтверждены.
 - Пользовательские [визуальные референсы](proekt/07-upakovka-soobshchestva/referensy/) сохранены для анализа, не для публикации.
 
 ## Полезные документы
 
 - [Редакторский подход к визуалу и тексту](proekt/07-upakovka-soobshchestva/08-redakcionnyj-podhod.md)
+- [Редакционная система, исследования и новые идеи](proekt/01-strategiya/16-redakcionnaya-sistema.md)
 - [Анализ и редактура шаблонного текста](proekt/01-strategiya/15-redaktura-ii-teksta.md)
+- [Локальные проверки текста и PNG](instrumenty/README.md)
+- [Черновик следующего поста про лук](proekt/03-chernoviki/luk-raznye-sposoby/tekst.md) — ещё не утверждён
 - [Визуальный стиль и статус оформления](proekt/07-upakovka-soobshchestva/07-vk-format-i-stil.md)
 - [ИИ и монетизация ВК](proekt/01-strategiya/14-ii-i-monetizaciya-vk.md)
 - [Стратегия и ранние наработки](proekt/01-strategiya/PROEKT.md)
