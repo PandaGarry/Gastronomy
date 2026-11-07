@@ -63,3 +63,18 @@
 - Подтверждён unbounded table-index allocation before casino eligibility and duplicate seating window; добавлены table/seat bounds, finite-coordinate guards, global one-seat guard (`CAS-003`). Координаты всё ещё client-provided; arbitrary teleport зарегистрирован отдельно (`CAS-004`).
 - Подтверждён repeat `setBet` debit + `Rate` overwrite; добавлены duplicate-bet guard и обязательная проверка `Wallet.Change` result (`CAS-006`).
 - Задокументированы authoritative-move/rules bypass для split/double (`CAS-005`) и CEF-only table maximum/payout overflow (`CAS-007`); не менялись без подтверждения gameplay limits. Build/RAGE tests не выполнены.
+
+
+## 2026-11-07 — Spin and Horses static review
+
+- Созданы `SPIN_REVIEW.md`/`HORSES_REVIEW.md`; добавлены `CAS-008..016` в `ISSUES.md`.
+- Зафиксированы Spin refund-after-reveal через remote leave, client-supplied slot teleport, mismatch 54 client slots/53 server states, zero/unbounded stake/debit/payout guards, off-by-one weight bucket и exact payout math: gross RTP 42.01992698%.
+- Зафиксированы Horses winning horse в публичном race payload до 3-second disconnect refund deadline, remote betting без server-side session/location, zero/unbounded stake, unchecked wallet operations, generic casino marker teardown и scheduler/dictionary concurrency failure path. При равномерной лошади gross return = 50%.
+- Gambling policy/RTP/refund and stake-limit issues не переписаны без подтверждения; build/RAGE/staging tests не запускались.
+
+
+## 2026-11-07 — Lucky Wheel static review
+
+- Создан `LUCKYWHEEL_REVIEW.md`; `CAS-017..019` внесены в `ISSUES.md`.
+- Зафиксированы forged remote daily spin без server-side casino proximity и global 21-second lock; возможные prize-grant failures (partial costume, garage-cap vehicle return, unchecked wallet/item/weapon results) и непроверенный durable consume-once/recovery path.
+- Рассчитаны nominal 20-slot shares: 20% clothes, 20% cash, 5% vehicle, 25% mystic, 20% weapon, 5% costume, 5% RedBucks; ожидаемая фиксированная часть — $6,452.10 и 3.725 RB per spin при текущих random ranges. Build/RAGE/DB tests не запускались.

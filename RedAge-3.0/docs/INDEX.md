@@ -4,7 +4,7 @@
 
 ## Текущий статус
 
-- Аудит продолжается; кроме документации, в inventory move/stack внесены два узких local hardening changes (`INV-001..002`), но они пока не скомпилированы и не проверены в RAGE staging.
+- Аудит продолжается; в inventory, Roulette и Blackjack внесены узкие local hardening patches, но они пока не скомпилированы и не проверены в RAGE staging. NewCasino Roulette/Blackjack/Spin/Horses/LuckyWheel имеют только частичные статические reviews; ставки, settlement, RNG и prize-grant paths требуют further review/runtime tests.
 - Client JS bundle собран в изолированной копии.
 - CEF build и C# build заблокированы текущими ограничениями toolchain/RAM.
 - SQL import/RAGE smoke tests ожидают одноразовую test DB и полный runtime/assets.
@@ -26,6 +26,9 @@
 - [ROULETTE_REVIEW](ROULETTE_REVIEW.md) — remote case purchase/open count validation, wallet/item side effects и staging regression matrix.
 - [CASINO_REVIEW](CASINO_REVIEW.md) — NewCasino Roulette bet/cancel/disconnect settlement audit and staging matrix.
 - [BLACKJACK_REVIEW](BLACKJACK_REVIEW.md) — blackjack remote join, bet, move, payout and disconnect audit.
+- [SPIN_REVIEW](SPIN_REVIEW.md) — slot join/bet/refund, payout math and computed RTP review.
+- [HORSES_REVIEW](HORSES_REVIEW.md) — Inside Track betting, race reveal/refund, session and scheduler review.
+- [LUCKYWHEEL_REVIEW](LUCKYWHEEL_REVIEW.md) — daily wheel eligibility, prize-grant consistency, claim/replay and prize odds.
 - [FUTURE_FEATURES](FUTURE_FEATURES.md) — backlog solo-mode/NPC-симуляции; отложен до завершения аудита.
 - [ISSUES](ISSUES.md) — нумерованный журнал рисков/вопросов.
 - [TEST_PLAN](TEST_PLAN.md) — baseline и следующие тестовые наборы.
