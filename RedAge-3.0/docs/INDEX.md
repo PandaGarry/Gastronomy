@@ -19,7 +19,7 @@
 - Time-based progression: `MONEY-011` — reward/time checkpoint crash consistency gap; `PROG-005` — short deserialized `Achievements` array can cause bounds exceptions; `PROG-006` — nullable `TimeInfo` can interrupt shared minute processing. Static only; DB-row prevalence and crash replay remain unverified; see `ONLINE_REWARDS_REVIEW.md`.
 - Taxi meter path: `MONEY-012`/`PROG-007` — unverified client mileage can bill an active passenger and advance taxi mileage tasks. RAGE reproduction pending; see `TAXI_MILEAGE_REVIEW.md`.
 - Passport progression: `PROG-008` — self-target request/accept can satisfy the active “show passport” task if RAGE entity argument resolves as expected; staging check pending; see `DOCUMENTS_REVIEW.md`.
-- House transactions/tax: `MONEY-016..019` cover conditional sale/purchase/transfer settlement and tax persistence gaps; `PROP-003` covers conditional resurrection after tax repossession. Static-only; see the linked property reviews.
+- House transactions/tax: `MONEY-016..019` cover conditional sale/purchase/transfer settlement and tax persistence gaps; `PROP-003` covers conditional resurrection after tax repossession. `MONEY-020` records the policy-dependent ATM remote location/eligibility bypass; `MONEY-021` records replayable bank-transfer confirmation state. Static-only; see the linked property/bank reviews.
 - House resident ACL: `PROP-001` — roommate remotes can toggle self/other permissions or evict roommates because they use owner-or-roommate house lookup; `PROP-002` — resident writes are not marked dirty for the house persistence worker. Static-only; downstream impact/restart not tested. See `HOUSE_RESIDENT_REVIEW.md`.
 - Organization fleet vehicle slice: `MONEY-014` records conditional payout-before-async-delete replay risk, `MONEY-015` records the ignored evacuation debit result when wallet change may fail during shutdown. Access checks traced but staging tests pending. See `ORG_VEHICLE_REVIEW.md`.
 - Vehicle/garage: `VEH-001` is policy-dependent self-repair callback; `VEH-002` records missing household ownership validation in `server.garage.parking` (unauthorized association/recreation path, exact theft impact unproven); `VEH-003` records negative garage slot keys that can persist and fail spawn; `VEH-004..005` cover missing aircraft action/entity authorization (runtime reachability pending); `VEH-006`/`MONEY-013` cover stale sale confirmation and conditional payout/delete failure; `VEH-007..008` cover vehicle-sync entity authorization and passenger radio policy. Static-only, staging tests unavailable. See the linked vehicle review files.
@@ -61,6 +61,8 @@
 - [PROPERTY_SALE_REVIEW](PROPERTY_SALE_REVIEW.md) — house sale confirmation, owner persistence and payout crash-consistency review.
 - [PROPERTY_TRANSFER_REVIEW](PROPERTY_TRANSFER_REVIEW.md) — player-to-player house offer, acceptance, wallet and owner settlement review.
 - [PROPERTY_TAX_REVIEW](PROPERTY_TAX_REVIEW.md) — hourly house-tax account persistence, repossession owner dirty-save and restart behavior.
+- [ATM_REVIEW](ATM_REVIEW.md) — ATM remotes, withdrawal location/eligibility and house-account access checks.
+- [BANK_TRANSFER_REVIEW](BANK_TRANSFER_REVIEW.md) — bank transfer confirmation replay, one-shot state and cooldown enforcement.
 - [FUTURE_FEATURES](FUTURE_FEATURES.md) — backlog solo-mode/NPC-симуляции; отложен до завершения аудита.
 - [ISSUES](ISSUES.md) — нумерованный журнал рисков/вопросов.
 - [TEST_PLAN](TEST_PLAN.md) — baseline и следующие тестовые наборы.
