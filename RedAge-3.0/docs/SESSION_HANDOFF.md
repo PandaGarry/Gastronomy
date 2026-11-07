@@ -150,3 +150,10 @@
 - Следующий проход: сравнить Organizations.Manager.inputStocks с теми же invariants, затем прочие faction stock callback actions и ownership/rank checks.
 
 - Organization parity checked: `Organizations.Manager.inputStocks` repeats the unchecked wallet credit/debit and AddNewItem/Remove settlement ordering. Covered by MONEY-035/STOCK-001, not duplicated. Test deposit as well as withdrawal paths.
+
+
+## Дополнение — MONEY-036 (2026-11-08)
+
+- Подтверждена несогласованность типов: CharacterData.Money — long, но Wallet.Change приводит его к int, прибавляет int amount и записывает int обратно в long. Для значений за пределами Int32 возможна потеря старших битов и порча баланса; дефект общий для всех вызовов Wallet.Change.
+- Зарегистрирован MONEY-036, добавлены тесты Int32/UInt32/Int64 boundaries и проверка всех call-sites. MONEY-035 теперь рассматривается вместе с общим дефектом кошелька.
+- Исходники не менялись; runtime/build/DB tests не выполнялись.
