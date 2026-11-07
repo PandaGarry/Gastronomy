@@ -1,6 +1,6 @@
 # Phone auction lifecycle — static review
 
-Обновлено: 2026-11-07. Traced property listing creation, first/subsequent bids, auction end and house/business award settlement. Narrow auction lifecycle slice; no code changes, .NET build, RAGE staging or DB fault injection.
+Обновлено: 2026-11-08. Traced property listing creation, first/subsequent bids, auction end and house/business award settlement. Narrow auction lifecycle slice; no code changes, .NET build, RAGE staging or DB fault injection.
 
 ## MONEY-023 — first bid debits the bidder before refunding the no-bid sentinel
 
@@ -54,3 +54,20 @@
 ## Boundaries
 
 House auctions do not need a separate character house-ID list in the inspected `GetHouse` path; the offline winner observation above is specific to business `BizIDs`. Vehicle/other-item auction mutations and auction escrow persistence require separate review.
+
+
+## MONEY-038 — unchecked auction bid fee arithmetic can turn a debit into a credit
+
+**Приоритет: критичный; арифметическая цепочка и положительное зачисление подтверждены статически, runtime не воспроизведён.**
+
+- Remote server.phone.auction.bet accepts price as a client-supplied int and forwards it unchanged to Repository.OnBet (Players/Phone/Auction/Events.cs:23-25).
+- OnBet checks only that the new price is greater than LastPrice; it does not enforce a positive value or a maximum bid (Players/Phone/Auction/Repository.cs:466-503).
+- At :525, priceAndPercent is calculated as price + Convert.ToInt32(price / 100) in int. The project file does not enable checked arithmetic (NeptuneEvo.csproj has no CheckForOverflowUnderflow property).
+- For price = int.MaxValue (2,147,483,647), the mathematical sum is 2,168,958,483, which wraps in the default unchecked int context to -2,126,008,813.
+- The next line calls Bank.Change(characterData.Bank, -priceAndPercent). The unary negation therefore becomes positive 2,126,008,813; Bank.Change treats positive amounts as credits and adds them to the bank balance (MoneySystem/Bank.cs:79-115). The caller does not reject the resulting positive credit.
+- This is a direct client-controlled remote argument, not a UI-only value. Whether a particular account balance/DB configuration permits the full amount and the exact runtime outcome still require staging; the unsafe arithmetic and credit direction are statically established.
+- On a fresh auction, the existing MONEY-023 sentinel path may throw after this bank credit and before the bid state changes; that is a separate compounding failure, not a reason to merge the findings.
+
+**Remediation (not implemented):** validate price > 0 and a server-defined maximum before arithmetic; compute fee/total using checked long arithmetic; reject overflow and values outside the supported bank/economy range; pass a validated negative debit to the bank only. Make the bid reservation and previous-bid refund one serialized, durable settlement.
+
+**Regression:** direct remote bids at int.MaxValue, int.MaxValue-1, the maximum permitted bid, one above maximum, zero, negative and int.MinValue; verify the bank balance never increases from a bid, no integer wrap occurs, and no state/log/notification is committed on rejected input. Inject bank debit failure and first-bid sentinel failure; test concurrency and restart persistence.
