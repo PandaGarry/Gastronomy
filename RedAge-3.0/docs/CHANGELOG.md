@@ -78,3 +78,10 @@
 - Создан `LUCKYWHEEL_REVIEW.md`; `CAS-017..019` внесены в `ISSUES.md`.
 - Зафиксированы forged remote daily spin без server-side casino proximity и global 21-second lock; возможные prize-grant failures (partial costume, garage-cap vehicle return, unchecked wallet/item/weapon results) и непроверенный durable consume-once/recovery path.
 - Рассчитаны nominal 20-slot shares: 20% clothes, 20% cash, 5% vehicle, 25% mystic, 20% weapon, 5% costume, 5% RedBucks; ожидаемая фиксированная часть — $6,452.10 и 3.725 RB per spin при текущих random ranges. Build/RAGE/DB tests не запускались.
+
+
+## 2026-11-07 — Legacy dice and lottery static review
+
+- Прослежен `/dice` от `CMD_dice`/`callDice` через `dialogCallback(DICE_PLAY)` к `AcceptDice` и `Wallet.Change`; создан `DICE_REVIEW.md`, добавлены CAS-020..023. Подтверждены split wallet settlement с игнорированием bool, acceptance-time validation gaps, self-target без opponent и tie recursion; self-play progression отмечен как policy-dependent, не как повторный reward exploit.
+- Прослежен Lottery 24/7 shop callback, in-memory ticket/jackpot state, async `LotteryPlayers` insert и payday winner payout; создан `LOTTERY_REVIEW.md`, добавлены CAS-024..026. Зафиксированы stale `BizID` purchase boundary, non-atomic debit/ticket persistence и payout/reset без durable acknowledgment.
+- Обновлены index, casino scope, coverage matrix, test plan, roadmap и session handoff. Изменялись только документы под `RedAge-3.0/docs`; исходники не менялись. C# build, MySQL failure-injection и RAGE runtime tests отсутствуют.

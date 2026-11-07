@@ -11,6 +11,7 @@
 - Найдены и локально очищены credential-bearing значения; если они были активны, владельцу нужно их ротировать.
 - Auth review выявил legacy password hash без соли; миграция не выполнена, требуется отдельный backward-compatible план.
 - Economy/payment review зарегистрировал RedBucks debit/credit, deferred persistence, transfer replay, ATM validation, external receipt idempotency, DonatePack intent risks и roulette negative-count/overflow credit path. Для roulette внесены только узкие input guards; все такие изменения ещё требуют build/staging tests.
+- Casino coverage расширено legacy `/dice` и Lottery (`CAS-020..026`): findings статические, исходники не менялись, деньги/прогрессия требуют policy review и DB/RAGE regression testing.
 
 ## Документы
 
@@ -29,6 +30,8 @@
 - [SPIN_REVIEW](SPIN_REVIEW.md) — slot join/bet/refund, payout math and computed RTP review.
 - [HORSES_REVIEW](HORSES_REVIEW.md) — Inside Track betting, race reveal/refund, session and scheduler review.
 - [LUCKYWHEEL_REVIEW](LUCKYWHEEL_REVIEW.md) — daily wheel eligibility, prize-grant consistency, claim/replay and prize odds.
+- [DICE_REVIEW](DICE_REVIEW.md) — legacy `/dice` acceptance, wager settlement, self-target policy and tie reroll flow.
+- [LOTTERY_REVIEW](LOTTERY_REVIEW.md) — legacy lottery ticket purchase, shop-session validation, persistence and payday payout.
 - [FUTURE_FEATURES](FUTURE_FEATURES.md) — backlog solo-mode/NPC-симуляции; отложен до завершения аудита.
 - [ISSUES](ISSUES.md) — нумерованный журнал рисков/вопросов.
 - [TEST_PLAN](TEST_PLAN.md) — baseline и следующие тестовые наборы.

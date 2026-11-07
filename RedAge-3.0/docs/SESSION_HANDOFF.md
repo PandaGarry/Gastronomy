@@ -30,10 +30,12 @@
 4. Spin (`SPIN_REVIEW.md`): `CAS-008` outcome revealed at ~600 ms while `LEAVE_SLOT` refunds for 2 seconds; `CAS-009` client coordinate teleport and 53/54 slot-count mismatch; `CAS-010` stake/debit/payout validation; `CAS-011` computed gross RTP ≈42.0199% and selection bucket bias. Нет patch/build/runtime test.
 5. Horses (`HORSES_REVIEW.md`): `CAS-012` winner disclosed before 3-second disconnect refund deadline; `CAS-013..016` remote betting/session/stake, generic casino marker, integer payout and scheduler/concurrency findings. Static calculation gives 50% gross return if six horses equiprobable; runtime/policy confirmation needed.
 6. LuckyWheel (`LUCKYWHEEL_REVIEW.md`): `CAS-017..019` cover remote daily prize/no server-side location, global cooldown, partial/failed prize grant and durable claim/recovery. Nominal 20-slot mapping yields fixed expected cash `$6,452.10` and `3.725 RB` per spin; total EV needs item/vehicle value policy. No build/runtime verification.
+7. Legacy `/dice` (`DICE_REVIEW.md`): `CAS-020..023` cover ignored wallet-transfer results/non-atomic settlement, offer-time-only eligibility checks, self-target (policy-dependent progression), and unbounded recursive tie reroll. Static-only; no source changes.
+8. Legacy Lottery (`LOTTERY_REVIEW.md`): `CAS-024..026` cover stale `BizID` shop callback without location/session validation, in-memory ticket/debit vs async persistence ordering, and payday payout/reset without durable acknowledgment. Static-only; no source changes.
 
 ## Выполненные проверки и ограничения
 
-- Tree-sitter разобрал выбранные C# member snippets для roulette/inventory/Blackjack и целиком синтаксические деревья `Spin.cs`, `Horses.cs`, `LuckyWheel.cs`; это не компиляция. `node --check` выполнен для Roulette/Blackjack/Spin/Horses/LuckyWheel client scripts; static guard/data-flow assertions и Markdown link/whitespace checks выполнены.
+- Tree-sitter разобрал выбранные C# member snippets для roulette/inventory/Blackjack и целиком синтаксические деревья `Spin.cs`, `Horses.cs`, `LuckyWheel.cs`; это не компиляция. Для новых legacy `/dice`/Lottery потоков выполнен статический data-flow review, но никаких compile/runtime/DB tests не выполнялось. `node --check` выполнен для Roulette/Blackjack/Spin/Horses/LuckyWheel client scripts; static guard/data-flow assertions и Markdown link/whitespace checks выполнены.
 - Статические assertions guards и проверка Markdown links/whitespace прошли.
 - Полный C# build и RAGE:MP staging smoke tests **не выполнялись**: в среде нет .NET SDK/MSBuild, MySQL test DB и RAGE runtime.
 - CEF production build ранее ограничен отсутствующими assets/памятью; см. `TEST_PLAN.md`/`BUILD_LOG.md`.
@@ -41,11 +43,12 @@
 
 ## Следующие шаги
 
-1. В новом чате восстановить/подтвердить рабочую папку RedAge и прочитать `INDEX.md`, `AUDIT_COVERAGE.md`, `ISSUES.md`, `TEST_PLAN.md`, `CASINO_REVIEW.md`, `BLACKJACK_REVIEW.md`, `SPIN_REVIEW.md`, `HORSES_REVIEW.md`, `LUCKYWHEEL_REVIEW.md` и эту заметку.
+1. В новом чате восстановить/подтвердить рабочую папку RedAge и прочитать `INDEX.md`, `AUDIT_COVERAGE.md`, `ISSUES.md`, `TEST_PLAN.md`, `CASINO_REVIEW.md`, `BLACKJACK_REVIEW.md`, `SPIN_REVIEW.md`, `HORSES_REVIEW.md`, `LUCKYWHEEL_REVIEW.md`, `DICE_REVIEW.md`, `LOTTERY_REVIEW.md` и эту заметку.
 2. PR [#2](https://github.com/PandaGarry/Gastronomy/pull/2) открыт из `arena/fab5bf55-gastronomy` в `main`; продолжать добавлять только новые/изменённые файлы внутри `RedAge-3.0/`. Не менять/удалять root Gastronomy files и не пушить в upstream RedAge без отдельного checkout/ветки и разрешения владельца.
 3. Продолжить статический review очередных remote event/command boundaries и подсистем; не заявлять полное покрытие без прохождения матрицы `AUDIT_COVERAGE.md`.
 4. Подготовить поддерживаемый build-agent, staging/test DB и RAGE runtime; проверить inventory/roulette/Blackjack guards, Spin/Horses bet/refund fixes after implementation, положительные `RemoveIndex` call sites, rejected-payload no-op, DB/cache convergence, duplicate joins/bets и round settlement failure/restart.
-5. Продолжить NewCasino review: решить server-side blackjack coordinate/action/bet limits, согласовать Roulette/Spin/Horses disconnect settlement, test all wheel/horses/slot prize flows; также изучить roulette case grant fail-after-debit в `ROULETTE_REVIEW.md`.
+5. Продолжить casino/gambling review: подтвердить dice acceptance/self-target and wager bounds policy; проверить legacy lottery shop session, ticket persistence and winner payout exactly-once; решить NewCasino blackjack coordinate/action/bet limits and Roulette/Spin/Horses disconnect settlement; test all wheel/horses/slot prize flows; также изучить roulette case grant fail-after-debit в `ROULETTE_REVIEW.md`.
+6. Проверить новые CAS-020..026 на disposable DB/RAGE staging с fault injection, но не маркировать закрытыми без воспроизводимых regression tests и владельческой policy confirmation.
 
 ## Нельзя забыть
 

@@ -1,6 +1,6 @@
 # Статический review NewCasino remote flows
 
-Фокус этого файла: NewCasino Roulette (`NewCasino/Roulette/Roullete.cs`), client bridge `src_client/casino/roulette.js` и общий disconnect lifecycle. Проверены remote events `CHARACTER_OCCUPY_PLACE`, `CHARACTER_LEAVE_PLACE`, `CREATE_BET`, `DESTROY_LAST_BET`, `CLEAR_TABLE`, а также `ContinueGame`, `OnClearTable` и `Disconnect`. По Blackjack, Spin, Horses и LuckyWheel есть отдельные частичные отчёты `BLACKJACK_REVIEW.md`, `SPIN_REVIEW.md`, `HORSES_REVIEW.md`, `LUCKYWHEEL_REVIEW.md`; остальные casino entry points пока не покрыты.
+Основной scope этого файла: NewCasino Roulette (`NewCasino/Roulette/Roullete.cs`), client bridge `src_client/casino/roulette.js` и общий disconnect lifecycle. Проверены remote events `CHARACTER_OCCUPY_PLACE`, `CHARACTER_LEAVE_PLACE`, `CREATE_BET`, `DESTROY_LAST_BET`, `CLEAR_TABLE`, а также `ContinueGame`, `OnClearTable` и `Disconnect`. По Blackjack, Spin, Horses и LuckyWheel есть отдельные частичные отчёты `BLACKJACK_REVIEW.md`, `SPIN_REVIEW.md`, `HORSES_REVIEW.md`, `LUCKYWHEEL_REVIEW.md`. Продолжен legacy gambling review: `/dice` — `DICE_REVIEW.md`, lottery ticket purchase/draw — `LOTTERY_REVIEW.md`; эти новые reviews тоже статические и неполные. Остальные casino/gambling entry points пока не покрыты.
 
 ## CAS-001 — remote cancel возвращал ставку после закрытия betting phase
 
