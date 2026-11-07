@@ -19,6 +19,7 @@
 - Time-based progression: `MONEY-011` — reward/time checkpoint crash consistency gap; `PROG-005` — short deserialized `Achievements` array can cause bounds exceptions; `PROG-006` — nullable `TimeInfo` can interrupt shared minute processing. Static only; DB-row prevalence and crash replay remain unverified; see `ONLINE_REWARDS_REVIEW.md`.
 - Taxi meter path: `MONEY-012`/`PROG-007` — unverified client mileage can bill an active passenger and advance taxi mileage tasks. RAGE reproduction pending; see `TAXI_MILEAGE_REVIEW.md`.
 - Passport progression: `PROG-008` — self-target request/accept can satisfy the active “show passport” task if RAGE entity argument resolves as expected; staging check pending; see `DOCUMENTS_REVIEW.md`.
+- House resident ACL: `PROP-001` — roommate remotes can toggle self/other permissions or evict roommates because they use owner-or-roommate house lookup; `PROP-002` — resident writes are not marked dirty for the house persistence worker. Static-only; downstream impact/restart not tested. See `HOUSE_RESIDENT_REVIEW.md`.
 - Organization fleet vehicle slice: `MONEY-014` records conditional payout-before-async-delete replay risk, `MONEY-015` records the ignored evacuation debit result when wallet change may fail during shutdown. Access checks traced but staging tests pending. See `ORG_VEHICLE_REVIEW.md`.
 - Vehicle/garage: `VEH-001` is policy-dependent self-repair callback; `VEH-002` records missing household ownership validation in `server.garage.parking` (unauthorized association/recreation path, exact theft impact unproven); `VEH-003` records negative garage slot keys that can persist and fail spawn; `VEH-004..005` cover missing aircraft action/entity authorization (runtime reachability pending); `VEH-006`/`MONEY-013` cover stale sale confirmation and conditional payout/delete failure; `VEH-007..008` cover vehicle-sync entity authorization and passenger radio policy. Static-only, staging tests unavailable. See the linked vehicle review files.
 
@@ -54,6 +55,7 @@
 - [VEHICLE_SALE_REVIEW](VEHICLE_SALE_REVIEW.md) — government sale confirmation ownership revalidation and conditional payout/delete crash consistency.
 - [VEHICLE_SYNC_REVIEW](VEHICLE_SYNC_REVIEW.md) — vehicle dirt/indicator entity remotes and shared radio-station authorization/range review.
 - [ORG_VEHICLE_REVIEW](ORG_VEHICLE_REVIEW.md) — organization fleet vehicle access, rank, evacuation and sale persistence review.
+- [HOUSE_RESIDENT_REVIEW](HOUSE_RESIDENT_REVIEW.md) — roommate permission/eviction authorization and resident dirty-save persistence review.
 - [FUTURE_FEATURES](FUTURE_FEATURES.md) — backlog solo-mode/NPC-симуляции; отложен до завершения аудита.
 - [ISSUES](ISSUES.md) — нумерованный журнал рисков/вопросов.
 - [TEST_PLAN](TEST_PLAN.md) — baseline и следующие тестовые наборы.
