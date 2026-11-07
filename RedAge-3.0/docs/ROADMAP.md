@@ -43,6 +43,8 @@
 - [ ] MONEY-032: исправить mayor treasury withdrawal — проверять результат bank credit до списания казначейства; транзакционная/идемпотентная модель и failure tests.
 - [ ] MONEY-033: исправить ticket settlement — consume-once ticket intent, подтверждённое списание до выплат, durable idempotency и replay/concurrency/failure tests.
 
+- [ ] MONEY-034: gang drug purchase integer overflow — bounded quantity, checked/long arithmetic, exact grant-before-debit and overflow regression tests.
+
 ## Этап 3 — Аудит безопасности и надёжности (`В работе`)
 
 - [x] Начальный credential/config scan: локально убраны обнаруженные credentials; владельцу указана необходимость ротации, если upstream значения были активны.
