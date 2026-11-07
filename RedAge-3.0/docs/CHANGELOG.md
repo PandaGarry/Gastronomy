@@ -171,3 +171,11 @@
 
 - Прослежены `inputCallback` → `Stocks.inputStocks` / `Stocks.fracgarage` для character↔fraction и vehicle↔fraction transfers. Внесён `STOCK-001`: faction stock totals меняются вокруг `Remove`, `AddNewItem` и `Wallet.Change` без проверки точного результата/компенсации; точная runtime failure/exploitability не заявляется.
 - Создан `FRACTION_STOCK_REVIEW.md`; `ISSUES.md`, `MASTER_CHECKLIST.md`, `INDEX.md`, `AUDIT_COVERAGE.md` и `ROADMAP.md` обновлены. Нет source patch, C# build или RAGE/MySQL runtime tests.
+
+
+## 2026-11-08 — faction stock settlement review
+
+- Registered MONEY-035: faction cash stock is debited before Wallet.Change and its bool result is ignored; source confirms false-return paths.
+- Registered STOCK-001: faction/vehicle stock is debited despite ignored AddNewItem result; AddNewItem can fail or partially insert, and vehicle medkit slot precheck is commented out.
+- Verified generic inputCallback rejects put_stock/take_stock quantities below 1; negative-quantity exploit not asserted for this entry point.
+- Updated issue register, remote review, master checklist, test plan, index, coverage, roadmap and handoff. Documentation only; no source changes or runtime tests.
