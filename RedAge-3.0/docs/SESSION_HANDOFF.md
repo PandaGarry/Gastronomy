@@ -126,7 +126,7 @@
 
 ## Продолжение аудита (2026-11-08, pass 2)
 
-- Перечислены все 38 `case` labels в `Main.ClientEvent_inputCallback`. Это inventory labels, а не завершённое покрытие всех delegated handlers.
+- Перечислены 38 `case` occurrences (32 уникальных callback names) в `Main.ClientEvent_inputCallback`. Это inventory labels, а не завершённое покрытие всех delegated handlers.
 - Проверены `sellMedKitToTarget` и `healTarget`: повторные проверки доступа/дежурства/цены/дистанции присутствуют. Проверен `mayor_put`: результат bank debit проверяется до пополнения казны. В issue register не добавлялись findings без отдельного доказанного дефекта.
 - Открытые для следующего прохода delegated paths: club price, house sale offer, drugs, faction stock/garage, street race, vehicle sale acceptance/settlement, hotel rent extension, tent rename/sell, pet rename, legacy weaptransfer, generic argument/rate-limit handling.
 - MONEY-030..033 остаются открытыми. Статический анализ only; C# build, RAGE runtime и MySQL failure tests не выполнялись.
