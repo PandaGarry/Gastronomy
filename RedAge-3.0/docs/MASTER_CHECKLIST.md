@@ -47,6 +47,9 @@
 - [ ] MONEY-032 — Mayor treasury withdrawal: confirm bank credit before treasury debit; transactional/restart-safe settlement.
 - [ ] MONEY-033 — Ticket settlement: successful debit required, server-side one-shot intent and durable idempotent payout.
 - [ ] MONEY-034 — Gang drug purchase: quantity cap, checked/long cost+capacity math, exact item-grant result before faction debit.
+- [ ] MONEY-035 — Faction money withdrawal: check wallet credit result; atomic stock/player balance transfer.
+- [ ] STOCK-001 — Faction/vehicle stock: exact AddNewItem result; no stock debit on failed/partial grant.
+- [ ] Review organization stock implementation against the same money/item settlement invariants.
 - [ ] MONEY-025/026 — business order arithmetic, dirty-save и sale replay.
 - [ ] MONEY-003/004 — bank transfer replay и ATM policy/location.
 - [ ] MONEY-005, PAY-001..003 — payment receipts, durable idempotency и compensation.
