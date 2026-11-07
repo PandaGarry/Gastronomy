@@ -113,3 +113,11 @@
 - Расширен static call-graph: generic qMain `perform/take` does not dispatch Valentine/Defender legacy actor transitions; their NPC spawn setup appears commented in this snapshot, so active runtime scope is marked for owner confirmation. PROG-003 was narrowed to client-forgeable completion booleans only; no downstream rewards/transitions are claimed.
 - Создан `WEDDING_REVIEW.md`; `MONEY-010` documents spouse-disconnect after one-sided divorce prompt (debit precedes a null dereference/unlink); `WEDDING-001` tracks invalid target input exception path without claiming server crash/DoS. Coverage, `ECONOMY_REVIEW.md`, issue register, index, test plan, roadmap and handoff updated.
 - Static quest/wedding source assertions, `node --check` for `npc_dialogs.js`, `main.js` and `wedding.js`, `git diff --check` and Markdown relative links passed; no source patches, DB/RAGE runtime or C# build performed.
+
+
+## 2026-11-07 — Time rewards, TimeInfo persistence and achievement-array audit
+
+- Traced minute reward thresholds against hourly `SaveServer`, disconnect/admin character saves, `TimeInfo` load/save and independent RB/warehouse writes. Added `MONEY-011` for the unprotected reward/checkpoint crash-consistency gap; exact replay requires fault-injection, and no remotely-triggered crash is claimed.
+- Rechecked all active `Achievements[index]` sites. A valid short `Achiev` JSON list is not normalized on load despite create/fallback using 401 flags (`PROG-005`). DDL also allows nullable `characters.time`; JSON `null` bypasses deserialize catch and interrupts the outer minute pass (`PROG-006`). Both findings are conditional on row contents; production rows were not queried.
+- Created `ONLINE_REWARDS_REVIEW.md`; updated issue register, economy/coverage/index/test plan. No source code changed.
+- Static source assertions, relative Markdown-link validation (29 docs) and `git diff --check` passed. C# build, DB fault-injection and RAGE runtime tests were unavailable/not performed. Both findings remain open.
