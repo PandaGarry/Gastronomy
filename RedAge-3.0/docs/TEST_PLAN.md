@@ -103,3 +103,16 @@
 - [ ] Verify the actual `targetSessionData.TicketsData` is consumed/cleared after accept or decline.
 
 No runtime tests have been run; execute only on disposable RAGE:MP/MySQL staging accounts.
+
+
+## MONEY-034 — gang drug purchase overflow regression (pending staging)
+
+- [ ] Empty vehicle rejects amounts above configured capacity; no balance or inventory mutation.
+- [ ] Partially filled vehicle rejects `int.MaxValue` and all addition-overflow boundaries.
+- [ ] Price multiplication boundary values and `int.MaxValue` never produce negative/zero price or increase faction funds.
+- [ ] Valid minimum/maximum quantities debit exactly `amount * configuredPrice` and grant exactly the same quantity.
+- [ ] Insufficient faction funds, full slots, partial AddNewItem result and injected persistence failure do not create an unbalanced transaction.
+- [ ] Concurrent/replayed direct callbacks settle once; restart reconciliation preserves exact balance and item count.
+- [ ] Inventory item counts remain positive, within stack limits, and within vehicle capacity in memory and SQL.
+
+No runtime exploit reproduction or DB test has been performed; use disposable RAGE:MP/MySQL staging only.
