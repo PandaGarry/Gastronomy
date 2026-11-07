@@ -47,6 +47,9 @@
 
 - [ ] STOCK-001: fraction stock and vehicle cargo transfers — exact item/cash result, atomic/idempotent settlement, authorization and failure/restart tests; see `FRACTION_STOCK_REVIEW.md`.
 
+- [ ] MONEY-035: make faction cash withdrawals atomic; verify wallet credit before stock commit.
+- [ ] STOCK-001: make faction/vehicle stock item grants exact and atomic; handle partial/full-slot failures.
+
 ## Этап 3 — Аудит безопасности и надёжности (`В работе`)
 
 - [x] Начальный credential/config scan: локально убраны обнаруженные credentials; владельцу указана необходимость ротации, если upstream значения были активны.
