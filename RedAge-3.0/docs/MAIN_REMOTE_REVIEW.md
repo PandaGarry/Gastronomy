@@ -24,6 +24,18 @@
 
 **Remediation (not implemented):** move authorization into the server-side setter; require City Hall leader/explicit authorized rank for the whole operation, use a server-owned target fraction and a documented maximum, and audit fuel-limit changes. Test ordinary leader/nonleader direct calls, every target fraction, over-limit integers, persistence/reconnect and daily reset/refuel accounting.
 
+## MONEY-032 — mayor treasury withdrawal ignores bank-credit failure
+
+**Приоритет: средний; unchecked result and treasury debit order confirmed statically; failure requires an invalid/stale bank account or exception and was not reproduced.**
+
+- In `Main.cs:1665-1691`, `inputCallback("mayor_take", text)` correctly checks City Hall leader status, positive amount, `Cityhall.canGetMoney`, and treasury balance.
+- It then calls `MoneySystem.Bank.Change(characterData.Bank, limit)` but ignores the returned `bool`, and unconditionally subtracts `limit` from `fractionData.Money`.
+- `MoneySystem/Bank.cs:79-116` returns `false` when the bank account is missing or an exception occurs. In that failure path the City Hall treasury is still reduced although the personal bank was not credited. This is a conditional value-loss path, not an unauthorized withdrawal or a proven exploit.
+
+**Remediation (not implemented):** require a successful bank credit before reducing treasury; preferably use a transactional transfer primitive with durable exactly-once receipt and compensating/retry semantics. If a single transaction is unavailable, persist an explicit pending transfer state and reconcile it on restart.
+
+**Regression:** inject missing/stale bank account and bank-change exception; verify treasury and personal balance remain unchanged or are reconciled exactly once. Also test normal leader withdrawal, limit boundary, repeated callback and restart between each persistence step.
+
 ## Waypoint relay — reviewed, no standalone issue asserted
 
 `syncWaypoint` requires the sender to be a passenger in a vehicle with another character as driver, then relays client-provided X/Y and awards task 126. The relay itself performs the described passenger-to-driver waypoint transfer, so this static pass does not classify the client-supplied coordinates as a task bypass. Finite/world-bound validation and rate limiting still need staging/policy review; no coordinates were executed or tested.
