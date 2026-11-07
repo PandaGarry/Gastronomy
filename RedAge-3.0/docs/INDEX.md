@@ -19,7 +19,7 @@
 - Time-based progression: `MONEY-011` — reward/time checkpoint crash consistency gap; `PROG-005` — short deserialized `Achievements` array can cause bounds exceptions; `PROG-006` — nullable `TimeInfo` can interrupt shared minute processing. Static only; DB-row prevalence and crash replay remain unverified; see `ONLINE_REWARDS_REVIEW.md`.
 - Taxi meter path: `MONEY-012`/`PROG-007` — unverified client mileage can bill an active passenger and advance taxi mileage tasks. RAGE reproduction pending; see `TAXI_MILEAGE_REVIEW.md`.
 - Passport progression: `PROG-008` — self-target request/accept can satisfy the active “show passport” task if RAGE entity argument resolves as expected; staging check pending; see `DOCUMENTS_REVIEW.md`.
-- Vehicle/garage: `VEH-001` is policy-dependent self-repair callback; `VEH-002` records missing household ownership validation in `server.garage.parking` (unauthorized association/recreation path, exact theft impact unproven); `VEH-003` records negative garage slot keys that can persist and fail spawn; `VEH-004..005` cover missing aircraft action/entity authorization (runtime reachability pending); `VEH-006` and `MONEY-013` cover stale sale confirmation and conditional payout/delete failure ordering. Static-only, staging tests unavailable. See `VEHICLE_REPAIR_REVIEW.md`, `GARAGE_REVIEW.md`, `VEHICLE_ACTION_REVIEW.md` and `VEHICLE_SALE_REVIEW.md`.
+- Vehicle/garage: `VEH-001` is policy-dependent self-repair callback; `VEH-002` records missing household ownership validation in `server.garage.parking` (unauthorized association/recreation path, exact theft impact unproven); `VEH-003` records negative garage slot keys that can persist and fail spawn; `VEH-004..005` cover missing aircraft action/entity authorization (runtime reachability pending); `VEH-006`/`MONEY-013` cover stale sale confirmation and conditional payout/delete failure; `VEH-007..008` cover vehicle-sync entity authorization and passenger radio policy. Static-only, staging tests unavailable. See the linked vehicle review files.
 
 ## Документы
 
@@ -51,6 +51,7 @@
 - [GARAGE_REVIEW](GARAGE_REVIEW.md) — house garage remote ownership validation, global vehicle-ID resolution and negative slot-index persistence review.
 - [VEHICLE_ACTION_REVIEW](VEHICLE_ACTION_REVIEW.md) — vehicle action and tuning remotes, aircraft ownership checks, entity marshalling and staging tests.
 - [VEHICLE_SALE_REVIEW](VEHICLE_SALE_REVIEW.md) — government sale confirmation ownership revalidation and conditional payout/delete crash consistency.
+- [VEHICLE_SYNC_REVIEW](VEHICLE_SYNC_REVIEW.md) — vehicle dirt/indicator entity remotes and shared radio-station authorization/range review.
 - [FUTURE_FEATURES](FUTURE_FEATURES.md) — backlog solo-mode/NPC-симуляции; отложен до завершения аудита.
 - [ISSUES](ISSUES.md) — нумерованный журнал рисков/вопросов.
 - [TEST_PLAN](TEST_PLAN.md) — baseline и следующие тестовые наборы.
