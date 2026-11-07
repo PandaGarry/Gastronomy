@@ -113,3 +113,4 @@
 
 - [ ] MONEY-037: player-to-player house sale settlement — checked buyer debit/seller credit, atomic ownership handoff, offer idempotency and correct audit identities; see `HOUSE_SALE_REVIEW.md`.
 - [ ] MONEY-038: auction bid-fee overflow — positive/max bid validation, checked `long` fee arithmetic, debit-only invariant and boundary/failure regression; see `AUCTION_REVIEW.md`.
+- [ ] INV-011: Other-item auction lifecycle — either disable unsupported listing type or implement durable winner grant/no-bid return with offline/restart recovery; see `AUCTION_REVIEW.md`.
