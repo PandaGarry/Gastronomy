@@ -157,3 +157,8 @@
 - Подтверждена несогласованность типов: CharacterData.Money — long, но Wallet.Change приводит его к int, прибавляет int amount и записывает int обратно в long. Для значений за пределами Int32 возможна потеря старших битов и порча баланса; дефект общий для всех вызовов Wallet.Change.
 - Зарегистрирован MONEY-036, добавлены тесты Int32/UInt32/Int64 boundaries и проверка всех call-sites. MONEY-035 теперь рассматривается вместе с общим дефектом кошелька.
 - Исходники не менялись; runtime/build/DB tests не выполнялись.
+
+
+## 2026-11-08 continuation — MONEY-037
+
+- Audited player-to-player house sale confirmation (`HouseManager.acceptHouseSell`). Buyer and seller `Wallet.Change` return values are ignored; house ownership changes regardless. Found sellerCharacterData assigned from buyer, causing wrong seller UUID in money log. Added `HOUSE_SALE_REVIEW.md`, MONEY-037, checklist and regression cases. Static only; no runtime/build validation.
