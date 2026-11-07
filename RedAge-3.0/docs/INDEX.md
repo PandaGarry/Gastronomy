@@ -79,6 +79,7 @@
 - [PHONE_NEWS_REVIEW](PHONE_NEWS_REVIEW.md) — phone News advert debit/persistence ordering, published image-link CSS path and Forbes visibility boundary review.
 - [PHONE_SIM_REVIEW](PHONE_SIM_REVIEW.md) — SIM ownership/install/remove consistency, gallery/camera boundaries and phone animation remote review.
 - [PHONE_DISPATCH_REVIEW](PHONE_DISPATCH_REVIEW.md) — taxi/mechanic dispatch claim and rate-limit remotes plus narrow cars/property/GPS/read-endpoint checks.
+- [FRACTION_STOCK_REVIEW](MAIN_REMOTE_REVIEW.md#money-035--faction-cash-withdrawal-ignores-wallet-credit-result) — faction cash transfer and partial inventory-grant settlement findings MONEY-035/STOCK-001.
 - [AUCTION_REVIEW](AUCTION_REVIEW.md) — auction first-bid settlement, expired-lot checks, property listing durability and offline business winner persistence.
 - [FUTURE_FEATURES](FUTURE_FEATURES.md) — backlog solo-mode/NPC-симуляции; отложен до завершения аудита.
 - [ISSUES](ISSUES.md) — нумерованный журнал рисков/вопросов.
