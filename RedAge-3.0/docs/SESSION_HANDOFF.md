@@ -122,3 +122,11 @@
 - Продолжен `Main.cs` delegated callback review. MONEY-032: `mayor_take` игнорирует false от `Bank.Change` и всё равно списывает казначейские средства. MONEY-033: `ticketConfirm` продолжает выплату при неудаче обоих debit paths и не очищает `targetSessionData.TicketsData`, поэтому settlement replayable. См. `MAIN_REMOTE_REVIEW.md`, `ISSUES.md`, `TEST_PLAN.md`.
 - Только статический анализ; C# build, RAGE:MP, MySQL fault injection и runtime reproduction не выполнялись. Оба finding остаются открытыми.
 - Продолжить аудит оставшихся delegated `inputCallback`/ `dialogCallback` paths, затем остальные неохваченные remote groups; не считать audit завершённым.
+
+
+## Продолжение аудита (2026-11-08, pass 2)
+
+- Перечислены все 38 `case` labels в `Main.ClientEvent_inputCallback`. Это inventory labels, а не завершённое покрытие всех delegated handlers.
+- Проверены `sellMedKitToTarget` и `healTarget`: повторные проверки доступа/дежурства/цены/дистанции присутствуют. Проверен `mayor_put`: результат bank debit проверяется до пополнения казны. В issue register не добавлялись findings без отдельного доказанного дефекта.
+- Открытые для следующего прохода delegated paths: club price, house sale offer, drugs, faction stock/garage, street race, vehicle sale acceptance/settlement, hotel rent extension, tent rename/sell, pet rename, legacy weaptransfer, generic argument/rate-limit handling.
+- MONEY-030..033 остаются открытыми. Статический анализ only; C# build, RAGE runtime и MySQL failure tests не выполнялись.
