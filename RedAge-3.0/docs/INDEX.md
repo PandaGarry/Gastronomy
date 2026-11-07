@@ -12,8 +12,9 @@
 - Auth review выявил legacy password hash без соли; миграция не выполнена, требуется отдельный backward-compatible план.
 - Economy/payment review зарегистрировал RedBucks debit/credit, deferred persistence, transfer replay, ATM validation, external receipt idempotency, DonatePack intent risks и roulette negative-count/overflow credit path. Для roulette внесены только узкие input guards; все такие изменения ещё требуют build/staging tests.
 - Casino coverage расширено legacy `/dice` и Lottery (`CAS-020..026`): findings статические, исходники не менялись, деньги/прогрессия требуют policy review и DB/RAGE regression testing.
-- BattlePass progression review начат: CAS-027..028 охватывают reward receipt crash/replay и failure/partial grant. В `UpdateReward` trace также выявлен Sapper progress-before-validation (`PROG-001`) и 72 активных вызова для IDs без задачи в Season4 catalog; inventory пока не равен полному аудиту producers.
-- Sapper minigame: `MONEY-008..009` — критические статические findings по отрицательной ставке (RB mint), client-controlled outcome/multiplier and loss refund; подробности и test matrix — `SAPPER_REVIEW.md`.
+- BattlePass progression review начат: CAS-027..028 охватывают reward receipt crash/replay и failure/partial grant. В `UpdateReward` trace найдено 209 non-comment invocation lines, включая 72 для IDs вне текущего Season4 catalog; inventory пока не равен полному аудиту producers.
+- Sapper minigame: `MONEY-008..009` — критические статические findings по отрицательной ставке (RB mint), client-controlled outcome/multiplier и loss refund; `PROG-001` — progress-before-session-validation. Подробности: `SAPPER_REVIEW.md`.
+- Quest progression: `PROG-002..004` фиксируют direct clear task bypass, client-forgeable Dada/Edward objective flags и admin SkipQuest recipient bug; `BUG-001` — disconnected Dada/Edward dialogue dispatch; `INV-008` — Granny Bear item injection. Проход частичный; см. `QUESTS_REVIEW.md`.
 
 ## Документы
 
@@ -36,6 +37,7 @@
 - [LOTTERY_REVIEW](LOTTERY_REVIEW.md) — legacy lottery ticket purchase, shop-session validation, persistence and payday payout.
 - [BATTLEPASS_REVIEW](BATTLEPASS_REVIEW.md) — BattlePass reward claims, durable receipt lifecycle, grant failure and mission/replay test scenarios.
 - [SAPPER_REVIEW](SAPPER_REVIEW.md) — RedBucks Sapper wager validation, client-controlled RNG/payout, and BattlePass progress validation.
+- [QUESTS_REVIEW](QUESTS_REVIEW.md) — partial quest remote/objective validation, Granny item grant and progression bypass review.
 - [FUTURE_FEATURES](FUTURE_FEATURES.md) — backlog solo-mode/NPC-симуляции; отложен до завершения аудита.
 - [ISSUES](ISSUES.md) — нумерованный журнал рисков/вопросов.
 - [TEST_PLAN](TEST_PLAN.md) — baseline и следующие тестовые наборы.

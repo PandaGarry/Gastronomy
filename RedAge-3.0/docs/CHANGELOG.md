@@ -99,3 +99,10 @@
 - Инвентаризированы `UpdateReward` calls: 209 non-comment source invocation lines; 72 call sites указывают на 55 IDs отсутствующих в зафиксированном Season4 catalog и потому no-op в текущем `UpdateReward`. Нужна policy/legacy confirmation; все 209 producers ещё не reviewed end-to-end.
 - В Sapper прослежены remote stake/end flow и CEF RNG: отрицательная ставка приводит к RB credit (`MONEY-008`), а forged client outcome позволяет выбрать payout/refund (`MONEY-009`); оба critical. `SappeEnd` также начисляет task 3 до проверки active game (`PROG-001`). Создан `SAPPER_REVIEW.md` и расширены issue/coverage/test docs.
 - Static source assertions for signed stake, client-controlled multiplier, progress-before-state-guard and `UpdateReward` catalog counts passed; `node --check` passed for the Sapper bridge and extracted CEF script; Markdown relative links and `git diff --check` passed. Исходники не менялись. Эксплойт, DB effects, C# compilation и RAGE runtime не запускались.
+
+
+## 2026-11-07 — Quest remotes and objective progression review
+
+- Частично прослежены generic `qMain` remotes, Granny Bear pickup, Defender Day Dada/Edward objectives and admin SkipQuest command. Добавлены `PROG-002..004` (task 97 direct-clear, client-forgeable Dada/Edward objective flags, wrong SkipQuest receiver), `BUG-001` (Dada/Edward handlers disconnected from generic dispatch) и `INV-008` (server quest-item grant без server pickup/state checks).
+- Создан `QUESTS_REVIEW.md`; обновлены issue register, coverage, index, test plan, roadmap и handoff. Никакие игровые исходники не менялись.
+- Static source assertions, `node --check` для проверенного client script и docs link/whitespace checks выполнены после изменений. Live remotes, quest rewards/trade value, DB persistence, C# build и RAGE runtime не тестировались; все findings остаются открыты.
