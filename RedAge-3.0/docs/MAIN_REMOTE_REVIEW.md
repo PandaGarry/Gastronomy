@@ -103,3 +103,30 @@ No additional issue ID was created from the helper checks above because the insp
 
 **Regression:** empty/partially filled/full vehicle; `1`, maximum allowed, max+1, `int.MaxValue`, `int.MinValue`, and boundary values around multiplication/addition overflow; insufficient faction balance; full inventory/slot exhaustion; AddNewItem partial failure; concurrent duplicate callbacks; verify no negative item counts, no capacity breach, no faction-balance increase, and exactly-once debit/grant after restart.
 
+
+
+## MONEY-035 — faction cash withdrawal ignores wallet credit result
+
+**Приоритет: высокий; debit-before-credit and ignored boolean statically confirmed.**
+
+In `Fractions.Manager.inputStocks`, `take_stock` for `money` performs `fractionData.Money -= amount` and then calls `MoneySystem.Wallet.Change(player, amount)` without checking its boolean return. `Wallet.Change` can return false when the character is unavailable or its resulting integer balance is invalid/overflows (it computes `int temp = (int)characterData.Money + amount` and rejects `temp < 0`). The stock has already been debited; the code proceeds to logs/notifications. Thus the operation can lose faction funds without crediting the player. Normal boundary likelihood depends on the actual balance type/range and should be reproduced in staging; the unchecked failure path is proven by source.
+
+**Remediation:** use a single transactional transfer/ledger operation with a checked wallet balance calculation; only commit the stock debit after a confirmed credit, or compensate atomically on failure. Handle concurrent withdrawals and exactly-once retries.
+
+**Regression:** character missing/disconnecting, balance at/near numeric bounds, wallet update failure, concurrent withdrawals, duplicate callback, restart/reconciliation; assert faction debit equals player credit exactly once.
+
+## STOCK-001 — faction stock debit ignores partial/failed inventory grant
+
+**Приоритет: высокий; ignored return value and partial-grant semantics statically confirmed.**
+
+- In `Fractions.Manager.inputStocks` take paths, faction stock counters are decremented before/around `Chars.Repository.AddNewItem`; its return value is ignored. `AddNewItem` returns `-1` when no slot is available and can return the last successful slot when it could not place the full requested quantity.
+- Vehicle load paths (`load_mats`, `load_drugs`, `load_medkits`) similarly call `AddNewItem(null, vehicleInventory, ...)` and then subtract the full requested amount from faction stock. A check against aggregate item count/capacity does not prove that the vehicle inventory has enough free slots when other item types occupy slots. The medkit free-slot check is explicitly commented out.
+- Therefore a failed or partial grant can still consume the full stock quantity. Runtime frequency and persisted DB outcome require disposable staging; the unchecked settlement path is confirmed.
+
+**Remediation:** change inventory insertion API to return exact inserted count/result and make the operation atomic; reserve slots before stock debit, or roll back stock when insertion is incomplete; validate the actual inventory delta rather than aggregate count alone. Apply same contract to organization stock and other callers.
+
+**Regression:** full/mixed vehicle inventory, fragmented stacks, zero free slots, partial insertion, SQL insert failure, concurrent loads, disconnect/restart; assert stock delta equals actual item delta and no item duplication/loss.
+
+## Scope correction — negative quantities
+
+The generic `Main.ClientEvent_inputCallback` branch for `put_stock`/`take_stock` parses the input and rejects `limit < 1` before calling `Stocks.inputStocks`. Therefore negative quantities are **not** recorded as a confirmed exploit through this entry point. Continue checking for alternate direct callers and retain server-side validation as a defense-in-depth requirement.
