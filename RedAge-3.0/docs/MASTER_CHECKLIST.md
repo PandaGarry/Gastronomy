@@ -41,6 +41,7 @@
 ## Этап C — Критичные деньги, платежи и игровые активы
 
 - [ ] MONEY-008/009, PROG-001 — Sapper: серверная state machine, RNG, ход, cashout, exactly-once settlement.
+- [ ] STOCK-001 — fraction stock and vehicle cargo transfers: exact item/cash result, atomicity, authorization, idempotency and restart recovery; see `FRACTION_STOCK_REVIEW.md`.
 - [ ] MONEY-030 — EventCoins: точное списание из разрешённого контейнера до начисления RB.
 - [ ] MONEY-031 — Fuel Control: server-side role/fraction authorization и input bounds.
 - [ ] MONEY-032 — Mayor treasury withdrawal: confirm bank credit before treasury debit; transactional/restart-safe settlement.
