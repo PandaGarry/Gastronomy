@@ -1,6 +1,6 @@
 # BattlePass progression and reward-claim review
 
-Статус: частичный статический review. Проверены remote handlers `open`, `take`, `takeAll`, `buyLvl`, `setMissions`, `skip`, reward dispatch and save/load call sites. Исходники не менялись; полный progression/reward producer inventory и runtime persistence tests остаются незавершёнными.
+Статус: частичный статический review. Проверены remote handlers `open`, `take`, `takeAll`, `buyLvl`, `setMissions`, `skip`, reward dispatch and save/load call sites. Исходники не менялись; полный progression/reward producer inventory и runtime persistence tests остаются незавершёнными. В ходе callsite trace найден отдельный Sapper case `PROG-001` (см. `SAPPER_REVIEW.md`): completion event засчитывает task до проверки игры.
 
 ## CAS-027 — reward receipt не сохраняется вместе с prize grant
 
@@ -23,6 +23,12 @@
 **Remediation:** grant API должен возвращать подтверждённый результат или durable receipt; атомарно фиксировать claim only after grant commit либо записывать pending claim и обеспечивать повтор/компенсацию. Все wallet/item/RedBucks/VIP grant steps должны быть individually observable; не показывать success при fail.
 
 **Проверки:** отказать по очереди в Wallet.Change, item insert, RedBucks persistence, VIP update и одной из `takeAll` наград; проверить claimed IDs, retry, user notification, logs и фактический баланс/предметы. Повторные remote calls не должны ни терять, ни дублировать приз.
+
+## Инвентаризация `UpdateReward` producers — продолжается
+
+Static scan по `NeptuneEvo/**/*.cs` (line/block comments исключены) нашёл **209** non-comment `BattlePass.Repository.UpdateReward(...)` source invocation lines. В Season4 task catalog — 106 distinct IDs; каждый из них имеет хотя бы один invocation. Дополнительно 55 IDs из call sites отсутствуют в Season4 list, всего **72** invocation lines. `UpdateReward` ищет задачу через `FirstOrDefault` и немедленно returns при `null`, поэтому эти calls в текущей hardwired Season4 конфигурации гарантированно no-op. Возможно, это остатки прошлых сезонов, но intended status пока не подтверждён.
+
+Эта inventory — не validation всех producers: ещё не проверена полностью последовательность «remote/event → действие действительно выполнено → reward ID», duplicate/replay/rate limits и возможные cross-player effects. Отдельный проверенный no-game Sapper task path описан как `PROG-001` в `SAPPER_REVIEW.md`.
 
 ## Дополнительные проверки endpoints
 

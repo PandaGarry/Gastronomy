@@ -92,3 +92,12 @@
 ## MONEY-007 — NewCasino Roulette outcome-dependent disconnect refund
 
 `ContinueGame` sends the winning number in the `START_GAME` client payload and sets a five-second `rData.Time` window; `Roullete.Disconnect` returns the player’s stake while that window remains active, irrespective of disconnect type. A modified client can inspect the delivered result and disconnect on a losing outcome. The related `DESTROY_LAST_BET` active-phase bypass received a narrow server-side phase guard (`CAS-001`), but the disconnect settlement policy remains open pending owner decision and durable exactly-once test design. Evidence and staging matrix: [CASINO_REVIEW.md](CASINO_REVIEW.md). Do not change the refund policy or gameplay balance before staging and approval.
+
+
+## MONEY-008 — Sapper negative stake credits RedBucks
+
+`server.sapper.bet` accepts a signed amount without positive/max validation; a negative stake passes the balance comparison and is negated into a positive `UpdateData.RedBucks` credit. Detailed proof and test matrix: [SAPPER_REVIEW.md](SAPPER_REVIEW.md). Critical; open pending server-side stake validation and test-account regression testing.
+
+## MONEY-009 — Sapper client selects outcome and payout
+
+CEF controls RNG and `server.sapper.end` trusts a client multiplier index; forged `type=7` pays 3x stake, and a losing `-2` can be replaced with `-1` to refund. The server has no authoritative board/progress record. Detailed proof and tests: [SAPPER_REVIEW.md](SAPPER_REVIEW.md). Critical; open pending server-owned round/RNG and exactly-once settlement.

@@ -92,3 +92,10 @@
 - Прослежены `server.battlepass.take`, `takeAll`, mission reward flow, `GiveBonus`, `AddNewItemWarehouse`, BattlePass save/load и character save call sites.
 - Добавлены CAS-027..028: claim marker живёт в памяти и сохраняется через character-save/disconnect, отдельно от prize grant; после persist grant до аварии/restart возможен replay claim. `GiveBonus` swallowing exceptions/no grant acknowledgements приводит к consumed claim при failed/partial reward.
 - Создан `BATTLEPASS_REVIEW.md`; обновлены `ISSUES.md`, `AUDIT_COVERAGE.md`, index, test plan, roadmap и handoff. Исходники не менялись; C# build, DB fault injection, crash/reconnect и RAGE tests не выполнялись.
+
+
+## 2026-11-07 — BattlePass producer trace and Sapper remote review
+
+- Инвентаризированы `UpdateReward` calls: 209 non-comment source invocation lines; 72 call sites указывают на 55 IDs отсутствующих в зафиксированном Season4 catalog и потому no-op в текущем `UpdateReward`. Нужна policy/legacy confirmation; все 209 producers ещё не reviewed end-to-end.
+- В Sapper прослежены remote stake/end flow и CEF RNG: отрицательная ставка приводит к RB credit (`MONEY-008`), а forged client outcome позволяет выбрать payout/refund (`MONEY-009`); оба critical. `SappeEnd` также начисляет task 3 до проверки active game (`PROG-001`). Создан `SAPPER_REVIEW.md` и расширены issue/coverage/test docs.
+- Static source assertions for signed stake, client-controlled multiplier, progress-before-state-guard and `UpdateReward` catalog counts passed; `node --check` passed for the Sapper bridge and extracted CEF script; Markdown relative links and `git diff --check` passed. Исходники не менялись. Эксплойт, DB effects, C# compilation и RAGE runtime не запускались.
