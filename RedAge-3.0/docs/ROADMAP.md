@@ -109,3 +109,6 @@
 - Нет `dotnet` SDK в текущей рабочей среде: C# сборка пока не проверена.
 - В текущем снимке намеренно отсутствуют серверные бинарники/runtime, собранные client packages и часть тяжёлых UI/game assets.
 - Нет подтверждённой полной схемы запуска и сведений о предполагаемом production-хостинге.
+
+
+- [ ] MONEY-037: player-to-player house sale settlement — checked buyer debit/seller credit, atomic ownership handoff, offer idempotency and correct audit identities; see `HOUSE_SALE_REVIEW.md`.
