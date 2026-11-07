@@ -165,3 +165,9 @@
 - Traced `buy_drugs` from generic input callback into `Gangs.BuyDrugs`, configured default price and `Chars.Repository.AddNewItem` stack behavior.
 - Registered MONEY-034: unchecked `int` multiplication can turn `int.MaxValue * 30` into `-30`, causing faction balance increase; unchecked capacity addition can also wrap for partially loaded vehicles. Exact item/DB corruption remains unverified.
 - Updated issue register, remote review, index, coverage, master checklist, roadmap, test plan and handoff. Documentation-only change; no source patch/build/staging test.
+
+
+## 2026-11-08 — Fraction stock/cargo remote audit
+
+- Прослежены `inputCallback` → `Stocks.inputStocks` / `Stocks.fracgarage` для character↔fraction и vehicle↔fraction transfers. Внесён `STOCK-001`: faction stock totals меняются вокруг `Remove`, `AddNewItem` и `Wallet.Change` без проверки точного результата/компенсации; точная runtime failure/exploitability не заявляется.
+- Создан `FRACTION_STOCK_REVIEW.md`; `ISSUES.md`, `MASTER_CHECKLIST.md`, `INDEX.md`, `AUDIT_COVERAGE.md` и `ROADMAP.md` обновлены. Нет source patch, C# build или RAGE/MySQL runtime tests.
