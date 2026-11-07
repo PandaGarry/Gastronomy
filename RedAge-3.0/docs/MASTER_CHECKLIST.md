@@ -57,7 +57,7 @@
 - [ ] MONEY-005, PAY-001..003 — payment receipts, durable idempotency и compensation.
 - [ ] MONEY-001/002/011/012 — money queue, online reward checkpoint, taxi mileage/fare.
 - [ ] MONEY-013..019, 022..024, 027..029 — property, vehicle, business and phone settlement/persistence.
-- [ ] INV-001..010 — inventory/container ownership, counts, ammo, crafting, item lifecycle.
+- [ ] INV-001..011 — inventory/container ownership, counts, ammo, crafting and item lifecycle; include Other-item auction escrow award/return (`INV-011`, `AUCTION_REVIEW.md`).
 - [ ] CAS-001..028 — casino state machines, RNG, wager limits, disconnect settlement and prize grants.
 - [ ] PROP-001..005, VEH-001..008 — ownership/ACL, persistence, vehicle actions and recovery.
 
