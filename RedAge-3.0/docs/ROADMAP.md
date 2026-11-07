@@ -50,6 +50,7 @@
 - [x] Создана `AUDIT_COVERAGE.md`: разграничивает просмотренные/непросмотренные подсистемы и критерии завершения полного аудита; большинство gameplay-модулей остаются не начаты.
 - [x] Начат inventory remote/persistence review; findings `INV-001..007`, добавлены локальные mitigations для stack count/same slot и foreign-tent read-only paths. Статические snippets распарсились; отдельные roulette count guards также внесены; compile/staging tests заблокированы отсутствующими .NET/RAGE runtime.
 - [x] Начат NewCasino Roulette static review: server-side phase guard для `DESTROY_LAST_BET` добавлен (`CAS-001`); обнаружены client-only bet min/max (`CAS-002`) и outcome-dependent пятисекундная disconnect refund policy (`MONEY-007`), код не менялся до согласования gameplay semantics. См. `CASINO_REVIEW.md`; build/staging ещё недоступны.
+- [x] Начат Blackjack remote/state review: bounds/duplicate-seat и duplicate-bet guards внесены (`CAS-003`, `CAS-006`); arbitrary-coordinate teleport, illegal split/double/state moves и client-only bet max зарегистрированы (`CAS-004/005/007`). Денежные/gameplay policy issues оставлены без patch до согласования; см. `BLACKJACK_REVIEW.md`.
 - [ ] Завершить inventory trade/storage/weapon/clothes/shop permissions, исправить NoteCreate ownership/dedup, подтвердить mitigations полной сборкой и regression tests.
 - [ ] Продолжить review удалённых событий/команд: авторизация, проверка аргументов, rate limits, доверие клиенту.
 - [ ] Проверить SQL: параметризация, транзакции, пул соединений, таймауты, ошибки и повторные попытки.

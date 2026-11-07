@@ -25,6 +25,7 @@
 - [INVENTORY_REVIEW](INVENTORY_REVIEW.md) — remote inventory move/stack, tent ownership и отложенная запись предметов.
 - [ROULETTE_REVIEW](ROULETTE_REVIEW.md) — remote case purchase/open count validation, wallet/item side effects и staging regression matrix.
 - [CASINO_REVIEW](CASINO_REVIEW.md) — NewCasino Roulette bet/cancel/disconnect settlement audit and staging matrix.
+- [BLACKJACK_REVIEW](BLACKJACK_REVIEW.md) — blackjack remote join, bet, move, payout and disconnect audit.
 - [FUTURE_FEATURES](FUTURE_FEATURES.md) — backlog solo-mode/NPC-симуляции; отложен до завершения аудита.
 - [ISSUES](ISSUES.md) — нумерованный журнал рисков/вопросов.
 - [TEST_PLAN](TEST_PLAN.md) — baseline и следующие тестовые наборы.

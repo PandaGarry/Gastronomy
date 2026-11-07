@@ -55,3 +55,11 @@
 - Подтверждён отдельный пятисекундный disconnect refund path после того, как сервер отправляет исход roulette в client event (`MONEY-007`). Код не менялся: policy может затрагивать компенсацию аварийного разрыва; необходимы согласование и staging design для exactly-once settlement.
 - Зафиксирован client-only bet min/max path и потенциальный settlement overflow (`CAS-002`); серверную policy не менял до подтверждения intended limits.
 - Покрытие обновлено; другие казино, включая Blackjack/Spin/Horses, остаются неаудированными.
+
+
+## 2026-11-07 — Blackjack remote/state audit
+
+- Проверены Blackjack join/bet/move/leave events, client/CEF controls, table state machine, payout and disconnect paths; создан `BLACKJACK_REVIEW.md`.
+- Подтверждён unbounded table-index allocation before casino eligibility and duplicate seating window; добавлены table/seat bounds, finite-coordinate guards, global one-seat guard (`CAS-003`). Координаты всё ещё client-provided; arbitrary teleport зарегистрирован отдельно (`CAS-004`).
+- Подтверждён repeat `setBet` debit + `Rate` overwrite; добавлены duplicate-bet guard и обязательная проверка `Wallet.Change` result (`CAS-006`).
+- Задокументированы authoritative-move/rules bypass для split/double (`CAS-005`) и CEF-only table maximum/payout overflow (`CAS-007`); не менялись без подтверждения gameplay limits. Build/RAGE tests не выполнены.

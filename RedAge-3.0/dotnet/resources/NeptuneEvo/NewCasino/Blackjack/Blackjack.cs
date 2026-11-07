@@ -284,13 +284,17 @@ namespace NeptuneEvo.NewCasino
                 if (sessionData == null) return;
                 var characterData = player.GetCharacterData();
                 if (characterData == null) return;
+                if (Index < 0 || Index >= BlackjackData.Count || SlotId < 1 || SlotId > 4) return;
+                if (float.IsNaN(PosX) || float.IsInfinity(PosX) || float.IsNaN(PosY) || float.IsInfinity(PosY) ||
+                    float.IsNaN(PosZ) || float.IsInfinity(PosZ) || float.IsNaN(Rotation) || float.IsInfinity(Rotation)) return;
+                if (PlayerData.ContainsKey(player) || DealerData.Values.Any(dealer => dealer.Players.Contains(player))) return;
+                if (!characterData.InCasino || !characterData.IsAlive || sessionData.CuffedData.Cuffed) return;
                 if (!FunctionsAccess.IsWorking("blackjack"))
                 {
                     Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.FunctionOffByAdmins), 3000);
                     return;
                 }
                 if (!DealerData.ContainsKey(Index)) DealerData.Add(Index, new BlackjackDealerInfo());
-                if (!characterData.InCasino || !characterData.IsAlive || sessionData.CuffedData.Cuffed || DealerData[Index].Players.Contains(player)) return;
                 if (characterData.Money < 500)
                 {
                     Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.Table500Bucks), 3000);
@@ -376,8 +380,9 @@ namespace NeptuneEvo.NewCasino
                     Notify.Send(player, NotifyType.Warning, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.CantBetByGame), 5000);
                     return;
                 }
+                if (bInfo.Join) return;
+                if (!MoneySystem.Wallet.Change(player, -money)) return;
                 Notify.Send(player, NotifyType.Warning, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.BetSuc), 1000);
-                MoneySystem.Wallet.Change(player, -money);
                 GameLog.CasinoBJLog(-money);
                 GameLog.Money($"player({characterData.UUID})", $"system", money, $"BJBet");
                 BattlePass.Repository.UpdateReward(player, 55);

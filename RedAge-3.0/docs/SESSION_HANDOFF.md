@@ -14,7 +14,7 @@
 
 Продолжается систематический статический аудит RedAge 3.0; feature work отложен.
 
-Последние проходы — две roulette системы:
+Последние проходы — casino remote flows:
 
 1. Donate/case remote handlers в `dotnet/resources/NeptuneEvo/Chars/Repository.cs` (`ROULETTE_REVIEW.md`):
 
@@ -26,10 +26,11 @@
 - Solo-mode/NPC только отложен в `FUTURE_FEATURES.md`; не реализовывать до завершения аудита.
 
 2. NewCasino Roulette (`CASINO_REVIEW.md`): `CAS-001` server-side phase guard внесён в `Roullete.cs`, не собран/runtime-tested. `CAS-002`: CEF содержит min/max ставок, но сервер допускает только нижнюю общую границу `20`; потенциальное payout overflow описано, intended limits требуют подтверждения. `MONEY-007`: сервер отправляет outcome в `START_GAME` и сохраняет пятисекундный disconnect refund grace; finding зарегистрирован, исправление не внесено, пока не согласована компенсация аварийного disconnect и exactly-once settlement.
+3. Blackjack (`BLACKJACK_REVIEW.md`): `CAS-003` table/seat and duplicate-join guards, `CAS-006` duplicate-bet/debit guard внесены, но не собраны/runtime-tested. Открыты arbitrary-coordinate teleport (`CAS-004`), move/split/double server validation (`CAS-005`) и CEF-only bet maximum/payout overflow (`CAS-007`).
 
 ## Выполненные проверки и ограничения
 
-- Tree-sitter разобрал выбранные C# member snippets, включая roulette, inventory и NewCasino `OnDestroyLastBet`; это не компиляция. `node --check src_client/casino/roulette.js`, static phase-guard assertion, Markdown link/whitespace check прошли.
+- Tree-sitter разобрал выбранные C# member snippets, включая roulette, inventory и NewCasino Roulette/Blackjack handlers; это не компиляция. `node --check` проверен для casino client scripts, static guard/data-flow assertions и Markdown link/whitespace checks выполнены.
 - Статические assertions guards и проверка Markdown links/whitespace прошли.
 - Полный C# build и RAGE:MP staging smoke tests **не выполнялись**: в среде нет .NET SDK/MSBuild, MySQL test DB и RAGE runtime.
 - CEF production build ранее ограничен отсутствующими assets/памятью; см. `TEST_PLAN.md`/`BUILD_LOG.md`.
@@ -37,11 +38,11 @@
 
 ## Следующие шаги
 
-1. В новом чате восстановить/подтвердить рабочую папку RedAge и прочитать `INDEX.md`, `AUDIT_COVERAGE.md`, `ISSUES.md`, `TEST_PLAN.md`, `CASINO_REVIEW.md` и эту заметку.
-2. PR создаётся из `arena/fab5bf55-gastronomy` в `main` репозитория Gastronomy и должен содержать только добавление изолированного каталога `RedAge-3.0/`. Не пушить изменения в upstream RedAge без отдельного checkout/ветки и разрешения владельца.
+1. В новом чате восстановить/подтвердить рабочую папку RedAge и прочитать `INDEX.md`, `AUDIT_COVERAGE.md`, `ISSUES.md`, `TEST_PLAN.md`, `CASINO_REVIEW.md`, `BLACKJACK_REVIEW.md` и эту заметку.
+2. PR [#2](https://github.com/PandaGarry/Gastronomy/pull/2) открыт из `arena/fab5bf55-gastronomy` в `main`; продолжать добавлять только новые/изменённые файлы внутри `RedAge-3.0/`. Не менять/удалять root Gastronomy files и не пушить в upstream RedAge без отдельного checkout/ветки и разрешения владельца.
 3. Продолжить статический review очередных remote event/command boundaries и подсистем; не заявлять полное покрытие без прохождения матрицы `AUDIT_COVERAGE.md`.
-4. Подготовить поддерживаемый build-agent, staging/test DB и RAGE runtime; проверить roulette и inventory guards, в особенности положительные/валидные `RemoveIndex` call sites, zero-state при отвергнутых payloads, DB/cache convergence и failure/restart scenarios.
-5. Позже исследовать остальные казино/gambling paths и consistency case grant (сбой `AddNewItem`/warehouse после списания) в `ROULETTE_REVIEW.md`.
+4. Подготовить поддерживаемый build-agent, staging/test DB и RAGE runtime; проверить inventory/roulette/Blackjack guards, положительные `RemoveIndex` call sites, rejected-payload no-op, DB/cache convergence, duplicate joins/bets и round settlement failure/restart.
+5. Продолжить NewCasino review: решить server-side blackjack coordinate/action/bet limits, согласовать roulette disconnect settlement, проверить Spin/Horses; также изучить roulette case grant fail-after-debit в `ROULETTE_REVIEW.md`.
 
 ## Нельзя забыть
 
