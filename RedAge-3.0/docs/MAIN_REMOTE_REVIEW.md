@@ -36,6 +36,19 @@
 
 **Regression:** inject missing/stale bank account and bank-change exception; verify treasury and personal balance remain unchanged or are reconciled exactly once. Also test normal leader withdrawal, limit boundary, repeated callback and restart between each persistence step.
 
+## MONEY-033 — ticket confirmation can pay out without a successful debit and can be replayed
+
+**Приоритет: критичный для денежной целостности; both failure-to-abort and failure-to-consume ticket state confirmed statically; runtime exploitation not tested.**
+
+- `FractionCommands.ticketConfirm(target, true)` reads `targetSessionData.TicketsData` into `ticketsData`, copies its target/price/reason, then executes `ticketsData = new TicketsData()`. This only replaces the local variable; it does not clear `targetSessionData.TicketsData`.
+- It attempts `Wallet.Change(target, -sum)`, then `Bank.Change(targetCharacterData.Bank, -sum, false)` if the wallet debit fails. If both return false, the code sends error notifications but does not return. It continues to add 60% to the City Hall fraction and credits 40% to the issuing officer via `Wallet.Change(player, ...)`.
+- The same still-populated ticket state can be submitted again through the `TICKET` dialog callback, so a repeated confirmation may re-run settlement while the state remains available. The normal client UI is not a server-side one-shot guarantee.
+- The target/officer credits and fraction update are not wrapped in a durable transaction or idempotent settlement record. Exact persistence and online/offline behavior require staging.
+
+**Remediation (not implemented):** atomically claim/consume the ticket intent before settlement; validate issuer/target/session and positive bounded sum; debit exactly once and abort if no debit succeeds; credit recipients only after confirmed debit; persist a unique ticket settlement ID and make retries idempotent. Clear the actual `targetSessionData.TicketsData` state in the same controlled transition. Consider a durable ledger/transaction rather than independent in-memory mutations.
+
+**Regression:** test cash-only, bank-only, combined balances, insufficient total funds, invalid/stale issuer, issuer/target disconnect, duplicate direct TICKET callback, concurrent confirmations, and crash between debit/fraction/officer credits. Every ticket must settle at most once; no payout is allowed without exactly one successful debit; balances and logs must reconcile after restart.
+
 ## Waypoint relay — reviewed, no standalone issue asserted
 
 `syncWaypoint` requires the sender to be a passenger in a vehicle with another character as driver, then relays client-provided X/Y and awards task 126. The relay itself performs the described passenger-to-driver waypoint transfer, so this static pass does not classify the client-supplied coordinates as a task bypass. Finite/world-bound validation and rate limiting still need staging/policy review; no coordinates were executed or tested.
