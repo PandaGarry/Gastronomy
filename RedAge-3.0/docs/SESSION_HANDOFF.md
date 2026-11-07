@@ -112,3 +112,13 @@
 - PR #2 слит в `main`; продолжать только на фиксированной ветке `arena/fab5bf55-gastronomy`. Новые audit-doc изменения после merge следует отправлять отдельным PR из этой ветки; не пытаться повторно изменять уже слитый PR #2.
 - Очередной `Main.cs` pass зарегистрировал `MONEY-030` (условный EventCoins→RedBuck credit без точного снятия при различии локаций) и `MONEY-031` (generic input callback без проверки City Hall leader для фракционных fuel caps). См. `MAIN_REMOTE_REVIEW.md`; это статический анализ, не runtime-подтверждение. `syncWaypoint` cross-check не объявлялся отдельным finding: эвент непосредственно выполняет описанный waypoint relay.
 - Проверить new test cases 47–48 на disposable RAGE/MySQL staging; продолжить оставшиеся delegated `inputCallback`/`dialogCallback` and remote handlers.
+
+
+## Продолжение (2026-11-08)
+
+- GitHub write access теперь подтверждён реальной операцией: создана ветка `redage/audit-continuation` от `arena/fab5bf55-gastronomy`; `main` не изменялась.
+- Создан Draft PR #4: https://github.com/PandaGarry/Gastronomy/pull/4. Не сливать: `main` и arena branch diverged (по одному уникальному коммиту на каждой стороне до продолжения); PR содержит существующую документационную разницу и новые audit updates. Сначала reconcile history/diff.
+- Создан `MASTER_CHECKLIST.md`; PR body обновлён по мере добавления findings.
+- Продолжен `Main.cs` delegated callback review. MONEY-032: `mayor_take` игнорирует false от `Bank.Change` и всё равно списывает казначейские средства. MONEY-033: `ticketConfirm` продолжает выплату при неудаче обоих debit paths и не очищает `targetSessionData.TicketsData`, поэтому settlement replayable. См. `MAIN_REMOTE_REVIEW.md`, `ISSUES.md`, `TEST_PLAN.md`.
+- Только статический анализ; C# build, RAGE:MP, MySQL fault injection и runtime reproduction не выполнялись. Оба finding остаются открытыми.
+- Продолжить аудит оставшихся delegated `inputCallback`/ `dialogCallback` paths, затем остальные неохваченные remote groups; не считать audit завершённым.
