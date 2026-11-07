@@ -71,3 +71,18 @@ House auctions do not need a separate character house-ID list in the inspected `
 **Remediation (not implemented):** validate price > 0 and a server-defined maximum before arithmetic; compute fee/total using checked long arithmetic; reject overflow and values outside the supported bank/economy range; pass a validated negative debit to the bank only. Make the bid reservation and previous-bid refund one serialized, durable settlement.
 
 **Regression:** direct remote bids at int.MaxValue, int.MaxValue-1, the maximum permitted bid, one above maximum, zero, negative and int.MinValue; verify the bank balance never increases from a bid, no integer wrap occurs, and no state/log/notification is committed on rejected input. Inject bank debit failure and first-bid sentinel failure; test concurrency and restart persistence.
+
+
+## INV-011 — Other-item auction escrow has no end-of-auction award or return path
+
+**Приоритет: высокий; missing settlement branch statically confirmed, runtime item recovery not tested.**
+
+- The public remote server.phone.auction.add casts a client-supplied integer to AuctionType and calls OnCreate (Players/Phone/Auction/Events.cs:17-20).
+- OnCreate has an AuctionType.Other branch that reads the character inventory item, clears its inventory slot, and moves its SQL item record to locationName/location `auction` / `auction` via UpdateSqlItemData (Players/Phone/Auction/Repository.cs:253-273; Chars/Repository.cs:4622-4678).
+- The auction End method marks the auction ended, but its settlement dispatch handles only House, Biz and Vehicle. There is no Other award/return branch (`Players/Phone/Auction/Repository.cs:426-447`). SaveAuctions later removes ended auctions from the in-memory list after persisting IsEnd (`:393-418`).
+- Therefore an Other item can be detached from the seller inventory and placed in the auction location without a corresponding winner grant or no-bid return in the reviewed auction lifecycle. The item may remain orphaned in that storage location after the auction is removed from active memory. Exact persistence/recovery behavior needs disposable DB verification.
+- The client-facing item-picker path GetItem also has no AuctionType.Other branch (`:121-185`), so the intended UI workflow is unclear; nevertheless the server add remote and Other mutation branch are present. Do not assume the UI makes this safe.
+
+**Remediation (not implemented):** either disable AuctionType.Other at the server boundary until complete, or implement explicit item settlement for winner/no-bid/cancel paths. Reserve and move the exact owned item with a durable auction ID; atomically grant it to the winner or return it to the seller; support offline recipients, retry and exactly-once receipts. Validate the item ID belongs to the caller and reject unsupported enum values.
+
+**Regression:** direct add remote for Other with valid, foreign, nonexistent and stale item IDs; auction end with and without bids; winner/seller online and offline; DB failure at reserve/grant/return; restart before and after end; verify the item exists exactly once in the correct owner container and never remains stranded in auction storage.
