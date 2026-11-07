@@ -121,3 +121,10 @@
 - Rechecked all active `Achievements[index]` sites. A valid short `Achiev` JSON list is not normalized on load despite create/fallback using 401 flags (`PROG-005`). DDL also allows nullable `characters.time`; JSON `null` bypasses deserialize catch and interrupts the outer minute pass (`PROG-006`). Both findings are conditional on row contents; production rows were not queried.
 - Created `ONLINE_REWARDS_REVIEW.md`; updated issue register, economy/coverage/index/test plan. No source code changed.
 - Static source assertions, relative Markdown-link validation (29 docs) and `git diff --check` passed. C# build, DB fault-injection and RAGE runtime tests were unavailable/not performed. Both findings remain open.
+
+
+## 2026-11-07 — Taxi mileage remote and progression producer trace
+
+- Traced client `MileageClass` → `server.vehicle.updateMileage` → taxi billing → BattlePass calls. Added `MONEY-012` for client-supplied unvalidated mileage reaching passenger-to-driver fare transfer, and `PROG-007` because the same request advances miles-based driver/passenger task counters before unchecked wallet mutations.
+- Created `TAXI_MILEAGE_REVIEW.md`; linked findings into issue/coverage/economy/index/roadmap/test plan and handoff. No game source changed.
+- Static review only; forged remote, fare settlement, C# build and RAGE/DB tests not run. Findings remain open pending test-ride reproduction and owner policy confirmation.

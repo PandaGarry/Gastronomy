@@ -16,7 +16,8 @@
 - Sapper minigame: `MONEY-008..009` — критические статические findings по отрицательной ставке (RB mint), client-controlled outcome/multiplier и loss refund; `PROG-001` — progress-before-session-validation. Подробности: `SAPPER_REVIEW.md`.
 - Quest progression: `PROG-002..004` фиксируют direct clear task bypass, client-forgeable Dada/Edward objective flags и admin SkipQuest recipient bug; `BUG-001` — disconnected legacy quest dispatch (active runtime scope не подтверждён); `INV-008` — Granny Bear item injection. Проход частичный; см. `QUESTS_REVIEW.md`.
 - Wedding remote: `MONEY-010` — divorce fee may be debited before failed offline-spouse unlink after disconnect race; `WEDDING-001` — null target dereference on invalid input. Статический анализ, runtime policy/tests pending; `WEDDING_REVIEW.md`.
-- Time-based progression: `MONEY-011` — reward/time checkpoint crash consistency gap; `PROG-005` — short deserialized `Achievements` array can cause bounds exceptions; `PROG-006` — nullable `TimeInfo` can interrupt shared minute processing. Static only; actual DB-row prevalence and crash replay remain unverified; see `ONLINE_REWARDS_REVIEW.md`.
+- Time-based progression: `MONEY-011` — reward/time checkpoint crash consistency gap; `PROG-005` — short deserialized `Achievements` array can cause bounds exceptions; `PROG-006` — nullable `TimeInfo` can interrupt shared minute processing. Static only; DB-row prevalence and crash replay remain unverified; see `ONLINE_REWARDS_REVIEW.md`.
+- Taxi meter path: `MONEY-012`/`PROG-007` — unverified client mileage can bill an active passenger and advance taxi mileage tasks. RAGE reproduction pending; see `TAXI_MILEAGE_REVIEW.md`.
 
 ## Документы
 
@@ -42,6 +43,7 @@
 - [QUESTS_REVIEW](QUESTS_REVIEW.md) — partial quest remote/objective validation, Granny item grant and progression bypass review.
 - [WEDDING_REVIEW](WEDDING_REVIEW.md) — marriage invitation and divorce settlement failure-path review.
 - [ONLINE_REWARDS_REVIEW](ONLINE_REWARDS_REVIEW.md) — time-based reward/checkpoint crash consistency and achievement-array bounds review.
+- [TAXI_MILEAGE_REVIEW](TAXI_MILEAGE_REVIEW.md) — client mileage trust in Taxi fare billing and BattlePass progression.
 - [FUTURE_FEATURES](FUTURE_FEATURES.md) — backlog solo-mode/NPC-симуляции; отложен до завершения аудита.
 - [ISSUES](ISSUES.md) — нумерованный журнал рисков/вопросов.
 - [TEST_PLAN](TEST_PLAN.md) — baseline и следующие тестовые наборы.
