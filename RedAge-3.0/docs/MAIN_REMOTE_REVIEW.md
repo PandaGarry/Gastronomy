@@ -134,3 +134,17 @@ The generic `Main.ClientEvent_inputCallback` branch for `put_stock`/`take_stock`
 ## Organization stock parity check
 
 The corresponding `Organizations.Manager.inputStocks` implementation repeats both settlement defects: organization money is decremented before an unchecked `Wallet.Change`, and organization stock counters are decremented before an unchecked `AddNewItem` result. The deposit paths also mutate organization stock before invoking the wallet/item removal helpers without verifying their outcomes. The same atomicity/idempotency remediation must cover organization stock; do not treat this as a separate duplicate finding.
+
+
+## MONEY-036 — Wallet.Change truncates long character balance to int
+
+**Приоритет: критичный для аккаунтов с балансом выше Int32.MaxValue; type mismatch and lossy write statically confirmed.**
+
+- `CharacterData.Money` is declared as `long`.
+- `MoneySystem.Wallet.Change` computes `int temp = (int)characterData.Money + amount`, checks `temp < 0`, then assigns `characterData.Money = temp`.
+- The explicit cast truncates a 64-bit balance to signed 32-bit before applying the delta. For balances outside Int32 range, the method can reject a legitimate operation or return true after replacing the stored long balance with an unrelated 32-bit value. Example: a balance of 4,294,967,296 cast to int becomes 0; adding 100 can store 100 and report success.
+- This is a shared wallet primitive; every caller inherits the defect, including faction/organization stock transfers (MONEY-035), rewards, trades and other economy systems. Whether a given mutation is persisted immediately depends on the call path/save workers; the in-memory corruption is directly implied by the code.
+
+**Remediation:** compute using `long` throughout, use `checked(characterData.Money + (long)amount)`, enforce a deliberate nonnegative maximum balance, and ensure persistence uses the same width. Review every `Wallet.Change` caller for ignored return values and ordering; do not silently clamp/truncate.
+
+**Regression:** balances at `int.MaxValue - 1`, `int.MaxValue`, `int.MaxValue + 1`, `uint.MaxValue`, `uint.MaxValue + 1`, `long.MaxValue`; positive/negative deltas, overflow, save/reload, concurrent changes and callers that ignore false. Assert exact balance conservation.
