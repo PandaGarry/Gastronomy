@@ -47,4 +47,4 @@
 - `gps.pointDefault` accepts only fixed `house`, `biz`, `frac`, `org` names and resolves positions from the caller's own context; it does not accept client-supplied coordinates.
 - `recentsClear` clears the caller's own recents; phone settings airplane mode has a server-side five-minute cooldown.
 
-News/Forbes are separately and partially reviewed in `PHONE_NEWS_REVIEW.md`. Still out of scope: complete gallery upload/URL lifecycle, phone open/close/animation remotes, SIM-item lifecycle and all direct remote throttling. See `AUDIT_COVERAGE.md` before treating Phone/social as complete.
+News/Forbes are separately and partially reviewed in `PHONE_NEWS_REVIEW.md`; SIM/gallery/animation lifecycle is in `PHONE_SIM_REVIEW.md`. Still out of scope: complete gallery upload/URL lifecycle, SIM issuance/trading and all direct remote throttling. See `AUDIT_COVERAGE.md` before treating Phone/social as complete.

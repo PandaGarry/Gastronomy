@@ -48,4 +48,4 @@
 
 ## Boundaries
 
-This is a narrow contacts/SMS slice. Call/settings/Tinder are separately and partially reviewed in `PHONE_CALL_TINDER_REVIEW.md`; News/Forbes are separately reviewed in `PHONE_NEWS_REVIEW.md`; gallery upload lifecycle, SIM lifecycle, recents behavior, bonus-code/promo policy, phone-wide throttling and other remotes remain open. No general CEF-XSS conclusion outside the traced SMS sinks is claimed.
+This is a narrow contacts/SMS slice. Call/settings/Tinder are separately and partially reviewed in `PHONE_CALL_TINDER_REVIEW.md`; News/Forbes are separately reviewed in `PHONE_NEWS_REVIEW.md`; SIM/gallery/animation is partially reviewed in `PHONE_SIM_REVIEW.md`; recents behavior, bonus-code/promo policy, phone-wide throttling and other remotes remain open. No general CEF-XSS conclusion outside the traced SMS sinks is claimed.
