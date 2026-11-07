@@ -109,7 +109,7 @@ No additional issue ID was created from the helper checks above because the insp
 
 **Приоритет: высокий; debit-before-credit and ignored boolean statically confirmed.**
 
-In `Fractions.Manager.inputStocks`, `take_stock` for `money` performs `fractionData.Money -= amount` and then calls `MoneySystem.Wallet.Change(player, amount)` without checking its boolean return. `Wallet.Change` can return false when the character is unavailable or its resulting integer balance is invalid/overflows (it computes `int temp = (int)characterData.Money + amount` and rejects `temp < 0`). The stock has already been debited; the code proceeds to logs/notifications. Thus the operation can lose faction funds without crediting the player. Normal boundary likelihood depends on the actual balance type/range and should be reproduced in staging; the unchecked failure path is proven by source.
+In both `Fractions.Manager.inputStocks` and `Organizations.Manager.inputStocks`, `take_stock` for `money` performs `fractionData.Money -= amount` and then calls `MoneySystem.Wallet.Change(player, amount)` without checking its boolean return. `Wallet.Change` can return false when the character is unavailable or its resulting integer balance is invalid/overflows (it computes `int temp = (int)characterData.Money + amount` and rejects `temp < 0`). The stock has already been debited; the code proceeds to logs/notifications. Thus the operation can lose faction funds without crediting the player. Normal boundary likelihood depends on the actual balance type/range and should be reproduced in staging; the unchecked failure path is proven by source.
 
 **Remediation:** use a single transactional transfer/ledger operation with a checked wallet balance calculation; only commit the stock debit after a confirmed credit, or compensate atomically on failure. Handle concurrent withdrawals and exactly-once retries.
 
@@ -119,7 +119,7 @@ In `Fractions.Manager.inputStocks`, `take_stock` for `money` performs `fractionD
 
 **Приоритет: высокий; ignored return value and partial-grant semantics statically confirmed.**
 
-- In `Fractions.Manager.inputStocks` take paths, faction stock counters are decremented before/around `Chars.Repository.AddNewItem`; its return value is ignored. `AddNewItem` returns `-1` when no slot is available and can return the last successful slot when it could not place the full requested quantity.
+- In `Fractions.Manager.inputStocks` and `Organizations.Manager.inputStocks` take paths, faction/organization stock counters are decremented before/around `Chars.Repository.AddNewItem`; its return value is ignored. `AddNewItem` returns `-1` when no slot is available and can return the last successful slot when it could not place the full requested quantity.
 - Vehicle load paths (`load_mats`, `load_drugs`, `load_medkits`) similarly call `AddNewItem(null, vehicleInventory, ...)` and then subtract the full requested amount from faction stock. A check against aggregate item count/capacity does not prove that the vehicle inventory has enough free slots when other item types occupy slots. The medkit free-slot check is explicitly commented out.
 - Therefore a failed or partial grant can still consume the full stock quantity. Runtime frequency and persisted DB outcome require disposable staging; the unchecked settlement path is confirmed.
 
@@ -130,3 +130,7 @@ In `Fractions.Manager.inputStocks`, `take_stock` for `money` performs `fractionD
 ## Scope correction — negative quantities
 
 The generic `Main.ClientEvent_inputCallback` branch for `put_stock`/`take_stock` parses the input and rejects `limit < 1` before calling `Stocks.inputStocks`. Therefore negative quantities are **not** recorded as a confirmed exploit through this entry point. Continue checking for alternate direct callers and retain server-side validation as a defense-in-depth requirement.
+
+## Organization stock parity check
+
+The corresponding `Organizations.Manager.inputStocks` implementation repeats both settlement defects: organization money is decremented before an unchecked `Wallet.Change`, and organization stock counters are decremented before an unchecked `AddNewItem` result. The deposit paths also mutate organization stock before invoking the wallet/item removal helpers without verifying their outcomes. The same atomicity/idempotency remediation must cover organization stock; do not treat this as a separate duplicate finding.
