@@ -90,3 +90,16 @@
 
 47. **Festive coin→RedBuck exchange (`MONEY-030`):** on disposable RAGE accounts, place EventCoins in `inventory`, `fastSlots` and other character locations; direct-call `inputCallback("sell_festive", "3")` and test 498, 500, nonmultiples, insufficient totals and repeated replay. Verify exact debit equals the exchange amount before any RedBuck credit; replay/no-removal must not credit. Also verify ordinary UI/valid exchange. Static review: `MAIN_REMOTE_REVIEW.md`, dependent slot route `INV-003`; requires RAGE/inventory staging.
 48. **Government fuel-limit authorization (`MONEY-031`):** direct-call each `fuelcontrol_*` callback as nonleader, wrong faction rank and City Hall leader with zero, negative, configured max and `int.MaxValue`; inspect all faction `FuelLimit/FuelLeft` values, DB persistence and next-day reset/refueling. Unauthorized/over-cap requests must be no-ops. Static review: `MAIN_REMOTE_REVIEW.md`; requires disposable RAGE/MySQL staging.
+
+
+## MONEY-033 — ticket settlement regression matrix (pending staging)
+
+- [ ] Cash-only debit succeeds; exactly one City Hall/officer payout.
+- [ ] Bank-only debit succeeds; exactly one City Hall/officer payout.
+- [ ] Both cash and bank debits fail: no recipient credit and no fraction balance change.
+- [ ] Duplicate and concurrent `TICKET` confirmation: exactly one settlement.
+- [ ] Invalid/stale issuer, target disconnect and reconnect: no stale or cross-player settlement.
+- [ ] Inject crash after debit, after fraction credit and after officer credit; restart reconciliation must produce exactly one complete settlement.
+- [ ] Verify the actual `targetSessionData.TicketsData` is consumed/cleared after accept or decline.
+
+No runtime tests have been run; execute only on disposable RAGE:MP/MySQL staging accounts.
