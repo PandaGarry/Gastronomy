@@ -8,12 +8,12 @@
 
 - New auction rows initialize `LastBetUUID = 0` and `LastPrice = price` (`Players/Phone/Auction/Repository.cs:290-305, 309-324`).
 - `OnBet` debits `price + 1%` from the bidder before unconditionally calling `ReturnMoney(auctionData.LastBetUUID, auctionData.LastPrice, ...)` (`:525-538`).
-- `ReturnMoney` treats the UUID as a connected-player lookup and immediately dereferences the result (`:562-568`). The first-bid sentinel `0` has no connected player in the normal character model, so the initial bid can throw after the debit and before `LastBetUUID`/`LastPrice` are updated. The event wrapper simply forwards to `OnBet` (`Events.cs:24-25`); no compensating refund is visible.
+- `ReturnMoney` treats the UUID as a connected-player lookup and immediately dereferences the result (`:562-568`); `Main.GetPlayerByUUID` explicitly returns null when the UUID is not connected (`Main.cs:4998-5005`). Thus the first-bid sentinel `0` can throw after the debit, and the same null dereference also makes the intended offline-character DB refund/payout branch unreachable for a real offline previous bidder or offline seller. In an overbid, the new bidder has already been debited before the previous-bid refund call; in house/business/vehicle award methods, seller payout is called before the asset handoff, so an offline seller can interrupt award processing. The event wrapper simply forwards to `OnBet` (`Events.cs:24-25`); no compensation is visible.
 - The bidder's own selected bid is the only account debited here; this is not evidence of cross-player debit. The in-memory debit may later be persisted by character save/disconnect. Test the sentinel on a disposable server before reporting as runtime-proven.
 
 **Remediation (not implemented):** refund the previous leader only when `LastBetUUID` identifies an actual prior bidder; settle debit/refund/bid update atomically or compensate on any exception. Require a valid positive starting price and use an explicit nullable/no-bid state rather than UUID zero.
 
-**Regression:** first bid on a fresh auction of each type; confirm debit exactly once and state advances, no `ReturnMoney(0,...)`; injected refund/update failure must restore or retain funds consistently.
+**Regression:** first bid on a fresh auction of each type; offline previous bidder on overbid; offline seller at auction end for house/business/vehicle; confirm exact debit/refund/proceeds and asset handoff after reconnect/restart. Inject refund/update failure and verify durable retry/compensation; no `ReturnMoney(0,...)`.
 
 ## MONEY-024 — expired/ended auctions still accept bids while the row remains cached
 
