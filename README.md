@@ -16,7 +16,7 @@
 - [Анализ и редактура шаблонного текста](proekt/01-strategiya/15-redaktura-ii-teksta.md)
 - [Рабочая база рецептов из main и правила адаптации](proekt/01-strategiya/17-rabochaya-baza-receptov.md)
 - [Локальные проверки текста и PNG](instrumenty/README.md)
-- [Черновик следующего поста про лук](proekt/03-chernoviki/luk-raznye-sposoby/tekst.md) — ещё не утверждён
+- [Черновик карточек о нарезке лука](proekt/03-chernoviki/luk-raznye-sposoby/tekst.md) — ещё не утверждён
 - [Визуальный стиль и статус оформления](proekt/07-upakovka-soobshchestva/07-vk-format-i-stil.md)
 - [ИИ и монетизация ВК](proekt/01-strategiya/14-ii-i-monetizaciya-vk.md)
 - [Стратегия и ранние наработки](proekt/01-strategiya/PROEKT.md)
