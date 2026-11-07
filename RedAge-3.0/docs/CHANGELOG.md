@@ -85,3 +85,10 @@
 - Прослежен `/dice` от `CMD_dice`/`callDice` через `dialogCallback(DICE_PLAY)` к `AcceptDice` и `Wallet.Change`; создан `DICE_REVIEW.md`, добавлены CAS-020..023. Подтверждены split wallet settlement с игнорированием bool, acceptance-time validation gaps, self-target без opponent и tie recursion; self-play progression отмечен как policy-dependent, не как повторный reward exploit.
 - Прослежен Lottery 24/7 shop callback, in-memory ticket/jackpot state, async `LotteryPlayers` insert и payday winner payout; создан `LOTTERY_REVIEW.md`, добавлены CAS-024..026. Зафиксированы stale `BizID` purchase boundary, non-atomic debit/ticket persistence и payout/reset без durable acknowledgment.
 - Обновлены index, casino scope, coverage matrix, test plan, roadmap и session handoff. Изменялись только документы под `RedAge-3.0/docs`; исходники не менялись. C# build, MySQL failure-injection и RAGE runtime tests отсутствуют.
+
+
+## 2026-11-07 — BattlePass claim and persistence review
+
+- Прослежены `server.battlepass.take`, `takeAll`, mission reward flow, `GiveBonus`, `AddNewItemWarehouse`, BattlePass save/load и character save call sites.
+- Добавлены CAS-027..028: claim marker живёт в памяти и сохраняется через character-save/disconnect, отдельно от prize grant; после persist grant до аварии/restart возможен replay claim. `GiveBonus` swallowing exceptions/no grant acknowledgements приводит к consumed claim при failed/partial reward.
+- Создан `BATTLEPASS_REVIEW.md`; обновлены `ISSUES.md`, `AUDIT_COVERAGE.md`, index, test plan, roadmap и handoff. Исходники не менялись; C# build, DB fault injection, crash/reconnect и RAGE tests не выполнялись.
