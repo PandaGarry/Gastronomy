@@ -142,3 +142,12 @@
 - Traced `dialogCallback("RepairMyVeh", true)`: callback branch is active, the apparent repair-point opener is commented out, there is no server-owned pending intent/location recheck, and repair is performed before unchecked `$500` Wallet debit. Added policy-dependent `VEH-001` and `VEHICLE_REPAIR_REVIEW.md`; no free-repair claim under ordinary wallet success.
 - One narrow vehicle-flow pass changes matrix status to 12 partial, 2 inventory-only, 4 not started, 1 blocked. Broader vehicle/garage scope remains unreviewed.
 - Updated issue register, coverage, index, roadmap, test plan, BattlePass producer notes and handoff. Static source-order/catalog assertions, Node syntax, 40 relative Markdown links and `git diff --check` passed; no C# build, MySQL failure injection or RAGE reproduction.
+
+
+## 2026-11-08 — GitHub write access, Draft PR and Main.cs settlement audit
+
+- Confirmed GitHub write access through successful creation of `redage/audit-continuation` and documentation commits. Created Draft PR #4 to `main`; it must remain draft until the divergent `main`/arena history and included documentation delta are reconciled.
+- Added `MASTER_CHECKLIST.md` with repository safety, audit, build/staging, remediation, test and release gates.
+- Continued delegated `Main.cs`/fraction callback review. Added `MONEY-032`: mayor treasury withdrawal ignores failed personal-bank credit before debiting City Hall treasury. Added `MONEY-033`: ticket confirmation can continue payout after both debit paths fail and the ticket intent is not consumed from session state, allowing replay.
+- Updated `MAIN_REMOTE_REVIEW.md`, `ISSUES.md`, `INDEX.md`, `AUDIT_COVERAGE.md`, `TEST_PLAN.md`, `ROADMAP.md` and `SESSION_HANDOFF.md` as applicable.
+- Static source review only. No C# build, RAGE:MP runtime, disposable MySQL or exploit reproduction was performed; findings remain open.
