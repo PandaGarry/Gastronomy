@@ -188,3 +188,9 @@
 - Compared CharacterData.Money (long) with Wallet.Change arithmetic (int cast/add/store); registered MONEY-036 as a systemic economy defect. Out-of-Int32 balances can be rejected or overwritten with unrelated 32-bit values.
 - Added long-boundary, persistence and call-site regression matrix; linked with MONEY-035 stock settlement ordering.
 - No source code patch or runtime/build test; documentation only.
+
+
+## 2026-11-08 — MONEY-037 player-to-player house sale
+
+- Added `HOUSE_SALE_REVIEW.md`; registered MONEY-037 for unchecked buyer debit/seller credit followed by ownership transfer, plus incorrect seller UUID in money log.
+- Updated master checklist, index, coverage, roadmap and test plan. Static source review only; no source patch, build or runtime tests.
