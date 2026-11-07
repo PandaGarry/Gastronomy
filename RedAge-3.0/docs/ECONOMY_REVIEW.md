@@ -87,3 +87,8 @@
 ## MONEY-006 — отрицательный/overflow count в покупке roulette-кейсов начислял RedBucks
 
 В `RouletteBuyCase` отрицательный remote count превращался в положительную сумму для `Donate.UpdatePrice`/`UpdateData.RedBucks`; unchecked multiplication также допускала отрицательный результат при переполнении. Внесены локальные guards для диапазона count, positive case price, checked total и negative wallet amount. Точная трассировка, ограничения и regression matrix: [ROULETTE_REVIEW.md](ROULETTE_REVIEW.md). До C# build и test-account staging данный патч не закрыт.
+
+
+## MONEY-007 — NewCasino Roulette outcome-dependent disconnect refund
+
+`ContinueGame` sends the winning number in the `START_GAME` client payload and sets a five-second `rData.Time` window; `Roullete.Disconnect` returns the player’s stake while that window remains active, irrespective of disconnect type. A modified client can inspect the delivered result and disconnect on a losing outcome. The related `DESTROY_LAST_BET` active-phase bypass received a narrow server-side phase guard (`CAS-001`), but the disconnect settlement policy remains open pending owner decision and durable exactly-once test design. Evidence and staging matrix: [CASINO_REVIEW.md](CASINO_REVIEW.md). Do not change the refund policy or gameplay balance before staging and approval.

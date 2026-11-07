@@ -49,6 +49,7 @@
 - [x] Выполнен первый статический economy/payment review: RedBucks gift, deferred money persistence, bank transfer callback/replay, ATM remote state, DonatePack package grants и external payment receipt processing; findings `MONEY-001..006` и `PAY-001..003`, см. `ECONOMY_REVIEW.md` и `PAYMENTS_REVIEW.md`.
 - [x] Создана `AUDIT_COVERAGE.md`: разграничивает просмотренные/непросмотренные подсистемы и критерии завершения полного аудита; большинство gameplay-модулей остаются не начаты.
 - [x] Начат inventory remote/persistence review; findings `INV-001..007`, добавлены локальные mitigations для stack count/same slot и foreign-tent read-only paths. Статические snippets распарсились; отдельные roulette count guards также внесены; compile/staging tests заблокированы отсутствующими .NET/RAGE runtime.
+- [x] Начат NewCasino Roulette static review: server-side phase guard для `DESTROY_LAST_BET` добавлен (`CAS-001`); обнаружены client-only bet min/max (`CAS-002`) и outcome-dependent пятисекундная disconnect refund policy (`MONEY-007`), код не менялся до согласования gameplay semantics. См. `CASINO_REVIEW.md`; build/staging ещё недоступны.
 - [ ] Завершить inventory trade/storage/weapon/clothes/shop permissions, исправить NoteCreate ownership/dedup, подтвердить mitigations полной сборкой и regression tests.
 - [ ] Продолжить review удалённых событий/команд: авторизация, проверка аргументов, rate limits, доверие клиенту.
 - [ ] Проверить SQL: параметризация, транзакции, пул соединений, таймауты, ошибки и повторные попытки.

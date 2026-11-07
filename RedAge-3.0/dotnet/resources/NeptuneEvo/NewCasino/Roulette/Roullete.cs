@@ -635,6 +635,8 @@ namespace NeptuneEvo.NewCasino
                 if (characterData == null) return;
                 if (!PlayerData.ContainsKey(player)) return;
                 RoulettePlayerData rData = PlayerData[player];
+                if (rData.SelectedTable < 0 || rData.SelectedTable >= RouletteTables.Count) return;
+                if (RouletteTables[rData.SelectedTable].Process) return;
                 int casenum = rData.AllBets.Count;
                 switch (rData.AllBets.Count)
                 {

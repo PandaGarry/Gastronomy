@@ -14,7 +14,9 @@
 
 Продолжается систематический статический аудит RedAge 3.0; feature work отложен.
 
-Последний проход — roulette/case remote handlers в `dotnet/resources/NeptuneEvo/Chars/Repository.cs`:
+Последние проходы — две roulette системы:
+
+1. Donate/case remote handlers в `dotnet/resources/NeptuneEvo/Chars/Repository.cs` (`ROULETTE_REVIEW.md`):
 
 - `MONEY-006`: отрицательное количество в `RouletteBuyCase` могло привести к начислению RedBucks; unchecked `Price * count` мог переполниться. Локально добавлены проверки case ID, count `1..100` (CEF selector поддерживает максимум 100), positive case price, `checked` multiplication и запрет отрицательной суммы в `RouletteGetWallet`.
 - `INV-007`: отрицательное количество в `RouletteOpenCase` проходило проверку владения, пустой цикл `RouletteCreate` сопровождался вычитанием отрицательного count в `RemoveIndex`, увеличивая stack кейсов. Локально добавлены guards в `RouletteOpenCase`, `RouletteCreate` и общий `RemoveIndex`; нижняя граница case ID проверяется.
@@ -23,17 +25,19 @@
 - `NoteCreate` ownership/edit-intent/duplicate path (`INV-006`) выявлен, исправление не внесено.
 - Solo-mode/NPC только отложен в `FUTURE_FEATURES.md`; не реализовывать до завершения аудита.
 
+2. NewCasino Roulette (`CASINO_REVIEW.md`): `CAS-001` server-side phase guard внесён в `Roullete.cs`, не собран/runtime-tested. `CAS-002`: CEF содержит min/max ставок, но сервер допускает только нижнюю общую границу `20`; потенциальное payout overflow описано, intended limits требуют подтверждения. `MONEY-007`: сервер отправляет outcome в `START_GAME` и сохраняет пятисекундный disconnect refund grace; finding зарегистрирован, исправление не внесено, пока не согласована компенсация аварийного disconnect и exactly-once settlement.
+
 ## Выполненные проверки и ограничения
 
-- Tree-sitter разобрал выбранные C# member snippets, включая roulette и перечисленные inventory handlers; это не компиляция.
+- Tree-sitter разобрал выбранные C# member snippets, включая roulette, inventory и NewCasino `OnDestroyLastBet`; это не компиляция. `node --check src_client/casino/roulette.js`, static phase-guard assertion, Markdown link/whitespace check прошли.
 - Статические assertions guards и проверка Markdown links/whitespace прошли.
 - Полный C# build и RAGE:MP staging smoke tests **не выполнялись**: в среде нет .NET SDK/MSBuild, MySQL test DB и RAGE runtime.
 - CEF production build ранее ограничен отсутствующими assets/памятью; см. `TEST_PLAN.md`/`BUILD_LOG.md`.
-- Ни один inventory/roulette patch не считать закрытым до compile и staging regression tests. Не менять баланс/донат/прогрессию без согласования; только test DB/test accounts.
+- Ни один inventory/roulette/NewCasino patch не считать закрытым до compile и staging regression tests. Не менять баланс/донат/прогрессию без согласования; только test DB/test accounts.
 
 ## Следующие шаги
 
-1. В новом чате восстановить/подтвердить рабочую папку RedAge и прочитать `INDEX.md`, `AUDIT_COVERAGE.md`, `ISSUES.md`, `TEST_PLAN.md` и эту заметку.
+1. В новом чате восстановить/подтвердить рабочую папку RedAge и прочитать `INDEX.md`, `AUDIT_COVERAGE.md`, `ISSUES.md`, `TEST_PLAN.md`, `CASINO_REVIEW.md` и эту заметку.
 2. PR создаётся из `arena/fab5bf55-gastronomy` в `main` репозитория Gastronomy и должен содержать только добавление изолированного каталога `RedAge-3.0/`. Не пушить изменения в upstream RedAge без отдельного checkout/ветки и разрешения владельца.
 3. Продолжить статический review очередных remote event/command boundaries и подсистем; не заявлять полное покрытие без прохождения матрицы `AUDIT_COVERAGE.md`.
 4. Подготовить поддерживаемый build-agent, staging/test DB и RAGE runtime; проверить roulette и inventory guards, в особенности положительные/валидные `RemoveIndex` call sites, zero-state при отвергнутых payloads, DB/cache convergence и failure/restart scenarios.

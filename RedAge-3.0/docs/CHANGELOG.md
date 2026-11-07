@@ -46,3 +46,12 @@
 
 - Снимок RedAge перенесён из прежней отдельной рабочей папки в верхнеуровневый `RedAge-3.0/` внутри ветки `arena/fab5bf55-gastronomy`, чтобы его можно было сохранить через PR. Существующие файлы Gastronomy не заменялись; source `settings/mainDB.json` намеренно не копировался и остаётся исключён nested `.gitignore`.
 - Для продолжения обновлён `SESSION_HANDOFF.md`; работа по RedAge впредь ведётся только внутри `RedAge-3.0/`.
+
+
+## 2026-11-07 — NewCasino Roulette remote audit
+
+- Прослежены seat/bet/cancel/clear remote events, `ContinueGame`, payout и общий disconnect path; создан `CASINO_REVIEW.md`.
+- Подтверждён server-side race window логики отмены ставки после `table.Process=true`; добавлена phase guard (`CAS-001`), сохраняющая легальную отмену до старта. Статический snippet требует compile/RAGE staging tests.
+- Подтверждён отдельный пятисекундный disconnect refund path после того, как сервер отправляет исход roulette в client event (`MONEY-007`). Код не менялся: policy может затрагивать компенсацию аварийного разрыва; необходимы согласование и staging design для exactly-once settlement.
+- Зафиксирован client-only bet min/max path и потенциальный settlement overflow (`CAS-002`); серверную policy не менял до подтверждения intended limits.
+- Покрытие обновлено; другие казино, включая Blackjack/Spin/Horses, остаются неаудированными.
