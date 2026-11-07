@@ -155,6 +155,6 @@
 
 ## 2026-11-08 — inputCallback case inventory and delegated helper review
 
-- Enumerated all 38 `case` labels in `Main.ClientEvent_inputCallback` and traced selected delegated paths.
+- Enumerated all 38 `case` occurrences (32 unique callback names) in `Main.ClientEvent_inputCallback` and traced selected delegated paths.
 - Confirmed `player_medkit` and `player_heal` helpers repeat role/on-duty/price/proximity/trade checks; confirmed `mayor_put` aborts on failed bank debit; traced ticket issue-side policy checks while retaining MONEY-033 for confirmation settlement.
 - Recorded remaining delegated callback paths and explicit review gaps in `MAIN_REMOTE_REVIEW.md`. No additional independent finding was asserted without sufficient source evidence. No source code changed; no C# build or RAGE/MySQL runtime tests performed.
