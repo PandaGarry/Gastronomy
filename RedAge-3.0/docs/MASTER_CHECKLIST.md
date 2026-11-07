@@ -43,6 +43,7 @@
 - [ ] MONEY-008/009, PROG-001 — Sapper: серверная state machine, RNG, ход, cashout, exactly-once settlement.
 - [ ] MONEY-030 — EventCoins: точное списание из разрешённого контейнера до начисления RB.
 - [ ] MONEY-031 — Fuel Control: server-side role/fraction authorization и input bounds.
+- [ ] MONEY-032 — Mayor treasury withdrawal: confirm bank credit before treasury debit; transactional/restart-safe settlement.
 - [ ] MONEY-025/026 — business order arithmetic, dirty-save и sale replay.
 - [ ] MONEY-003/004 — bank transfer replay и ATM policy/location.
 - [ ] MONEY-005, PAY-001..003 — payment receipts, durable idempotency и compensation.
