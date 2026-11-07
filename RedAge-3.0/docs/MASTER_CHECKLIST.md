@@ -41,7 +41,7 @@
 ## Этап C — Критичные деньги, платежи и игровые активы
 
 - [ ] MONEY-008/009, PROG-001 — Sapper: серверная state machine, RNG, ход, cashout, exactly-once settlement.
-- [ ] STOCK-001 — fraction stock and vehicle cargo transfers: exact item/cash result, atomicity, authorization, idempotency and restart recovery; see `FRACTION_STOCK_REVIEW.md`.
+- [ ] STOCK-001 — faction/organization/vehicle stock and cargo transfers: exact Remove/AddNewItem/Wallet.Change result, atomicity, authorization, idempotency and restart recovery; include partial grants and all stock containers. See `FRACTION_STOCK_REVIEW.md` and `ISSUES.md`.
 - [ ] MONEY-030 — EventCoins: точное списание из разрешённого контейнера до начисления RB.
 - [ ] MONEY-031 — Fuel Control: server-side role/fraction authorization и input bounds.
 - [ ] MONEY-032 — Mayor treasury withdrawal: confirm bank credit before treasury debit; transactional/restart-safe settlement.
@@ -50,7 +50,6 @@
 - [ ] MONEY-035 — Faction/organization money withdrawal: check wallet credit result; atomic stock/player balance transfer.
 - [ ] MONEY-037 — Player-to-player house sale: buyer debit and seller credit must both succeed before ownership transfer; correct seller UUID in money log; idempotent offer settlement and crash/replay tests; see `HOUSE_SALE_REVIEW.md`.
 - [ ] MONEY-036 — Shared Wallet.Change: preserve long balance; remove int truncation and test every caller at numeric boundaries.
-- [ ] STOCK-001 — Faction/organization/vehicle stock: exact AddNewItem result; no stock debit on failed/partial grant.
 - [ ] Review organization stock implementation against the same money/item settlement invariants.
 - [ ] MONEY-025/026 — business order arithmetic, dirty-save и sale replay.
 - [ ] MONEY-003/004 — bank transfer replay и ATM policy/location.
