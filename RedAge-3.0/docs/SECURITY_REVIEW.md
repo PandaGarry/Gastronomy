@@ -40,7 +40,7 @@
 - C# обнаружено 498 `[RemoteEvent]` атрибутов в 137 файлах. Обязательная следующая выборка: авторизация, регистрация/recovery, bank/money, inventory, donations, admin/fraction actions. Проверять server-side ownership, permission, bounds, rate limits, replay/duplicate calls и transaction semantics.
 - `MySQL.Query` debug/error paths могут включать полный SQL text; подключение к БД настроено без TLS. См. `ISSUES.md`.
 - Внешние payment/API/cloud/radio/CDN hostnames и call-site inventory перечислены в `EXTERNAL_INTEGRATIONS.md`; до staging не отправлять туда тестовые/пользовательские данные.
-- Узкий phone SMS pass: `SEC-007` records client-supplied message text interpolated into `mp.gui.emmit` and used with Svelte `{@html}`; direct remote bypasses the UI encoder. This is static source-to-sink evidence only; see `PHONE_MESSAGES_REVIEW.md`, and do not infer native/client-bridge impact before CEF staging.
+- Узкий phone pass: `SEC-007` records client-supplied SMS text interpolated into `mp.gui.emmit` and used with Svelte `{@html}`; direct remote bypasses the UI encoder. `SEC-008`/`SEC-009` are separate Tinder-avatar and moderator-approved News-link CSS/resource-loading candidates, and `SEC-010` is a recipient-side SMS image URL request path; these are not script-execution findings. They need compiled CEF/CSP/network staging; see `PHONE_MESSAGES_REVIEW.md`, `PHONE_CALL_TINDER_REVIEW.md` and `PHONE_NEWS_REVIEW.md`.
 
 ## Не делать сейчас
 
