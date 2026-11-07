@@ -130,3 +130,12 @@
 - Проверены `sellMedKitToTarget` и `healTarget`: повторные проверки доступа/дежурства/цены/дистанции присутствуют. Проверен `mayor_put`: результат bank debit проверяется до пополнения казны. В issue register не добавлялись findings без отдельного доказанного дефекта.
 - Открытые для следующего прохода delegated paths: club price, house sale offer, drugs, faction stock/garage, street race, vehicle sale acceptance/settlement, hotel rent extension, tent rename/sell, pet rename, legacy weaptransfer, generic argument/rate-limit handling.
 - MONEY-030..033 остаются открытыми. Статический анализ only; C# build, RAGE runtime и MySQL failure tests не выполнялись.
+
+
+## Аудит продолжен — MONEY-034 (2026-11-08)
+
+- Проверен `buy_drugs`: `Main.ClientEvent_inputCallback` допускает любое положительное значение int; `Gangs.BuyDrugs` использует unchecked `amount * Main.DrugsPrice` (default 30) и `count + amount`. Для int.MaxValue стоимость становится -30, проверка средств проходит, а вычитание увеличивает деньги фракции на 30. При частично заполненном транспорте capacity sum тоже может переполниться. AddNewItem result игнорируется; DB/item effect требует staging.
+- Зарегистрирован MONEY-034 и добавлены тесты границ int, вместимости, partial insertion, replay и restart в TEST_PLAN.
+- HOUSE sale MONEY-018 уже был в PROPERTY_TRANSFER_REVIEW/ISSUES; не дублировал его.
+- MONEY-030..034 открыты. Новых игровых исходников не менял. Runtime/build/DB tests не запускались.
+- Чек-лист обновлён: 38 case occurrences / 32 unique names — это инвентаризация, не завершение review всех handlers. Следующий шаг — детально закрывать остальные delegated callbacks и remote groups.
