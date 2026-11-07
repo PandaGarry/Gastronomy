@@ -162,3 +162,10 @@
 ## 2026-11-08 continuation — MONEY-037
 
 - Audited player-to-player house sale confirmation (`HouseManager.acceptHouseSell`). Buyer and seller `Wallet.Change` return values are ignored; house ownership changes regardless. Found sellerCharacterData assigned from buyer, causing wrong seller UUID in money log. Added `HOUSE_SALE_REVIEW.md`, MONEY-037, checklist and regression cases. Static only; no runtime/build validation.
+
+
+## 2026-11-08 continuation — MONEY-038
+
+- Continued phone auction audit in `Players/Phone/Auction/Events.cs`, `Repository.cs` and `MoneySystem/Bank.cs`.
+- Registered MONEY-038: client-supplied `int price` is used in unchecked `int` fee arithmetic. `int.MaxValue` wraps `price + price/100` to `-2,126,008,813`; negating that value sends a positive credit to `Bank.Change` rather than a debit. `Bank.Change` accepts positive amounts as credits. Evidence is static; RAGE runtime, C# build and DB fault injection remain unavailable.
+- Updated `AUCTION_REVIEW.md`, `ISSUES.md`, `MASTER_CHECKLIST.md`, `AUDIT_COVERAGE.md`, `ROADMAP.md`, `INDEX.md`, `TEST_PLAN.md` and `CHANGELOG.md`. No gameplay source changes. PR remains draft and must not be merged until branch histories/diff are reconciled.
