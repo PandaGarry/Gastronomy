@@ -23,7 +23,7 @@
 
 ## Reviewed, no standalone issue asserted
 
-- `Gallery.AddGallery` enforces a 25-entry count but accepts unbounded URL strings. Gallery belongs to the caller; its image load is an owner-side resource request. This remains subject to the field-size/URL allowlist work in `PHONE-003` and the cross-recipient SMS image risk in `SEC-010`; no separate cross-player gallery issue found.
+- `Gallery.AddGallery` enforces a 25-entry count but accepts unbounded URL strings. The stored caller-owned URL reaches CEF `new Image().src` through `loadImage` when the owner opens the gallery; the helper only checks for an image-extension substring. This contributes to `PHONE-003` (unbounded field size and untrusted media URL), but no cross-player gallery read/write or standalone gallery vulnerability was established. CEF network behavior still needs a controlled staging test.
 - Camera capture requires the client camera flow and uploads the user's chosen screenshot to Imgur through `src_cef/src/api/imgSave.js`; no server-side photo upload remote is exposed in this path. External-service ownership/retention is not validated here; see `EXTERNAL_INTEGRATIONS.md`.
 - Phone open/close only toggles the caller's `PhoneData.IsOpen` and scenario animation in the reviewed handlers. No separate authorization issue asserted; item/SIM requirement is a product policy question.
 
