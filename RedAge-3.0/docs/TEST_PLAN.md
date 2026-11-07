@@ -116,3 +116,20 @@ No runtime tests have been run; execute only on disposable RAGE:MP/MySQL staging
 - [ ] Inventory item counts remain positive, within stack limits, and within vehicle capacity in memory and SQL.
 
 No runtime exploit reproduction or DB test has been performed; use disposable RAGE:MP/MySQL staging only.
+
+
+## MONEY-035 — faction money withdrawal settlement (pending staging)
+
+- [ ] Wallet credit succeeds: faction stock decreases by exactly the amount and player wallet increases by exactly the amount.
+- [ ] Wallet credit returns false/throws: faction stock remains unchanged; no misleading success notification/log.
+- [ ] Test wallet balance near integer limits and missing/disconnecting character state.
+- [ ] Concurrent and replayed withdrawals settle exactly once; restart reconciliation preserves both balances.
+
+## STOCK-001 — faction and vehicle inventory grant consistency (pending staging)
+
+- [ ] Zero free slots: AddNewItem failure does not debit faction/organization stock.
+- [ ] Mixed vehicle inventory with fewer free slots than requested: partial insertion is detected and stock is debited only by actual inserted quantity, or the whole operation rolls back.
+- [ ] Fragmented stacks and exact stack boundaries preserve item count and stack limits.
+- [ ] SQL insert/update failure, disconnect and restart do not produce stock/item mismatch.
+- [ ] Concurrent requests cannot overspend stock or duplicate items.
+- [ ] Repeat for materials, drugs and medkits; verify the commented-out medkit free-slot path is replaced by authoritative insertion result.
