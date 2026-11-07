@@ -150,3 +150,14 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] Test balances around UInt32.MaxValue and Long.MaxValue; overflow must fail without mutation.
 - [ ] Test every Wallet.Change call-site category (bank/ATM, faction/org stock, jobs/rewards, player trades, vehicles/business/casino) for ignored false return and side-effect ordering.
 - [ ] Save/restart preserves exact 64-bit balance; DB column and serialization width are verified.
+
+
+## MONEY-037 — player-to-player house sale (pending staging)
+
+- [ ] Normal sale: buyer debit, seller credit and ownership transfer settle exactly once.
+- [ ] Inject buyer Wallet.Change false/exception: seller receives nothing; house ownership and pending offer remain recoverable/unchanged.
+- [ ] Inject seller Wallet.Change false/exception after buyer debit: buyer is refunded or settlement resumes durably; ownership does not silently transfer without seller payment.
+- [ ] Duplicate/concurrent accept, offer replay, cancellation, disconnect and stale seller ownership are idempotent.
+- [ ] Crash/restart after each settlement step reconciles money and ownership exactly once.
+- [ ] Money log contains distinct buyer/seller UUIDs and settlement correlation ID.
+- [ ] Repeat at MONEY-036 Int32/Int64 balance boundaries.
