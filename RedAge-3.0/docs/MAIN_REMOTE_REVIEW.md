@@ -59,3 +59,32 @@
 - `syncSirenSound` contains server-side driver/faction checks. `VehStream_updateSirenStatus` is a separate client-supplied vehicle-entity sync path and needs a focused review; its normal client poll is currently commented out, so no runtime reachability claim is made here.
 - `inputCallback` has many delegated callbacks (faction stock, transfers, tickets, leases, pet/tent and sale flows). Only listed branches were traced in this pass; authorization, numeric bounds, one-shot intent and persistence for all delegated handlers remain incomplete.
 - No RAGE/DB assertions were executed. Continue the Main.cs and remote-event audit; do not treat this review as complete.
+
+
+## Follow-up pass — complete inputCallback case inventory (2026-11-08)
+
+Enumerated all 38 `case` labels in `ClientEvent_inputCallback` (including six fuel-control aliases and their nested dispatch labels). This is a callback-label inventory, not a claim that every delegated implementation is fully audited.
+
+### Delegated paths checked in this pass
+
+- `player_medkit` → `FractionCommands.sellMedKitToTarget`: helper rechecks `RankToAccess.Medkit`, on-duty state, item availability, price range, proximity, target money and trade state. No additional standalone bypass asserted in this pass; purchase confirmation/settlement path remains part of the broader trade audit.
+- `player_heal` → `FractionCommands.healTarget`: helper rechecks `RankToAccess.Heal`, on-duty state, price range, proximity and trade state, with vehicle/EMS checks in the vehicle branch. No additional standalone bypass asserted in this pass; downstream PAY_HEAL settlement still requires end-to-end confirmation.
+- `mayor_put`: checks City Hall leader and bank debit result before increasing fraction treasury. This is materially safer than the inverse `mayor_take` flow recorded as MONEY-032.
+- `player_ticketsum` / `player_ticketreason`: the originating selection path and `ticketToTarget` recheck ticket rank, on-duty status, amount ceiling and court-zone policy for City Hall. Confirmation settlement remains vulnerable as MONEY-033.
+
+### Paths explicitly left open
+
+- `club_setprice` → `AlcoFabrication.SetAlcoholPrice`: delegated role/rank, bounds, persistence and audit-log review pending.
+- `player_offerhousesell` → `HouseManager.OfferHouseSell`: ownership, pending-offer replacement, amount ceiling, buyer/seller confirmation and durable settlement review pending.
+- `buy_drugs` → `Gangs.BuyDrugs`: gang membership/rank, location, stock, amount bounds and cash/stock atomicity review pending.
+- `loadmats/unloadmats/loaddrugs/unloaddrugs/loadmedkits/unloadmedkits` → `Stocks.fracgarage`: faction/rank, vehicle/warehouse location, capacity, stock accounting and persistence review pending.
+- `put_stock/take_stock` → `Stocks.inputStocks`: container ownership, permission, quantity and save consistency review pending.
+- `streetrace` → `StreetRace.SelectRate`: round lifecycle, bet bounds, duplicate submission, cancellation and settlement review pending.
+- `sellcar`: offer creation has several ownership/distance/garage checks; buyer confirmation, atomic vehicle transfer/payment, stale ownership and duplicate/replay paths still require end-to-end tracing.
+- `extend_hotel_rent` → `Houses.Hotel.ExtendHotelRent`: affordability, rent-time bounds, concurrency and persistence review pending.
+- `rentname` / `sell_tent`: tent session/index and inventory-item provenance, stale selection, partial-stack movement, item-price mutation and persistence review pending.
+- `make_ped_name` → `Pet.Repository.UpdateName`: pet ownership, selected-ped provenance and naming policy review pending.
+- `weaptransfer`: branch currently validates an integer and returns without performing an action; determine whether it is dead legacy UI or an incomplete feature before removing/changing it.
+- Generic callback argument array/string handling and all delegated callback rate limits remain to be reviewed systematically.
+
+No additional issue ID was created from the helper checks above because the inspected code did not establish a new independent security defect. Existing MONEY-030..033 remain open. No runtime or build tests were run.
