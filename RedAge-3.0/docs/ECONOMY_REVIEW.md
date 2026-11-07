@@ -42,11 +42,13 @@
 - `Main.RemoteEvent_DialogCallback` принимает от клиента callback string + `yes` и dispatch-ит действия. Один из callback paths вызывает `ATM.AcceptTransfer`.
 - Банк хранит source account, target account и сумму в `SessionData`; значения записываются при подготовке перевода.
 - `AcceptTransfer` проверяет только session и ненулевые/положительные поля, затем вызывает `Bank.Transfer`. Найденных сбросов этих полей после завершения/отмены нет.
-- Клиент может повторно вызвать remote callback. Пока на source account достаточно средств, повторный вызов может повторять один и тот же transfer.
+- Клиент может повторно вызвать remote callback. Пока на source account достаточно средств, повторный вызов может повторять один и тот же transfer; `NextBankTransfer` проверяется при создании запроса, но не при acceptance.
+- Source ID задаётся сервером из `characterData.Bank`, не берётся из клиента на confirm. В просмотренном call path это собственный счёт вызывающего; cross-player source debit не найден. Основное подтверждённое последствие повторного callback — повторное перемещение собственных средств к уже выбранному получателю и обход cooldown, а не создание денег.
 - `Bank.Transfer` списывает source balance и затем вызывает `Change` для target, но не проверяет результат target credit; `AcceptTransfer` также игнорирует bool result. Целевая запись и списание не объединены DB transaction.
 - В `AcceptTransfer` объект target account индексируется до проверки `ContainsKey`, поэтому исчезнувший/невалидный target приводит к исключению.
 
-**Исправление (не внедрено):** одноразовый server-side transfer intent/nonce с коротким expiry; consume/clear до выполнения; проверки принадлежности source счёта, target type/permissions и подтверждённой суммы; транзакционный атомарный перевод с row locks/conditional update; уведомлять только после commit; replay/concurrency tests.
+**Исправление (не внедрено):** одноразовый server-side transfer intent/nonce с коротким expiry; consume/clear до выполнения; проверки принадлежности source счёта, target type/permissions, cooldown и подтверждённой суммы; транзакционный атомарный перевод с row locks/conditional update; уведомлять только после commit; replay/concurrency tests. Более подробная трассировка ATM transfer confirmation и regression cases: `BANK_TRANSFER_REVIEW.md`. Уровень риска/политика требуют staging и владельческого подтверждения.
+
 
 ## MONEY-004 — ATM remote events не проверяют server-side proximity/активность ATM
 

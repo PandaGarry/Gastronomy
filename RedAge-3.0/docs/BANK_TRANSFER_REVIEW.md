@@ -2,7 +2,7 @@
 
 Обновлено: 2026-11-07. Traced `atmVal` transfer setup → generic `dialogCallback("AcceptBankTransfer", true)` → `ATM.AcceptTransfer` → `Bank.Transfer`. Narrow personal-account transfer review; no code changes, build or RAGE/DB tests.
 
-## MONEY-021 — accepted transfer state is reusable, so confirmation replay repeats the transfer
+## MONEY-003 — accepted transfer state is reusable, so confirmation replay repeats the transfer
 
 **Приоритет: низкий/средний; cooldown/one-shot policy bypass, static path confirmed, runtime untested.**
 
@@ -17,4 +17,4 @@
 
 ## Boundaries
 
-No cross-player source-account ID was found in this call path. ATM location/eligibility remains separately tracked in `ATM_REVIEW.md` (`MONEY-020`); other phone/online banking transfers are not covered.
+No cross-player source-account ID was found in this call path. ATM location/eligibility remains separately tracked in `ATM_REVIEW.md` (`MONEY-004`); other phone/online banking transfers are not covered.

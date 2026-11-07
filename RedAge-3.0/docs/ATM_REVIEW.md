@@ -2,7 +2,7 @@
 
 Обновлено: 2026-11-07. Traced the ATM interaction and `atmCB` → `atmVal` server events, including house-account deposit selection. This is a narrow cash ATM slice, not a full bank/transfer review. No build, RAGE staging or policy confirmation.
 
-## MONEY-020 — ATM withdrawal remote lacks server-side location and eligibility checks
+## MONEY-004 — ATM withdrawal remote lacks server-side location and eligibility checks
 
 **Приоритет: низкий/средний; policy-dependent, static path confirmed, runtime untested.**
 
@@ -16,4 +16,4 @@
 
 ## House-account selection boundary
 
-The ATM menu's house-account branch separately requires `HouseManager.GetHouse(player, true)` (`Bank.cs:825-856`), and the house deposit path re-checks owner-only house access before changing the house bank balance (`:522-569`). This does not repair the general ATM proximity/eligibility gap. House tax persistence/repossessions are covered in `PROPERTY_TAX_REVIEW.md` (`MONEY-019`, `PROP-003`).
+The ATM menu's house-account branch separately requires `HouseManager.GetHouse(player, true)` (`Bank.cs:825-856`), and the house deposit path re-checks owner-only house access before changing the house bank balance (`:522-569`). This does not repair the general ATM proximity/eligibility gap. The broader issue record remains `ECONOMY_REVIEW.md` (`MONEY-004`). House tax persistence/repossessions are covered in `PROPERTY_TAX_REVIEW.md` (`MONEY-019`, `PROP-003`).
