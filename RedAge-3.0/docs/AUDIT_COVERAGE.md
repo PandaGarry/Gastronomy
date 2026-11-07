@@ -49,3 +49,8 @@
 - Perf-изменения подкреплены baseline/profiling, а не предположениями; release/recovery process проверен.
 
 Даже при выполнении критериев нельзя математически гарантировать отсутствие всех багов; цель — систематическое покрытие исходника, тестируемые инварианты и контролируемый release, а не недоказуемое обещание «ошибок больше нет».
+
+
+## 2026-11-08 — Player-to-player house sale
+
+- Static trace of `HouseManager.OfferHouseSell` and `acceptHouseSell`: buyer debit and seller credit results are ignored; house ownership changes and offer state clears regardless. `sellerCharacterData` incorrectly reads buyer character data, so the money log records buyer UUID as both sides. Registered MONEY-037 and added HOUSE_SALE_REVIEW.md. No runtime reproduction or patch.
