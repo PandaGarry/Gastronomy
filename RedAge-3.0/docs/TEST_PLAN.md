@@ -142,3 +142,11 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] Organization item withdrawal: failed/partial AddNewItem must not debit organization stock.
 - [ ] Organization item deposit: failed/partial Remove must not credit organization stock.
 - [ ] Test simultaneous stock requests and organization membership/status changes; verify exactly-once balance/item deltas.
+
+
+## MONEY-036 — shared wallet long-range arithmetic (pending tests)
+
+- [ ] `CharacterData.Money` at Int32.MaxValue-1, Int32.MaxValue and Int32.MaxValue+1; add/subtract small amounts and assert exact long balance.
+- [ ] Test balances around UInt32.MaxValue and Long.MaxValue; overflow must fail without mutation.
+- [ ] Test every Wallet.Change call-site category (bank/ATM, faction/org stock, jobs/rewards, player trades, vehicles/business/casino) for ignored false return and side-effect ordering.
+- [ ] Save/restart preserves exact 64-bit balance; DB column and serialization width are verified.
