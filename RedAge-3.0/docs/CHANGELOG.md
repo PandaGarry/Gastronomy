@@ -179,3 +179,5 @@
 - Registered STOCK-001: faction/vehicle stock is debited despite ignored AddNewItem result; AddNewItem can fail or partially insert, and vehicle medkit slot precheck is commented out.
 - Verified generic inputCallback rejects put_stock/take_stock quantities below 1; negative-quantity exploit not asserted for this entry point.
 - Updated issue register, remote review, master checklist, test plan, index, coverage, roadmap and handoff. Documentation only; no source changes or runtime tests.
+
+- Follow-up parity check: `Organizations.Manager.inputStocks` repeats unchecked wallet and inventory settlement ordering; included under MONEY-035/STOCK-001 rather than duplicated as new IDs.
