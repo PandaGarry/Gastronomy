@@ -194,3 +194,10 @@
 
 - Added `HOUSE_SALE_REVIEW.md`; registered MONEY-037 for unchecked buyer debit/seller credit followed by ownership transfer, plus incorrect seller UUID in money log.
 - Updated master checklist, index, coverage, roadmap and test plan. Static source review only; no source patch, build or runtime tests.
+
+
+## 2026-11-08 — MONEY-038 phone auction bid overflow
+
+- Extended `AUCTION_REVIEW.md` with the client-controlled `int` bid-fee overflow path: `int.MaxValue` can wrap the calculated fee total negative and reverse the subsequent bank debit into a credit.
+- Registered MONEY-038 in `ISSUES.md`, `MASTER_CHECKLIST.md`, `AUDIT_COVERAGE.md`, `ROADMAP.md`, `INDEX.md` and `TEST_PLAN.md`; added numeric-boundary staging cases.
+- Static finding only. No gameplay source patch, C# build, RAGE reproduction or DB fault-injection test was performed.
