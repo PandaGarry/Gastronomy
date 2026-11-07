@@ -103,6 +103,13 @@
 
 ## 2026-11-07 — Quest remotes and objective progression review
 
-- Частично прослежены generic `qMain` remotes, Granny Bear pickup, Defender Day Dada/Edward objectives and admin SkipQuest command. Добавлены `PROG-002..004` (task 97 direct-clear, client-forgeable Dada/Edward objective flags, wrong SkipQuest receiver), `BUG-001` (Dada/Edward handlers disconnected from generic dispatch) и `INV-008` (server quest-item grant без server pickup/state checks).
+- Частично прослежены generic `qMain` remotes, Granny Bear pickup, Defender Day Dada/Edward objectives and admin SkipQuest command. Добавлены `PROG-002..004` (task 97 direct-clear, client-forgeable Dada/Edward objective flags, wrong SkipQuest receiver), `BUG-001` (Valentine/Defender legacy handlers отсутствуют в generic dispatch; NPC runtime activation не подтверждена) и `INV-008` (server quest-item grant без server pickup/state checks).
 - Создан `QUESTS_REVIEW.md`; обновлены issue register, coverage, index, test plan, roadmap и handoff. Никакие игровые исходники не менялись.
 - Static source assertions, `node --check` для проверенного client script и docs link/whitespace checks выполнены после изменений. Live remotes, quest rewards/trade value, DB persistence, C# build и RAGE runtime не тестировались; все findings остаются открыты.
+
+
+## 2026-11-07 — Wedding divorce settlement and quest call-graph follow-up
+
+- Расширен static call-graph: generic qMain `perform/take` does not dispatch Valentine/Defender legacy actor transitions; their NPC spawn setup appears commented in this snapshot, so active runtime scope is marked for owner confirmation. PROG-003 was narrowed to client-forgeable completion booleans only; no downstream rewards/transitions are claimed.
+- Создан `WEDDING_REVIEW.md`; `MONEY-010` documents spouse-disconnect after one-sided divorce prompt (debit precedes a null dereference/unlink); `WEDDING-001` tracks invalid target input exception path without claiming server crash/DoS. Coverage, `ECONOMY_REVIEW.md`, issue register, index, test plan, roadmap and handoff updated.
+- Static quest/wedding source assertions, `node --check` for `npc_dialogs.js`, `main.js` and `wedding.js`, `git diff --check` and Markdown relative links passed; no source patches, DB/RAGE runtime or C# build performed.

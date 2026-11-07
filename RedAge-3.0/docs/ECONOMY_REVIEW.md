@@ -101,3 +101,7 @@
 ## MONEY-009 — Sapper client selects outcome and payout
 
 CEF controls RNG and `server.sapper.end` trusts a client multiplier index; forged `type=7` pays 3x stake, and a losing `-2` can be replaced with `-1` to refund. The server has no authoritative board/progress record. Detailed proof and tests: [SAPPER_REVIEW.md](SAPPER_REVIEW.md). Critical; open pending server-owned round/RNG and exactly-once settlement.
+
+## MONEY-010 — wedding divorce fee can be debited without unlinking after spouse disconnect
+
+For a married player whose spouse is online but more than 5m away, the confirmation session uses the one-sided `$300,000` path. If the spouse disconnects between prompt creation and confirmation, `Wedding.OnDivorcio` calls `Wallet.Change(-price)` before re-resolving that spouse; `GetPlayerByUUID` can then return null and `target.GetCharacterData()` throws before marriage fields are cleared. The generic dialog callback catches/logs the exception but does not refund. Detailed evidence and regression matrix: [WEDDING_REVIEW.md](WEDDING_REVIEW.md). Medium; open pending ordering/transaction fix and disconnect/failure tests.
