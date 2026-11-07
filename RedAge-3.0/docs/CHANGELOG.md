@@ -158,3 +158,10 @@
 - Enumerated all 38 `case` occurrences (32 unique callback names) in `Main.ClientEvent_inputCallback` and traced selected delegated paths.
 - Confirmed `player_medkit` and `player_heal` helpers repeat role/on-duty/price/proximity/trade checks; confirmed `mayor_put` aborts on failed bank debit; traced ticket issue-side policy checks while retaining MONEY-033 for confirmation settlement.
 - Recorded remaining delegated callback paths and explicit review gaps in `MAIN_REMOTE_REVIEW.md`. No additional independent finding was asserted without sufficient source evidence. No source code changed; no C# build or RAGE/MySQL runtime tests performed.
+
+
+## 2026-11-08 — MONEY-034 gang drug purchase arithmetic
+
+- Traced `buy_drugs` from generic input callback into `Gangs.BuyDrugs`, configured default price and `Chars.Repository.AddNewItem` stack behavior.
+- Registered MONEY-034: unchecked `int` multiplication can turn `int.MaxValue * 30` into `-30`, causing faction balance increase; unchecked capacity addition can also wrap for partially loaded vehicles. Exact item/DB corruption remains unverified.
+- Updated issue register, remote review, index, coverage, master checklist, roadmap, test plan and handoff. Documentation-only change; no source patch/build/staging test.
