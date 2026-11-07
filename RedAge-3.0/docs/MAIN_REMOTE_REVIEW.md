@@ -63,7 +63,7 @@
 
 ## Follow-up pass — complete inputCallback case inventory (2026-11-08)
 
-Enumerated all 38 `case` labels in `ClientEvent_inputCallback` (including six fuel-control aliases and their nested dispatch labels). This is a callback-label inventory, not a claim that every delegated implementation is fully audited.
+Enumerated all 38 `case` occurrences (32 unique callback names) in `ClientEvent_inputCallback` (including six fuel-control aliases and their nested dispatch labels). This is a callback-label inventory, not a claim that every delegated implementation is fully audited.
 
 ### Delegated paths checked in this pass
 
