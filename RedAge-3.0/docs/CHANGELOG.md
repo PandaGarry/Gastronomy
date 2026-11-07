@@ -128,3 +128,10 @@
 - Traced client `MileageClass` → `server.vehicle.updateMileage` → taxi billing → BattlePass calls. Added `MONEY-012` for client-supplied unvalidated mileage reaching passenger-to-driver fare transfer, and `PROG-007` because the same request advances miles-based driver/passenger task counters before unchecked wallet mutations.
 - Created `TAXI_MILEAGE_REVIEW.md`; linked findings into issue/coverage/economy/index/roadmap/test plan and handoff. No game source changed.
 - Static review only; forged remote, fare settlement, C# build and RAGE/DB tests not run. Findings remain open pending test-ride reproduction and owner policy confirmation.
+
+
+## 2026-11-07 — Audit stage snapshot and passport progression request
+
+- Added a transparent coverage snapshot to `AUDIT_COVERAGE.md`: 19 domains (11 partial, 2 inventory-only, 5 not started, 1 blocked), plus raw remote/server-event/command inventories. Explicitly distinguished discovered handlers from fully checked handlers; no percent claimed.
+- Traced passport `target` remote through request, timeout, accept and `UpdateReward(101)`. `target == player` is not rejected, so self-show can satisfy the active “show passport” task if RAGE entity marshalling behaves as normal; added conditional `PROG-008` and `DOCUMENTS_REVIEW.md`.
+- Findings and staging scenarios added to issue, index, roadmap, test plan and handoff. No source code changed; remote reproduction/build/runtime tests remain unrun.
