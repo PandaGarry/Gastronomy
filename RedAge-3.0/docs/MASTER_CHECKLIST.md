@@ -48,6 +48,7 @@
 - [ ] MONEY-033 — Ticket settlement: successful debit required, server-side one-shot intent and durable idempotent payout.
 - [ ] MONEY-034 — Gang drug purchase: quantity cap, checked/long cost+capacity math, exact item-grant result before faction debit.
 - [ ] MONEY-035 — Faction/organization money withdrawal: check wallet credit result; atomic stock/player balance transfer.
+- [ ] MONEY-037 — Player-to-player house sale: buyer debit and seller credit must both succeed before ownership transfer; correct seller UUID in money log; idempotent offer settlement and crash/replay tests; see `HOUSE_SALE_REVIEW.md`.
 - [ ] MONEY-036 — Shared Wallet.Change: preserve long balance; remove int truncation and test every caller at numeric boundaries.
 - [ ] STOCK-001 — Faction/organization/vehicle stock: exact AddNewItem result; no stock debit on failed/partial grant.
 - [ ] Review organization stock implementation against the same money/item settlement invariants.
