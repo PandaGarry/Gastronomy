@@ -112,3 +112,4 @@
 
 
 - [ ] MONEY-037: player-to-player house sale settlement — checked buyer debit/seller credit, atomic ownership handoff, offer idempotency and correct audit identities; see `HOUSE_SALE_REVIEW.md`.
+- [ ] MONEY-038: auction bid-fee overflow — positive/max bid validation, checked `long` fee arithmetic, debit-only invariant and boundary/failure regression; see `AUCTION_REVIEW.md`.
