@@ -61,7 +61,7 @@
 - [HOUSE_FURNITURE_REVIEW](HOUSE_FURNITURE_REVIEW.md) — furniture craft ingredient slot mismatch, phone-house route and related property boundaries.
 - [WEAPON_REMOTE_REVIEW](WEAPON_REMOTE_REVIEW.md) — weapon reload/remove/ammo-return remote boundaries and `INV-010`.
 - [SELECTING_REMOTE_REVIEW](SELECTING_REMOTE_REVIEW.md) — Core player/object/vehicle interaction remotes, phone cross-check and `PROG-010`.
-- [MAIN_REMOTE_REVIEW](MAIN_REMOTE_REVIEW.md) — generic `Main.cs` input/dialog callbacks, mayor fuel controls, festive exchange and waypoint progress remotes.
+- [MAIN_REMOTE_REVIEW](MAIN_REMOTE_REVIEW.md) — generic `Main.cs` input/dialog callbacks, mayor treasury withdrawal, fuel controls, festive exchange and waypoint progress remotes.
 - [CARROOM_REVIEW](CARROOM_REVIEW.md) — car showroom purchase/test-drive validation, payment ordering and cleanup (`MONEY-029`).
 - [PROPERTY_PURCHASE_REVIEW](PROPERTY_PURCHASE_REVIEW.md) — house purchase ownership/debit ordering and shutdown wallet-rejection review.
 - [PROPERTY_SALE_REVIEW](PROPERTY_SALE_REVIEW.md) — house sale confirmation, owner persistence and payout crash-consistency review.
