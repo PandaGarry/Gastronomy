@@ -201,3 +201,10 @@
 - Extended `AUCTION_REVIEW.md` with the client-controlled `int` bid-fee overflow path: `int.MaxValue` can wrap the calculated fee total negative and reverse the subsequent bank debit into a credit.
 - Registered MONEY-038 in `ISSUES.md`, `MASTER_CHECKLIST.md`, `AUDIT_COVERAGE.md`, `ROADMAP.md`, `INDEX.md` and `TEST_PLAN.md`; added numeric-boundary staging cases.
 - Static finding only. No gameplay source patch, C# build, RAGE reproduction or DB fault-injection test was performed.
+
+
+## 2026-11-08 — INV-011 Other-item auction settlement
+
+- Extended `AUCTION_REVIEW.md`: `AuctionType.Other` moves an item into the auction location, but auction end has no Other-item award or return branch.
+- Registered INV-011 in `ISSUES.md`, `MASTER_CHECKLIST.md`, `AUDIT_COVERAGE.md`, `ROADMAP.md`, `INDEX.md` and `TEST_PLAN.md`; added item ownership, offline and restart regression cases.
+- Static finding only. UI workflow, DB persistence and runtime recovery remain to be verified; no gameplay source patch or build was performed.
