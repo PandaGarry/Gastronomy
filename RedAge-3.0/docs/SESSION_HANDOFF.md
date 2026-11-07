@@ -105,3 +105,10 @@
 - Проверен `Core/Selecting.cs`: `beltSelected` безусловно вызывает BattlePass task 86; зарегистрирован `PROG-010`.
 - Проверен `Core/WeaponRepository.cs`: ammo-return remote использует client count для inventory-capacity вычисления до clip clamp и допускает unchecked drop; зарегистрирован `INV-010`. Статический вывод; RAGE behavior не проверен.
 - Добавлены tests 44–45 и новые review files. Ближайшее продолжение: проверить `INV-010`/`PROG-010` на disposable RAGE staging, затем покрывать непроверенные weapon damage/shop/vehicle and remaining remote groups; аудит не завершать преждевременно.
+
+
+## Продолжение после merge PR #2 (2026-11-07)
+
+- PR #2 слит в `main`; продолжать только на фиксированной ветке `arena/fab5bf55-gastronomy`. Новые audit-doc изменения после merge следует отправлять отдельным PR из этой ветки; не пытаться повторно изменять уже слитый PR #2.
+- Очередной `Main.cs` pass зарегистрировал `MONEY-030` (условный EventCoins→RedBuck credit без точного снятия при различии локаций) и `MONEY-031` (generic input callback без проверки City Hall leader для фракционных fuel caps). См. `MAIN_REMOTE_REVIEW.md`; это статический анализ, не runtime-подтверждение. `syncWaypoint` cross-check не объявлялся отдельным finding: эвент непосредственно выполняет описанный waypoint relay.
+- Проверить new test cases 47–48 на disposable RAGE/MySQL staging; продолжить оставшиеся delegated `inputCallback`/`dialogCallback` and remote handlers.
