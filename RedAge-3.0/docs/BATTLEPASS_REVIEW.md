@@ -47,3 +47,13 @@ Static scan по `NeptuneEvo/**/*.cs` (line/block comments исключены) �
 ## Границы
 
 Нет C# build, disposable DB или RAGE runtime. Статический review не доказывает фактический callback concurrency и момент завершения async insert. CAS-027/028 открыты до forced-crash/failure regression tests; покрытие BattlePass не означает завершение аудита Quests/Achievements/всей progression подсистемы.
+
+## Дополнение — Main waypoint / house / repair progress producer slice (2026-11-07)
+
+Проверены три call sites из частичного `UpdateReward` producer inventory:
+
+- `Main.ClientEvent_SyncWP` (`Main.cs:1158-1176`) получает `X,Y` от client remote; требует character, нахождение в vehicle, отличного от отправителя server-reported driver и валидного character у водителя, затем вызывает `UpdateReward(player,126)` и пересылает waypoint. Client `src_client/main.js:360-369` вызывает событие для нем-driver vehicle occupant только при непустом waypoint. Это выглядит как сам operation task 126 (“передать метку водителю, будучи пассажиром”); явный forged-payload/range test и driver UI response остаются staging tasks. Отдельный confirmed progression bypass не зарегистрирован.
+- `lockCarPressed` даёт ID 125/124 только после нахождения в EnterHouse/ExitHouse shape, `sessionData.HouseID`, owner/roommate authorization и фактического изменения замка (`Main.cs:2215-2246`). Однако IDs 124 и 125 отсутствуют в текущем Season4 task catalog, поэтому `UpdateReward` по текущему helper на них no-op.
+- `RepairMyVeh` callback в `Main.cs:2416-2441` зовёт ID 13, которого также нет в current catalog; этот вызов не продвигает Season4. Сама service callback boundary отдельно заведена как `VEH-001` в `VEHICLE_REPAIR_REVIEW.md`.
+
+Эта выборочная проверка не считается полным producer trace и не меняет 209-call-line inventory. Остальные producers и daily/weekly task assignment paths всё ещё требуют end-to-end review.

@@ -19,6 +19,7 @@
 - Time-based progression: `MONEY-011` — reward/time checkpoint crash consistency gap; `PROG-005` — short deserialized `Achievements` array can cause bounds exceptions; `PROG-006` — nullable `TimeInfo` can interrupt shared minute processing. Static only; DB-row prevalence and crash replay remain unverified; see `ONLINE_REWARDS_REVIEW.md`.
 - Taxi meter path: `MONEY-012`/`PROG-007` — unverified client mileage can bill an active passenger and advance taxi mileage tasks. RAGE reproduction pending; see `TAXI_MILEAGE_REVIEW.md`.
 - Passport progression: `PROG-008` — self-target request/accept can satisfy the active “show passport” task if RAGE entity argument resolves as expected; staging check pending; see `DOCUMENTS_REVIEW.md`.
+- Vehicle repair: `VEH-001` — generic dialog callback can invoke self-repair without a server-owned interaction intent; whether physical location/mechanic restrictions are intended needs confirmation. See `VEHICLE_REPAIR_REVIEW.md`.
 
 ## Документы
 
@@ -46,6 +47,7 @@
 - [ONLINE_REWARDS_REVIEW](ONLINE_REWARDS_REVIEW.md) — time-based reward/checkpoint crash consistency and achievement-array bounds review.
 - [TAXI_MILEAGE_REVIEW](TAXI_MILEAGE_REVIEW.md) — client mileage trust in Taxi fare billing and BattlePass progression.
 - [DOCUMENTS_REVIEW](DOCUMENTS_REVIEW.md) — passport request/accept flow and self-target task progression.
+- [VEHICLE_REPAIR_REVIEW](VEHICLE_REPAIR_REVIEW.md) — self-repair dialog callback, missing repair intent/location checks and staging matrix.
 - [FUTURE_FEATURES](FUTURE_FEATURES.md) — backlog solo-mode/NPC-симуляции; отложен до завершения аудита.
 - [ISSUES](ISSUES.md) — нумерованный журнал рисков/вопросов.
 - [TEST_PLAN](TEST_PLAN.md) — baseline и следующие тестовые наборы.

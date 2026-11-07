@@ -135,3 +135,10 @@
 - Added a transparent coverage snapshot to `AUDIT_COVERAGE.md`: 19 domains (11 partial, 2 inventory-only, 5 not started, 1 blocked), plus raw remote/server-event/command inventories. Explicitly distinguished discovered handlers from fully checked handlers; no percent claimed.
 - Traced passport `target` remote through request, timeout, accept and `UpdateReward(101)`. `target == player` is not rejected, so self-show can satisfy the active “show passport” task if RAGE entity marshalling behaves as normal; added conditional `PROG-008` and `DOCUMENTS_REVIEW.md`.
 - Findings and staging scenarios added to issue, index, roadmap, test plan and handoff. No source code changed; remote reproduction/build/runtime tests remain unrun.
+
+
+## 2026-11-07 — Vehicle self-repair callback and matrix update
+
+- Traced `dialogCallback("RepairMyVeh", true)`: callback branch is active, the apparent repair-point opener is commented out, there is no server-owned pending intent/location recheck, and repair is performed before unchecked `$500` Wallet debit. Added policy-dependent `VEH-001` and `VEHICLE_REPAIR_REVIEW.md`; no free-repair claim under ordinary wallet success.
+- One narrow vehicle-flow pass changes matrix status to 12 partial, 2 inventory-only, 4 not started, 1 blocked. Broader vehicle/garage scope remains unreviewed.
+- Updated issue register, coverage, index, roadmap, test plan, BattlePass producer notes and handoff. Static source-order/catalog assertions, Node syntax, 40 relative Markdown links and `git diff --check` passed; no C# build, MySQL failure injection or RAGE reproduction.
