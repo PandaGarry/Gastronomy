@@ -181,3 +181,10 @@
 - Updated issue register, remote review, master checklist, test plan, index, coverage, roadmap and handoff. Documentation only; no source changes or runtime tests.
 
 - Follow-up parity check: `Organizations.Manager.inputStocks` repeats unchecked wallet and inventory settlement ordering; included under MONEY-035/STOCK-001 rather than duplicated as new IDs.
+
+
+## 2026-11-08 — MONEY-036 shared wallet integer truncation
+
+- Compared CharacterData.Money (long) with Wallet.Change arithmetic (int cast/add/store); registered MONEY-036 as a systemic economy defect. Out-of-Int32 balances can be rejected or overwritten with unrelated 32-bit values.
+- Added long-boundary, persistence and call-site regression matrix; linked with MONEY-035 stock settlement ordering.
+- No source code patch or runtime/build test; documentation only.
