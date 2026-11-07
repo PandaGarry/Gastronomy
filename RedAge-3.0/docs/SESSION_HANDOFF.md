@@ -139,3 +139,12 @@
 - HOUSE sale MONEY-018 уже был в PROPERTY_TRANSFER_REVIEW/ISSUES; не дублировал его.
 - MONEY-030..034 открыты. Новых игровых исходников не менял. Runtime/build/DB tests не запускались.
 - Чек-лист обновлён: 38 case occurrences / 32 unique names — это инвентаризация, не завершение review всех handlers. Следующий шаг — детально закрывать остальные delegated callbacks и remote groups.
+
+
+## Продолжение — фракционные склады (2026-11-08)
+
+- Проверен Fractions.Manager.inputStocks и Chars.Repository.AddNewItem. Входной Main.ClientEvent_inputCallback для put_stock/take_stock отвергает amount < 1; отрицательный amount не записан как подтверждённый exploit через этот путь.
+- MONEY-035: при take_stock money сначала уменьшается fractionData.Money, затем игнорируется bool от Wallet.Change. Wallet.Change имеет false-return paths; при отказе баланс фракции уже уменьшен.
+- STOCK-001: AddNewItem возвращает -1 при неудаче и может сообщить последний слот при частичной вставке; склад/запасы уменьшаются на полное requested amount. Для medkits vehicle free-slot check закомментирован; aggregate count не гарантирует свободные slots.
+- Обновлены ISSUES, MAIN_REMOTE_REVIEW, MASTER_CHECKLIST, TEST_PLAN, INDEX, AUDIT_COVERAGE, ROADMAP, CHANGELOG и SESSION_HANDOFF. Runtime/staging не выполнялись; source code не менялся.
+- Следующий проход: сравнить Organizations.Manager.inputStocks с теми же invariants, затем прочие faction stock callback actions и ownership/rank checks.
