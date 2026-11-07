@@ -64,6 +64,7 @@
 - [ ] Завершить inventory trade/storage/weapon/clothes/shop permissions, исправить NoteCreate ownership/dedup, подтвердить mitigations полной сборкой и regression tests.
 - [ ] Продолжить review удалённых событий/команд: авторизация, проверка аргументов, rate limits, доверие клиенту.
 - [x] Ещё один крупный remote pass: phone contacts/blacklist/call/recents/GPS/gallery/settings/property-car и часть business/dispatch routes cross-checked; в `Core/Selecting.cs` найден `PROG-010` (belt task progress без server transition), в `Core/WeaponRepository.cs` — `INV-010` (ammo return quantity до clip-cap). Оба статически обоснованы, runtime не подтверждён; далее RAGE staging. См. `SELECTING_REMOTE_REVIEW.md` и `WEAPON_REMOTE_REVIEW.md`.
+- [x] Прослежен `Core/Carroom.cs`: `MONEY-029` — malformed client color can fail after purchase/test-drive charge and skip cleanup; test-drive model/showroom policy remains open. Только статический source trace; см. `CARROOM_REVIEW.md`.
 - [ ] Проверить SQL: параметризация, транзакции, пул соединений, таймауты, ошибки и повторные попытки.
 - [ ] Завершить аудит прав админов/фракций, экономических операций, донат/платежей и журналов аудита.
 - [ ] Проверить CORS/HTTP endpoints, TLS, файлы логов/дампов и безопасную конфигурацию на всём проекте.
