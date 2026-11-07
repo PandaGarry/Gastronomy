@@ -40,6 +40,9 @@
 - [ ] Поднять тестовый сервер без публичного объявления и без production-секретов.
 - [ ] Добавить smoke tests для входа, создания персонажа, сохранения/загрузки, инвентаря и базовых команд.
 
+- [ ] MONEY-032: исправить mayor treasury withdrawal — проверять результат bank credit до списания казначейства; транзакционная/идемпотентная модель и failure tests.
+- [ ] MONEY-033: исправить ticket settlement — consume-once ticket intent, подтверждённое списание до выплат, durable idempotency и replay/concurrency/failure tests.
+
 ## Этап 3 — Аудит безопасности и надёжности (`В работе`)
 
 - [x] Начальный credential/config scan: локально убраны обнаруженные credentials; владельцу указана необходимость ротации, если upstream значения были активны.
