@@ -151,3 +151,10 @@
 - Continued delegated `Main.cs`/fraction callback review. Added `MONEY-032`: mayor treasury withdrawal ignores failed personal-bank credit before debiting City Hall treasury. Added `MONEY-033`: ticket confirmation can continue payout after both debit paths fail and the ticket intent is not consumed from session state, allowing replay.
 - Updated `MAIN_REMOTE_REVIEW.md`, `ISSUES.md`, `INDEX.md`, `AUDIT_COVERAGE.md`, `TEST_PLAN.md`, `ROADMAP.md` and `SESSION_HANDOFF.md` as applicable.
 - Static source review only. No C# build, RAGE:MP runtime, disposable MySQL or exploit reproduction was performed; findings remain open.
+
+
+## 2026-11-08 — inputCallback case inventory and delegated helper review
+
+- Enumerated all 38 `case` labels in `Main.ClientEvent_inputCallback` and traced selected delegated paths.
+- Confirmed `player_medkit` and `player_heal` helpers repeat role/on-duty/price/proximity/trade checks; confirmed `mayor_put` aborts on failed bank debit; traced ticket issue-side policy checks while retaining MONEY-033 for confirmation settlement.
+- Recorded remaining delegated callback paths and explicit review gaps in `MAIN_REMOTE_REVIEW.md`. No additional independent finding was asserted without sufficient source evidence. No source code changed; no C# build or RAGE/MySQL runtime tests performed.
