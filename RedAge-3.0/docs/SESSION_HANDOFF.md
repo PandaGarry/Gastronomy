@@ -81,7 +81,7 @@
 
 ## Следующие шаги
 
-1. В новом чате восстановить/подтвердить рабочую папку RedAge и прочитать `INDEX.md`, `AUDIT_COVERAGE.md`, `ISSUES.md`, `TEST_PLAN.md`, `CASINO_REVIEW.md`, `BLACKJACK_REVIEW.md`, `SPIN_REVIEW.md`, `HORSES_REVIEW.md`, `LUCKYWHEEL_REVIEW.md`, `DICE_REVIEW.md`, `LOTTERY_REVIEW.md`, `BATTLEPASS_REVIEW.md`, `SAPPER_REVIEW.md`, `QUESTS_REVIEW.md`, `WEDDING_REVIEW.md`, `ONLINE_REWARDS_REVIEW.md`, `TAXI_MILEAGE_REVIEW.md`, `DOCUMENTS_REVIEW.md`, `VEHICLE_REPAIR_REVIEW.md`, `GARAGE_REVIEW.md`, `VEHICLE_ACTION_REVIEW.md`, `VEHICLE_SALE_REVIEW.md`, `VEHICLE_SYNC_REVIEW.md`, `ORG_VEHICLE_REVIEW.md`, `HOUSE_RESIDENT_REVIEW.md`, `PROPERTY_SALE_REVIEW.md`, `PROPERTY_PURCHASE_REVIEW.md`, `PROPERTY_TRANSFER_REVIEW.md`, `PROPERTY_TAX_REVIEW.md`, `ATM_REVIEW.md`, `BANK_TRANSFER_REVIEW.md`, `PHONE_MESSAGES_REVIEW.md`, `PHONE_CALL_TINDER_REVIEW.md`, `PHONE_NEWS_REVIEW.md`, `PHONE_SIM_REVIEW.md`, `PHONE_DISPATCH_REVIEW.md`, `HOUSE_FURNITURE_REVIEW.md` и эту заметку.
+1. В новом чате восстановить/подтвердить рабочую папку RedAge и прочитать `INDEX.md`, `AUDIT_COVERAGE.md`, `ISSUES.md`, `TEST_PLAN.md`, `CASINO_REVIEW.md`, `BLACKJACK_REVIEW.md`, `SPIN_REVIEW.md`, `HORSES_REVIEW.md`, `LUCKYWHEEL_REVIEW.md`, `DICE_REVIEW.md`, `LOTTERY_REVIEW.md`, `BATTLEPASS_REVIEW.md`, `SAPPER_REVIEW.md`, `QUESTS_REVIEW.md`, `WEDDING_REVIEW.md`, `ONLINE_REWARDS_REVIEW.md`, `TAXI_MILEAGE_REVIEW.md`, `DOCUMENTS_REVIEW.md`, `VEHICLE_REPAIR_REVIEW.md`, `GARAGE_REVIEW.md`, `VEHICLE_ACTION_REVIEW.md`, `VEHICLE_SALE_REVIEW.md`, `VEHICLE_SYNC_REVIEW.md`, `ORG_VEHICLE_REVIEW.md`, `HOUSE_RESIDENT_REVIEW.md`, `PROPERTY_SALE_REVIEW.md`, `PROPERTY_PURCHASE_REVIEW.md`, `PROPERTY_TRANSFER_REVIEW.md`, `PROPERTY_TAX_REVIEW.md`, `ATM_REVIEW.md`, `BANK_TRANSFER_REVIEW.md`, `PHONE_MESSAGES_REVIEW.md`, `PHONE_CALL_TINDER_REVIEW.md`, `PHONE_NEWS_REVIEW.md`, `PHONE_SIM_REVIEW.md`, `PHONE_DISPATCH_REVIEW.md`, `HOUSE_FURNITURE_REVIEW.md`, `WEAPON_REMOTE_REVIEW.md`, `SELECTING_REMOTE_REVIEW.md` и эту заметку.
 2. PR [#2](https://github.com/PandaGarry/Gastronomy/pull/2) открыт из `arena/fab5bf55-gastronomy` в `main`; продолжать добавлять только новые/изменённые файлы внутри `RedAge-3.0/`. Не менять/удалять root Gastronomy files и не пушить в upstream RedAge без отдельного checkout/ветки и разрешения владельца.
 3. Продолжить статический review очередных remote event/command boundaries и подсистем; не заявлять полное покрытие без прохождения матрицы `AUDIT_COVERAGE.md`.
 4. Подготовить поддерживаемый build-agent, staging/test DB и RAGE runtime; проверить inventory/roulette/Blackjack guards, Spin/Horses bet/refund fixes after implementation, положительные `RemoveIndex` call sites, rejected-payload no-op, DB/cache convergence, duplicate joins/bets и round settlement failure/restart.
@@ -95,3 +95,11 @@
 - Не пушить upstream snapshot без отдельного целевого репозитория/ветки и проверки credential cleanup.
 - Не включать реальные DB/payment/API credentials в файлы или сообщения.
 - NPC/solo-mode остаётся отложенным; синхронизированный ped не является `ExtPlayer`, а поддерживаемые RAGE API/capacity не подтверждены.
+
+
+## Последний проход (2026-11-07)
+
+- Продолжен широкий remote review: phone contacts/blacklist/call/recents/GPS/gallery/settings/open-close/property-car и business/dispatch cross-check; не добавляли дубликаты ранее описанных `PROG-009`, `PHONE-002..003`, `PHONE-006` и бизнес-findingов. Полнота phone audit не достигнута.
+- Проверен `Core/Selecting.cs`: `beltSelected` безусловно вызывает BattlePass task 86; зарегистрирован `PROG-010`.
+- Проверен `Core/WeaponRepository.cs`: ammo-return remote использует client count для inventory-capacity вычисления до clip clamp и допускает unchecked drop; зарегистрирован `INV-010`. Статический вывод; RAGE behavior не проверен.
+- Добавлены tests 44–45 и новые review files. Ближайшее продолжение: проверить `INV-010`/`PROG-010` на disposable RAGE staging, затем покрывать непроверенные weapon damage/shop/vehicle and remaining remote groups; аудит не завершать преждевременно.
