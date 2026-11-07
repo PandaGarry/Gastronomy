@@ -133,3 +133,12 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] SQL insert/update failure, disconnect and restart do not produce stock/item mismatch.
 - [ ] Concurrent requests cannot overspend stock or duplicate items.
 - [ ] Repeat for materials, drugs and medkits; verify the commented-out medkit free-slot path is replaced by authoritative insertion result.
+
+
+## Organization stock parity — MONEY-035 / STOCK-001 (pending staging)
+
+- [ ] Organization money withdrawal: Wallet.Change false/exception must not debit organization money.
+- [ ] Organization money deposit: failed wallet debit must not credit organization money.
+- [ ] Organization item withdrawal: failed/partial AddNewItem must not debit organization stock.
+- [ ] Organization item deposit: failed/partial Remove must not credit organization stock.
+- [ ] Test simultaneous stock requests and organization membership/status changes; verify exactly-once balance/item deltas.
