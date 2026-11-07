@@ -45,6 +45,8 @@
 
 - [ ] MONEY-034: gang drug purchase integer overflow — bounded quantity, checked/long arithmetic, exact grant-before-debit and overflow regression tests.
 
+- [ ] STOCK-001: fraction stock and vehicle cargo transfers — exact item/cash result, atomic/idempotent settlement, authorization and failure/restart tests; see `FRACTION_STOCK_REVIEW.md`.
+
 ## Этап 3 — Аудит безопасности и надёжности (`В работе`)
 
 - [x] Начальный credential/config scan: локально убраны обнаруженные credentials; владельцу указана необходимость ротации, если upstream значения были активны.
