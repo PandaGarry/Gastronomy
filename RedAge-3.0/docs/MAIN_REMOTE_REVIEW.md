@@ -88,3 +88,18 @@ Enumerated all 38 `case` occurrences (32 unique callback names) in `ClientEvent_
 - Generic callback argument array/string handling and all delegated callback rate limits remain to be reviewed systematically.
 
 No additional issue ID was created from the helper checks above because the inspected code did not establish a new independent security defect. Existing MONEY-030..033 remain open. No runtime or build tests were run.
+
+
+## MONEY-034 — integer overflow in gang drug purchase
+
+**Приоритет: высокий; signed overflow and unchecked debit arithmetic statically confirmed; malformed inventory persistence/runtime effect requires staging.**
+
+- `Main.ClientEvent_inputCallback` parses `buy_drugs` as a positive `int`, but has no meaningful upper bound before calling `Gangs.BuyDrugs(player, limit)`.
+- `Gangs.BuyDrugs` checks `fractionData.Money < amount * Main.DrugsPrice` using unchecked `int` multiplication. The configured default `Main.DrugsPrice` is 30. For `amount = int.MaxValue`, the product wraps to `-30`; the insufficient-funds check therefore passes and `fractionData.Money -= amount * Main.DrugsPrice` increases the faction balance by 30 instead of charging it.
+- The capacity guard also uses unchecked `count + amount`. If the vehicle already contains at least one drug item but is not full, this addition can overflow and bypass the configured capacity comparison.
+- `Chars.Repository.AddNewItem` is called without checking its returned slot/result. Its stack merge path also adds `item.Count + count` using `int`; the huge amount can overflow again, so malformed/negative stack data or partial insertion is possible. The precise in-memory/DB result is not claimed without runtime verification.
+
+**Remediation (not implemented):** enforce a small server-owned positive quantity ceiling before any arithmetic; use `checked` or `long` for total price and capacity calculations; validate `Main.DrugsPrice > 0`; calculate free capacity with subtraction after validating nonnegative operands; require `AddNewItem` to report the exact inserted quantity; only debit faction funds after a verified item grant, preferably via a transaction/ledger or compensating receipt. Reject requests during shutdown and audit the operation.
+
+**Regression:** empty/partially filled/full vehicle; `1`, maximum allowed, max+1, `int.MaxValue`, `int.MinValue`, and boundary values around multiplication/addition overflow; insufficient faction balance; full inventory/slot exhaustion; AddNewItem partial failure; concurrent duplicate callbacks; verify no negative item counts, no capacity breach, no faction-balance increase, and exactly-once debit/grant after restart.
+
