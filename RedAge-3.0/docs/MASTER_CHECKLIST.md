@@ -58,7 +58,7 @@
 
 - [ ] Versioned password-KDF migration with backward-compatible legacy verification.
 - [ ] Review all 498 RemoteEvent mentions, 116 ServerEvent mentions and 382 Command mentions; inventory counts are not completion evidence.
-- [x] Enumerate all 38 `Main.ClientEvent_inputCallback` case labels; selected delegated helpers checked, remaining paths explicitly listed in `MAIN_REMOTE_REVIEW.md`.
+- [x] Enumerate 38 `Main.ClientEvent_inputCallback` case occurrences (32 unique callback names); selected delegated helpers checked, remaining paths explicitly listed in `MAIN_REMOTE_REVIEW.md`.
 - [ ] Finish every delegated `inputCallback` handler review, including stock, house/drug sale, street race, vehicle trade, hotel, tent and pet flows.
 - [ ] Server-side ownership, permission, type/range, distance/dimension, rate-limit and replay checks.
 - [ ] Audit shared collections, worker threads, lock ordering and RAGE thread affinity.
