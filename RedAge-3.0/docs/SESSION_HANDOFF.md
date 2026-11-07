@@ -148,3 +148,5 @@
 - STOCK-001: AddNewItem возвращает -1 при неудаче и может сообщить последний слот при частичной вставке; склад/запасы уменьшаются на полное requested amount. Для medkits vehicle free-slot check закомментирован; aggregate count не гарантирует свободные slots.
 - Обновлены ISSUES, MAIN_REMOTE_REVIEW, MASTER_CHECKLIST, TEST_PLAN, INDEX, AUDIT_COVERAGE, ROADMAP, CHANGELOG и SESSION_HANDOFF. Runtime/staging не выполнялись; source code не менялся.
 - Следующий проход: сравнить Organizations.Manager.inputStocks с теми же invariants, затем прочие faction stock callback actions и ownership/rank checks.
+
+- Organization parity checked: `Organizations.Manager.inputStocks` repeats the unchecked wallet credit/debit and AddNewItem/Remove settlement ordering. Covered by MONEY-035/STOCK-001, not duplicated. Test deposit as well as withdrawal paths.
