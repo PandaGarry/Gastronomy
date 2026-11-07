@@ -40,6 +40,7 @@
 - C# обнаружено 498 `[RemoteEvent]` атрибутов в 137 файлах. Обязательная следующая выборка: авторизация, регистрация/recovery, bank/money, inventory, donations, admin/fraction actions. Проверять server-side ownership, permission, bounds, rate limits, replay/duplicate calls и transaction semantics.
 - `MySQL.Query` debug/error paths могут включать полный SQL text; подключение к БД настроено без TLS. См. `ISSUES.md`.
 - Внешние payment/API/cloud/radio/CDN hostnames и call-site inventory перечислены в `EXTERNAL_INTEGRATIONS.md`; до staging не отправлять туда тестовые/пользовательские данные.
+- Узкий phone SMS pass: `SEC-007` records client-supplied message text interpolated into `mp.gui.emmit` and used with Svelte `{@html}`; direct remote bypasses the UI encoder. This is static source-to-sink evidence only; see `PHONE_MESSAGES_REVIEW.md`, and do not infer native/client-bridge impact before CEF staging.
 
 ## Не делать сейчас
 
