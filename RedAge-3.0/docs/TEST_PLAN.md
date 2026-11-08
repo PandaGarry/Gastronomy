@@ -425,3 +425,10 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - Exercise vehicle load/unload for mats, drugs and medkits with full vehicle slots, stack boundaries, stale vehicle/session, DB failure and duplicate callbacks.
 - Verify `Remove` exact-consumption behavior; current public method returns void and suppresses exceptions, so tests must detect actual inventory delta rather than trusting invocation.
 - Organization and faction cash stock branches are covered separately by MONEY-035 tests. No STOCK-001 runtime test was run; no item/cargo patch was applied.
+
+## 2026-11-08 — STOCK-002 takeProd guard regression additions
+
+- Verify `takeProd` rejects zero and negative quantity without changing product stock or owner bank.
+- Verify missing/unknown product returns false and every caller stops without customer debit, item/weapon grant, quest/BattlePass progress or success notification.
+- Retain required but unexecuted cases: owner bank missing/Bank.Change false after stock validation, customer Wallet.Change false/exception, AddNewItem failure/partial result, weapon grant failure, missing product, dirty-save/restart, duplicate/concurrent purchase and DB outage.
+- Static assertions passed for positive-quantity guard, matching-product tracking and false return when no product is found. No C# build, RAGE staging or MySQL fault injection was run.
