@@ -331,12 +331,24 @@ namespace NeptuneEvo.Events
                 var joinedSessionData = streetRaceData.joined.GetSessionData();
                 if (joinedSessionData == null) return;
 
-                StreetRaceList[streetRaceId].Status = true;
                 if (streetRaceData.rate > 0)
                 {
-                    Wallet.Change(streetRaceData.created, -streetRaceData.rate);
-                    Wallet.Change(streetRaceData.joined, -streetRaceData.rate);
+                    if (!Wallet.Change(streetRaceData.created, -streetRaceData.rate))
+                    {
+                        ClearData(streetRaceData.created, 0);
+                        return;
+                    }
+
+                    if (!Wallet.Change(streetRaceData.joined, -streetRaceData.rate))
+                    {
+                        if (!Wallet.Change(streetRaceData.created, streetRaceData.rate))
+                            Log.Write($"Accept: failed to refund street race stake {streetRaceData.rate} to player {streetRaceData.created.Value} after opponent debit failed.");
+                        ClearData(streetRaceData.joined, 0);
+                        return;
+                    }
                 }
+
+                StreetRaceList[streetRaceId].Status = true;
                 createdSessionData.StreetRaceTime = DateTime.Now.AddSeconds(10);
                 joinedSessionData.StreetRaceTime = DateTime.Now.AddSeconds(10);
                 Trigger.ClientEvent(streetRaceData.created, "client.streetrace.start", streetRaceData.Position.X, streetRaceData.Position.Y, streetRaceData.Position.Z, true);
