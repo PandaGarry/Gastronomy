@@ -132,6 +132,9 @@
 
 - [ ] INV-017 — revoke furniture safe context on house exit/object removal/ACL change; bind every item operation to exact house/object/access mode and current range/dimension. See FURNITURE_SAFE_SESSION_REVIEW.md.
 
-- [ ] Complete remaining container traces without premature issue registration: warehouse location/quest policy; HeliCrash box/key-clamp/range lifecycle; weapon and CarKey parent-item ownership binding. Record confirmed behavior and staging tests in INVENTORY_REVIEW.md.
+- [ ] Remaining bounded container questions: warehouse location/quest policy and HeliCrash open/range lifecycle require owner-policy/staging confirmation; do not infer cross-player theft from personal UUID storage.
+- [x] Static parent-item subcontainer trace completed; finding INV-019 registered. Runtime ownership-transfer/replay tests remain pending.
 
 - [ ] INV-018 — make KeyClamp completion server-authoritative; require active player/box reservation and successful keyDown, validate progress/time, consume ArmyLockpick exactly once, clear state on all terminal paths. See HELICRASH_KEYCLAMP_REVIEW.md.
+
+- [ ] INV-019 — bind `weapon_<SqlId>` / `CarKey_<SqlId>` subcontainer sessions to exact parent item and current owner; revalidate on every move/stack/use and revoke on transfer/drop/delete/replacement. See WEAPON_KEYRING_SUBCONTAINER_REVIEW.md.
