@@ -295,3 +295,10 @@
 - MatWar: start/progress/open remotes lack active-war and proximity/session checks, share a generic IsAirDropHacking flag with AirDrop, and endWar leaves matwar_100 inventory/lock state until next startWar.
 - Registered INV-013 and INV-014; created AIRDROP_REMOTE_REVIEW.md and MATWAR_REMOTE_REVIEW.md. Expanded INVENTORY_REVIEW with the LoadOtherItemsData container entry-point map.
 - Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
+
+
+## 2026-11-08 — INV-015 faction stock session authorization
+
+- Traced OnFracStock assignments across FIB, Sheriff, Army, City Hall and Police. No reset was found. The openWeaponStock remote checks only current faction ID and rank, not duty, stock-open state, location, dimension or session freshness.
+- Registered INV-015 and created FRACTION_STOCK_SESSION_REVIEW.md; added staging matrix and linked the finding to the inventory container map.
+- Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
