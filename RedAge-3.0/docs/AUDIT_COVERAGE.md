@@ -138,3 +138,5 @@ Static trace of ItemsUse → LoadOtherItemsData → GetLocationName/GetItemData/
 - Follow-up: synchronized bank balance reads, account holder lookup, cache registration/removal and holder rename with the transfer lock; Create's checked DB INT/TINYINT input validation remains in place. `Bank.Get(int)` mutable Data escape remains under caller audit.
 
 - Bank persistence follow-up: all successful Bank.Change operations now mark dirty; background worker snapshots dirty IDs under AccountSync and uses a ConcurrentQueue with retry for failed account deletes. In-memory queue is not crash-durable; test DB failure, restart and write amplification.
+
+- Migrated active bank-balance writes in reviewed property/business callers to synchronized APIs: house/business tax, house purchase, house/business auction awards and admin bank grants. Targeted scan found no active direct Balance property writes in the reviewed callers; public Bank.Accounts exposure means repository-wide audit remains open.
