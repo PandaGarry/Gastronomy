@@ -100,16 +100,10 @@ namespace NeptuneEvo.Database.Models
             {
                 foreach (var saveData in donateUpdateList)
                 {
-                    var affectedRows = await db.Accounts
+                    await db.Accounts
                         .Where(v => v.Login == saveData[0].ToString())
                         .Set(v => v.Redbucks, Convert.ToInt32(saveData[1]))
                         .UpdateAsync();
-
-                    if (affectedRows != 1)
-                    {
-                        Log.Write($"DonateUpdate: expected one account row for '{saveData[0]}', affected {affectedRows}");
-                        return false;
-                    }
                 }
 
                 return true;
@@ -154,16 +148,10 @@ namespace NeptuneEvo.Database.Models
             {
                 foreach (var saveData in moneyUpdateList)
                 {
-                    var affectedRows = await db.Characters
+                    await db.Characters
                         .Where(v => v.Uuid == Convert.ToInt32(saveData[0]))
                         .Set(v => v.Money, Convert.ToInt32(saveData[1]))
                         .UpdateAsync();
-
-                    if (affectedRows != 1)
-                    {
-                        Log.Write($"MoneyUpdate: expected one character row for UUID {saveData[0]}, affected {affectedRows}");
-                        return false;
-                    }
                 }
 
                 return true;
