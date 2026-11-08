@@ -571,3 +571,16 @@
 
 - `FractionCommands.ticketConfirm` now returns immediately after both wallet and bank debit attempts fail, before city/officer credits, success events or paid fine log.
 - This is a narrow guard for the confirmed free-fine payout path; it does not provide one-shot replay protection or durable atomic settlement. C# build, RAGE staging and DB/failure tests remain pending.
+
+
+## 2026-11-08 — MONEY-033 ticket intent consume-once guard
+
+- `ticketToTarget` now protects pending ticket assignment with the same session lock used by confirmation and refuses to overwrite an existing pending ticket.
+- `ticketConfirm` now validates and detaches the pending ticket intent under that lock before settlement; accept/decline consumes the in-memory intent and a duplicate callback cannot reuse it.
+- This is not a durable settlement receipt. Split payout atomicity, uncertain DB outcome and restart recovery remain open. Static source review only; build/RAGE/DB tests pending.
+
+## 2026-11-08 — documentation status reconciliation
+
+- Added `DOCS_STATUS.md` with single-purpose ownership for each project document, status vocabulary, update cycle and current MONEY-002/003/033/060 truth.
+- Reconciled MONEY-033 vs MONEY-060 so ticket-intent replay and failed-debit payout are separate findings; updated issue register, reviews, checklist, test plan, roadmap, coverage, index and handoff.
+- Removed repeated MONEY-002/003 checklist entries by consolidating their outstanding validation gates. No build or runtime test is claimed.
