@@ -19,6 +19,9 @@ namespace NeptuneEvo.MoneySystem
 
         public static bool Change(ExtPlayer player, int amount, bool isDisconnect = false)
         {
+            // Once the in-memory balance has changed, never report this operation as
+            // rejected: callers may otherwise retry or compensate an already-applied change.
+            bool balanceChanged = false;
             try
             {
                 var characterData = player.GetCharacterData();
@@ -27,20 +30,31 @@ namespace NeptuneEvo.MoneySystem
                 if (temp < 0) return false;
                 if (amount < 0 && Admin.IsServerStoping) return false;
                 characterData.Money = temp;
-                
-                if (amount >= 10_000 || amount <= -10_000) 
+                balanceChanged = true;
+
+                if (amount >= 10_000 || amount <= -10_000)
                     Database.Models.Money.AddMoneyUpdate(characterData.UUID, characterData.Money);
-                
+
                 if (amount >= 1) characterData.EarnedMoney += (ulong)amount;
-                if (isDisconnect) return true;
-                Trigger.ClientEvent(player, "client.charStore.Money", temp);
+                if (!isDisconnect)
+                {
+                    try
+                    {
+                        Trigger.ClientEvent(player, "client.charStore.Money", temp);
+                    }
+                    catch (Exception e)
+                    {
+                        // Notification failure must not turn an applied balance mutation into false.
+                        Log.Write($"Change notification Exception: {e}");
+                    }
+                }
 
                 return true;
             }
             catch (Exception e)
             {
-                Log.Write($"Change Exception: {e.ToString()}");
-                return false;
+                Log.Write($"Change Exception: {e}");
+                return balanceChanged;
             }
         }
 
