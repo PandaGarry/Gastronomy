@@ -122,3 +122,6 @@
 - [ ] INV-012 — vehicle trunk inventory: bind session to exact vehicle and authorized access policy; revalidate distance/dimension/door/ownership/rank on every move, stack, use and drop. Revoke stale sessions and test walk-away/replay. See VEHICLE_TRUNK_ACCESS_REVIEW.md.
 
 - [ ] VEH-012 — release vehicle BagInUse reservation and clear SelectedVeh on auxiliary-pane close/context replacement, full close, disconnect and vehicle deletion; use an owner/session-bound idempotent release and test stale-owner races. See VEHICLE_TRUNK_LIFECYCLE_REVIEW.md.
+
+- [ ] INV-013 — bind AirDrop hack/progress/open to a server-owned player+DropId+event-generation intent; require active event, exact crate, dimension/proximity and server-timed progress; reject client health/replay/cross-event calls. See AIRDROP_REMOTE_REVIEW.md.
+- [ ] INV-014 — bind MatWar hack/progress/open to active war generation, exact player/ShapeId and nearby crate; server-authoritative progress; revoke and remove matwar_100 inventory on endWar. See MATWAR_REMOTE_REVIEW.md.
