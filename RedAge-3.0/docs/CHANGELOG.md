@@ -551,3 +551,5 @@
 
 
 - 2026-11-08: MONEY-002 inventory extension — traced business tax repossession online/offline payout. Online Wallet.Change result is ignored; offline path performs async cash/Biz absolute UPDATE while business bank reset and owner clear continue independently. House repossession uses AddMoney fallback. Added payout/ownership/restart regression cases; no source/build/runtime tests.
+
+- 2026-11-08 — MONEY-002 schema reconnaissance: checked-in MariaDB 10.10.2 dump declares character cash, bank accounts, accounts, referrals and lottery tables InnoDB; character cash is nullable signed INT. This is snapshot evidence only; disposable import and live schema verification remain pending.
