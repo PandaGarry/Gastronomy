@@ -194,3 +194,20 @@ A second interleaving was found in `MoneyUpdate`: the detached row's `ActiveMone
 **Patch:** `MoneyUpdate` now distinguishes a completed write, a superseded snapshot, and a failed write. It removes the in-flight marker after success or supersession only. On SQL failure it leaves the marker registered until `Worker` calls `RequeueMoney`, which atomically requeues only the still-current version and removes the marker under `QueueLock`. This closes the identified in-process failure/requeue window by source inspection; no runtime interleaving test has run.
 
 **Remaining direct writers requiring safe migration:** `Character.Save.Repository.AddMoney`, `Players.Phone.Auction.Repository.ReturnMoney` offline cash fallback, `Main.CheckMyPromoCode` referral reward, `Main` business repossession proceeds, `Core.Admin.OffGiveMoney`, and `Accounts.Merger.Repository` organization merge refund. They perform independent SQL reads/writes and do not share the per-UUID semaphore/version protocol. Do not blindly wrap these with the coordinator: first decide whether the target can be online and whether the operation is an absolute assignment or additive credit, then preserve any queued in-memory snapshot and make DB mutation/notification ordering explicit. `Accounts.Merger` currently appears to set an absolute `moneyTo` value and needs separate semantic review.
+
+
+### MONEY-002 follow-up — durability boundary and direct-writer sequencing (2026-11-08)
+
+The current `MoneyUpdateList` worker is a retryable **snapshot persistence queue**, not a durable transaction outbox. Moving the same in-memory snapshots into a new DB table from the background worker would not close the crash window: the process can still stop after `Wallet.Change` mutates the in-memory balance and before the worker records the outbox row.
+
+A crash-durable design therefore cannot be introduced only inside `Money.cs`. The write path must change at the mutation boundary:
+
+1. Give each logical cash operation a stable operation ID and immutable payload (character UUID, signed delta, reason/source, creation time).
+2. In one InnoDB transaction, insert a uniquely keyed operation/receipt and apply the balance delta with conditional bounds. Duplicate operation IDs return the stored result and do not apply the delta again.
+3. Commit before the caller reports durable success or triggers irreversible side effects. Keep the in-memory character cache synchronized only after commit (or expose a pending state with explicit recovery semantics).
+4. Reconcile/replay committed-but-unacknowledged operations from the receipt/ledger after restart; do not replay an operation whose unique receipt already exists.
+5. Migrate every cash writer—including `Wallet.Change`, full character save, offline `AddMoney`, bank/property/auction/merger/admin paths—to the same coordinator. A partial migration would retain last-writer-wins races between old and new writers.
+
+**Immediate safe follow-up:** the offline `Character.Save.Repository.AddMoney` and referral reward paths still perform read-then-absolute-write. They need an atomic conditional SQL increment to prevent concurrent lost updates and signed-`INT` overflow, but that alone is not idempotent and does not solve payout replay. Keep this as a separately tested transitional fix; do not present it as the durable ledger.
+
+**Decision gate before implementation:** confirm all relevant balance tables use InnoDB; inspect exact LinqToDB 3.3 transaction/affected-row APIs; define operation-ID ownership for lottery/referral/auction payouts; identify online/offline cache handoff; and provide a migration/rollback plan. Do not add a background outbox table and claim crash safety without moving the transaction boundary to the original mutation.
