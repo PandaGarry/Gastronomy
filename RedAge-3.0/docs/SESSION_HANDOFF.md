@@ -175,3 +175,10 @@
 
 - Extended phone auction lifecycle review to AuctionType.Other. OnCreate removes the item from the character inventory and queues its SQL record into location `auction`; End handles only House/Biz/Vehicle and has no Other-item winner grant or seller-return branch. The ended row is later removed from active auction cache. Registered INV-011; exact DB recovery behavior and intended UI exposure still require staging confirmation.
 - Updated `AUCTION_REVIEW.md`, `ISSUES.md`, `MASTER_CHECKLIST.md`, `AUDIT_COVERAGE.md`, `ROADMAP.md`, `INDEX.md` and `TEST_PLAN.md`. No source patch/build/runtime test. PR remains draft; do not merge until branch histories and diff are reconciled.
+
+
+## 2026-11-08 continuation — business order/delivery settlement
+
+- Expanded MONEY-022 evidence: `CancelOrder` clears order/product state before `Bank.Change` refund and ignores a false return. The account API can return false for a missing account or exception; no pending refund is retained in the cancellation method. Static only.
+- Registered JOB-004: `Jobs/Truckers.cs` ignores `Wallet.Change` result and proceeds to money log, stock replenishment, order removal, session cleanup and success notification. If the wallet credit fails, delivery is consumed without guaranteed payment. Added `BUSINESS_DELIVERY_REVIEW.md` and regression cases.
+- Updated `ISSUES.md`, `MASTER_CHECKLIST.md`, `TEST_PLAN.md`, `INDEX.md`, `AUDIT_COVERAGE.md`, `ROADMAP.md` and `CHANGELOG.md`. No gameplay source patch, C# build, RAGE runtime or DB fault injection performed.
