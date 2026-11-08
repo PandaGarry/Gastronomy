@@ -411,3 +411,8 @@ Static review found unchecked second legs in regular ATM cash deposit/withdrawal
 
 - `acceptBuyBusiness` now rejects missing pending offer/seller, inactive seller character/session, nonpositive price and missing business ID before proceeding.
 - Buyer/seller BizIDs and business Owner still mutate before unchecked buyer debit/seller credit. No unsafe local reorder/compensation was applied because owner/BizIDs persistence has no durable commit result. MONEY-044 remains high/open. Static-only.
+
+## 2026-11-08 — MONEY-043 revalidation
+
+- Current branch already contains an interim government business purchase guard: checked Bank.SetBalance, checked buyer Wallet.Change, attempted bank-balance restoration on debit rejection, and owner/stock/orders/BizIDs mutation only after debit success.
+- Corrected stale review/issue wording. Durable receipt across bank/wallet/ownership writes and restart reconciliation remain open. Static-only; no build/RAGE/MySQL tests.
