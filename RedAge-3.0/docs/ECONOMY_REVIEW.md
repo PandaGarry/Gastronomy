@@ -153,3 +153,13 @@ Do not implement retry/refund based only on these bools. Separate financial muta
 A bounded source patch was applied in `MoneySystem/Wallet.cs`: the method now records whether the in-memory balance has changed and returns that state from its outer exception handler. The client balance notification has its own exception boundary, so a notification failure is logged without reporting an already-applied balance mutation as rejected. This reduces the risk that callers retry or compensate an applied debit/credit based on a misleading `false`.
 
 **Limits:** `true` still means the in-memory balance mutation was applied, not that MySQL durably committed it. `Wallet.Change` remains non-transactional and the existing `long`/`int` cast and arithmetic boundary needs separate end-to-end review. The patch is static-only; build, notification fault injection, queue failure and RAGE tests remain pending. Do not treat this as settlement/idempotency closure.
+
+
+## MONEY-036 — единый signed-INT контракт для cash wallet (частичный patch)
+
+- `CharacterData.Money` — `long`, но `characters.money` в `ServerStruct.generated.cs` отображён как nullable `int?` (`int(11)`). Это подтверждённый schema/type mismatch; BIGINT migration не выполнялась.
+- Старый `Wallet.Change` делал `(int)characterData.Money + amount` до проверки диапазона. Теперь он складывает в `long`, отклоняет отрицательный результат и результат выше `Int32.MaxValue`, а затем только записывает `CharacterData.Money`. Это сохраняет существующий DB contract и не делает silent narrowing.
+- `Character.Save.Repository.SaveSql` теперь проверяет `0..Int32.MaxValue` до запуска связанных save операций и до `Convert.ToInt32`. Invalid state логируется и не сохраняется.
+- `Database.Models.Money.AddMoneyUpdate` уже валидирует UUID и signed INT range до помещения в retry queue. Однако сама очередь остаётся volatile.
+- **Незакрытый риск:** Money worker пишет абсолютное значение `characters.money` отдельным SQL UPDATE, параллельно с полным `SaveSql`. Без общего per-character serialization/version token старый batch, задержавшийся в DB, теоретически может перезаписать более новое значение полного save. Это требует отдельного решения; не объявлять MONEY-002 закрытым.
+- Проверки: статические source assertions only. Нет C# build, DB round-trip, worker concurrency или RAGE UI test.
