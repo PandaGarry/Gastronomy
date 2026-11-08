@@ -227,3 +227,11 @@
 - Expanded MONEY-045: tfuel and price are computed before the government quota clamp; stock reservation receives clamped liters while the vehicle receives stale pre-clamp fuel amount. Added regression assertions.
 - Updated ISSUES, MASTER_CHECKLIST, TEST_PLAN, AUDIT_COVERAGE, INDEX, ROADMAP, CHANGELOG and SESSION_HANDOFF. Static-only; no source patch/build/RAGE/CEF/DB tests.
 - Next: continue business stock/service callers and inventory/remote authorization; avoid duplicating STOCK-002, MONEY-045, VEH-009 and PET-001.
+
+
+## 2026-11-08 continuation — VEH-010 LS Customs tuning
+
+- Organization tuning entry stores the business ID in CharacterData.TuningShop. Client exit sends eventType=1; server case 1 does not clear the field. The personal server.custom.buy remote trusts this stale value and lacks active session, Type==12, proximity and dimension checks. Character.Repository also uses TuningShop for CurPosition resolution.
+- Registered VEH-010 and created TUNING_REMOTE_REVIEW.md. Expanded STOCK-002 retail/service review to include LS Customs reservation-before-SetCustomization and unchecked wallet debit.
+- Updated ISSUES, MASTER_CHECKLIST, TEST_PLAN, AUDIT_COVERAGE, INDEX, ROADMAP, CHANGELOG and SESSION_HANDOFF. Static-only; no source patch/build/RAGE/DB tests.
+- Next: continue remote authorization review around vehicle/business and phone flows; avoid duplication with VEH-010, VEH-009, PET-001 and STOCK-002.
