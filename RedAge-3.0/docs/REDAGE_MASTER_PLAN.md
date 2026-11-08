@@ -502,3 +502,11 @@ Implementation sequence: schema/deployed-engine verification → receipt DDL →
 
 - `ticketConfirm` now stops immediately when both wallet and bank debit attempts reject; no city/officer split payout or success effects follow the failed debit.
 - This is a bounded mitigation only. Durable one-shot fine intent/receipt, online cache persistence, replay/concurrency and failure/restart validation remain open. See `ISSUES.md`, `ECONOMY_REVIEW.md`, `TEST_PLAN.md`.
+
+
+## 2026-11-08 — ticket settlement guards and documentation synchronization
+
+- MONEY-033: `ticketToTarget` and `ticketConfirm` now use the same session lock; only one pending ticket is accepted, and confirmation detaches/consumes the pending intent before settlement. This prevents reuse of the same in-memory intent through repeated confirmation. Durable ticket receipt and atomic split payout remain open.
+- MONEY-060: `ticketConfirm` now exits immediately when both wallet and bank debit paths reject; no City Hall/officer split credit, success event or paid GameLog follows that failed debit.
+- Both are bounded source mitigations, not a durable settlement implementation. C# build, MariaDB fault injection, RAGE staging, concurrency and restart tests remain pending.
+- Added `DOCS_STATUS.md` to define document ownership, status vocabulary and the mandatory same-task documentation update cycle. It records MONEY-002 as partial in-process coordination, not a completed durable coordinator.
