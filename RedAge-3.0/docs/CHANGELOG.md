@@ -523,3 +523,10 @@
 
 - Traced offline auction refund, offline referral-owner reward and admin offline grant paths in addition to AddMoney and lottery payout. Recorded read-modify-absolute-write lost-update risks and login/full-save handoff races; account merger is tracked as a separate migration/import writer.
 - Expanded MONEY-002 regression cases for concurrent offline credits, login races, reward partial failures, retry/idempotency and merger interruption. No source code changed; storage engine for `characters` remains unverified.
+
+
+## 2026-11-08 — MONEY-002 schema and referral settlement evidence
+
+- Read the checked-in `database/main.sql`: `characters`, `money`, `accounts`, and `refferals` are declared InnoDB; `characters.money` is nullable signed INT; dump header says MariaDB 10.10.2. This is repository DDL evidence only, not confirmation of deployed schema.
+- Traced referral settlement ordering: online reward legs and success marker are separate; offline branch writes success marker, account RB/VIP, and cash in separate operations. Added fault-injection/replay cases.
+- No source code changed; no C# build, DB integration/fault-injection, concurrency, or RAGE staging test ran.
