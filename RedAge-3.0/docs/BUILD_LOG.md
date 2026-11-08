@@ -66,3 +66,9 @@
 - Verified one snapshot marker loop and one cleanup in `RequeueMoney`; normal `MoneyUpdate` cleanup remains in its per-row `finally`. Revision checks prevent an old detached absolute snapshot from overwriting a newer full-save/wallet version.
 - Verified `SaveSql` uses `ExecuteCharacterSave` and the shared UUID synchronization lock; `Wallet.Change` advances the revision while holding the same monitor.
 - Static source assertions only. No .NET compiler, MySQL instance or RAGE:MP runtime available; no concurrency/fault-injection test executed.
+
+
+### 2026-11-08 — MONEY-002 versioned writer coordination static assertions
+
+- Asserted shared striped monitor for Wallet mutation and SaveSql snapshot; per-UUID revision advance; stale detached snapshot check before SQL; in-flight markers at snapshot time; newer small mutation queueing during worker/full-save writes; version-aware retry; semaphore hand-off ordering.
+- All source assertions passed. No C# compiler/runtime, multithreaded stress, MySQL or RAGE staging test available. Direct cash SQL writers outside this coordinator remain explicitly uncovered.
