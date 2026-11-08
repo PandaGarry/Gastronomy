@@ -135,3 +135,5 @@
 - [ ] BUG-002/MONEY-047: make admin business deletion null-safe and idempotent across DB row, online/offline owner BizIDs/refund, runtime cache and world cleanup; test failures/restart. See BUSINESS_OWNERSHIP_REVIEW.md.
 
 - [ ] INV-012: bind vehicle trunk inventory to exact vehicle/access session and revalidate distance, dimension, door, ownership/key and faction/org rank on every mutation; test stale context and replay. See VEHICLE_TRUNK_ACCESS_REVIEW.md.
+
+- [ ] VEH-012: make vehicle trunk reservation release idempotent and session-owner-bound; clear BagInUse/SelectedVeh on OtherClose, context replacement, full close, disconnect and vehicle deletion; test competing openers and stale close. See VEHICLE_TRUNK_LIFECYCLE_REVIEW.md.
