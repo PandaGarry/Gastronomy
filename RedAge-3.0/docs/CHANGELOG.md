@@ -564,7 +564,7 @@
 - 2026-11-08 — MONEY-059: documented signed INT mismatch: Bank.Change/Transfer permit long balances beyond schema range, while Bank.Save rejects conversion and leaves the account dirty. Boundary tests pending.
 - 2026-11-08 — Reconciled MONEY-019/MONEY-040 status: reviewed house/business hourly tax paths now use ApplyBalanceAdjustment and dirty the bank account; durable cross-ledger tax settlement and repossession owner/payout issues remain open.
 
-- 2026-11-08 — MONEY-060: `ticketConfirm` continues to split fine proceeds and emit success events after both wallet and bank debit attempts return false; added failure/replay regression plan. Static-only; source unchanged.
+- 2026-11-08 — MONEY-060 initial finding (before the guard patch): `ticketConfirm` continued to split fine proceeds and emit success events after both wallet and bank debit attempts returned false. Failure/replay regression plan was added; the source guard is recorded in the later MONEY-060 changelog entry below.
 
 
 ## 2026-11-08 — MONEY-060 ticket settlement guard
