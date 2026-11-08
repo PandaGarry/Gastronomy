@@ -352,3 +352,5 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - [ ] Inject DB setup failure and mid-batch DELETE failure; pending delete IDs are retried on a later pass.
 - [ ] Restart after enqueue but before delete flush; document current in-memory queue loss until durable delete outbox exists.
 - [ ] Measure DB write rate and worker duration after marking every balance mutation dirty; verify 30-second polling does not create unacceptable write amplification or latency.
+
+- [ ] Verify Bank.Get(int)/Get(string) snapshots are stable and cannot mutate live account state; audit direct public Accounts dictionary consumers for lock bypass.
