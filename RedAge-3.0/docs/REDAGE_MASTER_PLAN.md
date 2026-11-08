@@ -354,3 +354,12 @@ Remaining: audit all mutable `Bank.Data` references/direct writes; verify purcha
 ### 2026-11-08 — property purchase settlement ordering
 
 Hardened direct business and house purchase flows: initialize the property bank balance through the synchronized API, require the buyer `Wallet.Change` debit to succeed, and only then perform ownership/success side effects. On debit rejection, attempt to restore the previous property-account balance and log failed compensation. Added explicit fault-injection cases. This is not a DB transaction; compensation/restart safety and auction award ordering remain open. No build or RAGE/MySQL test has run.
+
+
+### 2026-11-08 — bank API caller hardening and property settlement ordering
+
+- Every successful `Bank.Change` now marks the account dirty, including small personal-account mutations; dirty IDs are snapshotted under the account lock and the bank deletion worker uses a concurrent retry queue.
+- Property/business tax uses synchronized checked bank adjustment; the business Mafia tax share is applied only after successful bank debit.
+- House purchase debits before initializing the property bank and ownership; if bank initialization fails it attempts a buyer refund.
+- House/business auction awards initialize their bank balances through the synchronized API before assigning ownership/committing auction state; admin bank grants require `Bank.Change` success.
+- Targeted current-branch static assertions passed for these call paths. No C# compiler, MySQL/MariaDB or RAGE runtime is installed here, so no build/integration/staging test is claimed. Crash-safe multi-ledger transaction and public `Bank.Accounts` direct-access audit remain open.
