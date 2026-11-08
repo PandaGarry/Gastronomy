@@ -270,3 +270,10 @@ The wider repository search found additional paths outside Wallet.Change/the mon
 - Generated mapping confirms characters.money is nullable signed int(11); generated metadata reports MariaDB 10.4.12. This confirms the type contract only. The available search did not establish the storage engine for characters; InnoDB must be verified against the actual deployed DDL/runtime metadata before relying on transactional guarantees.
 
 **Current disposition:** no source change in this pass. The coordinator migration inventory must include wallet online mutations, full character save, worker flush, offline AddMoney, auction refund, referral reward, admin offline grant, lottery payout and account/server merger. Bank-account balance writers are a separate ledger and must be mapped before cross-ledger operations are designed.
+
+
+### MONEY-002 follow-up — character login publication race (2026-11-08)
+
+The login path confirms the cache handoff gap: Character.Load.Repository reads the Characters row and materializes CharacterData.Money near the start of the load, performs additional asynchronous loading work, and only later calls player.SetCharacterData(characterData). The reviewed path does not acquire Money.GetCharacterMoneySyncLock or the money semaphore around the DB read-to-cache-publication interval. An offline direct writer can therefore update the DB after the SELECT but before SetCharacterData; the newly published in-memory cache can start with the stale pre-update balance. The same missing login-side coordination means a future offline atomic increment alone is not sufficient.
+
+**Coordinator requirement:** login must participate in the same per-UUID serialization protocol as offline money operations and full saves, covering the authoritative balance read through cache publication. Offline writers must atomically establish that no login/cache publication is in progress before changing the DB row. Recheck this requirement during implementation; no source change was made here.
