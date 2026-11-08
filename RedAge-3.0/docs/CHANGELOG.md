@@ -548,3 +548,6 @@
 - No source code changed. No C# build, MariaDB fault injection, concurrency or RAGE staging tests ran.
 
 - 2026-11-08 — Добавлен MONEY-054: referral completion/RB/VIP persistence precedes cash reward; out-of-range cash or DB failure can leave a partially settled reward. Статический finding; source не менялся, tests pending.
+
+
+- 2026-11-08: MONEY-002 inventory extension — traced business tax repossession online/offline payout. Online Wallet.Change result is ignored; offline path performs async cash/Biz absolute UPDATE while business bank reset and owner clear continue independently. House repossession uses AddMoney fallback. Added payout/ownership/restart regression cases; no source/build/runtime tests.
