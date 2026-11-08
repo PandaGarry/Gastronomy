@@ -19,3 +19,10 @@
 ## Scope boundary
 
 This review covers phone government sale only. Player-to-player business transfer, auction award and order delivery have separate review notes; no full phone/business remote coverage is claimed.
+
+
+## Additional MONEY-026 evidence — sale proceeds are not a prerequisite for ownership release
+
+`OnSellConfirm` calls `MoneySystem.Wallet.Change(player, price)` and ignores its boolean result, then unconditionally writes the money log, removes the business ID from the in-memory `characterData.BizIDs`, and calls `biz.ClearOwner()` (`Players/Phone/Property/Businesses/Repository.cs:505-533`). `Wallet.Change` can return `false` when character state is unavailable, when the resulting `int` balance is negative after the `long`→`int` conversion, when shutdown/exception paths reject the operation (`MoneySystem/Wallet.cs:13-34`). Therefore a failed payout can still release the business to the state and remove it from the seller's active ownership list. This is a separate failure mode in the same settlement path, not a new ID: the existing `MONEY-026` must cover both payout replay after partial persistence and ownership transfer after rejected payout. Static only; no fault-injection reproduction.
+
+**Required regression addition:** inject `Wallet.Change=false` and an exception at sale confirmation. Assert business owner, `BizIDs`, wallet, money log and client success message remain unchanged/recoverable; test a valid payout followed by duplicate callback and crash/restart at each persistence boundary.
