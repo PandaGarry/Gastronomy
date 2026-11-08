@@ -1,3 +1,8 @@
+## 2026-11-08 — LinqToDB 3.3.0 transaction API reconnaissance
+
+- Verified against the pinned `linq2db.MySql` 3.3.0 source that `ServerBD` inherits `DataConnection` and exposes async begin/commit/rollback transaction methods. The 3.3.0 `BeginTransactionAsync` behavior disposes/rolls back an already attached transaction before starting another; coordinator must own one transaction per context.
+- This is API-level confirmation only. MariaDB InnoDB engine, schema constraints, commit durability, affected-row semantics and runtime rollback still require disposable-DB validation. No source code or DB schema changed.
+
 ## 2026-11-08 — MONEY-002 durability boundary and offline-writer test plan
 
 - Reconciled `MONEY-002` against the current source and issue register: queue synchronization/retry, revision-aware worker/full-save coordination and hand-off interleaving fixes are already present; build, concurrency and MySQL fault-injection validation remain pending.
