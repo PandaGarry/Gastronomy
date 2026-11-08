@@ -387,3 +387,5 @@
 - Cache initialization uses the exact validated database balance.
 - Regression cases added for boundary values, invalid input and concurrent reads/mutations.
 - Static source checks only; no build, DB or RAGE runtime tests have run.
+
+- Follow-up: synchronized GetBalance, holder lookup, account cache insert/removal and holder rename with the shared account lock. Retained checked account-creation validation against current TINYINT/INT schema. Mutable Data returned by Bank.Get(int) remains an open caller-audit item.
