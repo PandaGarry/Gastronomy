@@ -3349,6 +3349,11 @@ namespace NeptuneEvo.Core
                 var characterData = player.GetCharacterData();
                 if (characterData == null) return;
                 SellItemData sellItemData = sessionData.SellItemData;
+                if (sellItemData == null || sellItemData.Seller == null || !sellItemData.Seller.IsCharacterData())
+                {
+                    sessionData.SellItemData = new SellItemData();
+                    return;
+                }
                 ExtPlayer target = sellItemData.Seller;
                 var targetSessionData = target.GetSessionData();
                 var targetCharacterData = target.GetCharacterData();
@@ -3358,6 +3363,12 @@ namespace NeptuneEvo.Core
                     return;
                 }
                 int price = sellItemData.Price;
+                if (price <= 0 || !BizList.ContainsKey(sellItemData.Count))
+                {
+                    sessionData.SellItemData = new SellItemData();
+                    targetSessionData.SellItemData = new SellItemData();
+                    return;
+                }
                 Business biz = BizList[sellItemData.Count];
                 if (player.Position.DistanceTo(target.Position) > 2)
                 {
