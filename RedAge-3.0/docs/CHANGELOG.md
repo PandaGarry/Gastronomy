@@ -287,3 +287,11 @@
 - Traced CEF closeOther → client bridge → inventory.otherclose → Repository.OtherClose. The server clears InventoryOtherLocationName but leaves SelectedVeh and BagInUse; only full ItemsClose and disconnect currently release the reservation.
 - Registered VEH-012 and created VEHICLE_TRUNK_LIFECYCLE_REVIEW.md; linked it to INV-012 while keeping authorization and cleanup findings separate.
 - Static-only; no source changes, C# build, RAGE runtime or DB tests.
+
+
+## 2026-11-08 — INV-013/014 event loot remotes
+
+- AirDrop: team membership check is not a spatial check; start-hack lacks player/crate position binding, lock completion trusts client health and open-inventory lacks caller proximity/dimension validation.
+- MatWar: start/progress/open remotes lack active-war and proximity/session checks, share a generic IsAirDropHacking flag with AirDrop, and endWar leaves matwar_100 inventory/lock state until next startWar.
+- Registered INV-013 and INV-014; created AIRDROP_REMOTE_REVIEW.md and MATWAR_REMOTE_REVIEW.md. Expanded INVENTORY_REVIEW with the LoadOtherItemsData container entry-point map.
+- Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
