@@ -426,3 +426,12 @@
 - Не внесён source patch: простой atomic SQL increment не решает гонку с online wallet/full save и не даёт idempotent retry. Следующий шаг — продолжить inventory всех cash writers и определить единый coordinator/handoff contract.
 - Поиск DDL пока не подтвердил engine таблицы `characters`: найденные InnoDB определения относятся к `mainlogs.sql`, а не к денежной таблице. Не считать InnoDB доказанным.
 - Этот шаг обновляет только аудитные документы; C# build, MariaDB/MySQL fault injection и RAGE staging не запускались.
+
+
+## Контрольная точка 2026-11-08 — расширенный inventory денежных writers
+
+- Найдены дополнительные direct writers: offline Auction.Repository.ReturnMoney, offline referral-owner reward в Main.CheckMyPromoCode, Core.Admin.OffGiveMoney, а также character import в Accounts.Merger.Repository.
+- Auction/referral используют SELECT → application-side addition → absolute UPDATE без общей per-UUID координации. OffGiveMoney сначала проверяет offline status, но делает DB write позже в async task: login может произойти между check и update. Это статические race findings, не runtime reproduction.
+- Merger записывает агрегированный MoneyTo при создании целевого персонажа; включить в миграционный/idempotency plan отдельно от обычных wallet deltas.
+- Generated mapping подтверждает nullable signed int(11) для characters.money и MariaDB 10.4.12 в комментарии генерации; engine таблицы characters по доступным артефактам всё ещё не доказан.
+- Source code не менялся. Документация/тест-план расширены; build, DB fault injection и RAGE staging не запускались.
