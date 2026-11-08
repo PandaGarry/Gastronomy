@@ -466,3 +466,11 @@
 
 - `Database/Models/Money.cs`: prevent duplicate worker startup; use async task loop/nonblocking delay; reject invalid UUID and balances outside the current DB signed-INT range before enqueue.
 - Existing lock/retry/newer-value-wins logic retained. Static source checks only; no C# build, concurrency or MySQL fault-injection tests. Durable queue/restart recovery remains open.
+
+
+## 2026-11-08 — MONEY-036 wallet Int32 range guard
+
+- Patched `Wallet.Change` to calculate the new balance in `long` and reject values outside the existing signed DB INT range before mutating character state.
+- Patched `Character.Save.Repository.SaveSql` to reject invalid cash balance before related save side effects and `Convert.ToInt32`.
+- Confirmed `CharacterData.Money` is `long`; generated `characters.money` model is `int?` (`int(11)`). No schema migration performed.
+- Added boundary, UI, round-trip and concurrent worker/full-save tests. Static review only; no C# build, MySQL or RAGE tests.
