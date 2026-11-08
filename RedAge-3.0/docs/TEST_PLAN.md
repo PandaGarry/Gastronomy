@@ -231,3 +231,12 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] At the active crate, test normal hack/open, wrong ShapeId, instant zero/negative/oversized health, replay and duplicate completion.
 - [ ] Start AirDrop hack then call MatWar completion, and vice versa; generic session flags must not authorize another event.
 - [ ] End war while crate locked, unlocked and while a player has an open inventory; verify event inventory/session is removed/revoked and direct calls between wars reject. Next startWar must create a fresh generation. Static review: MATWAR_REMOTE_REVIEW.md; requires disposable RAGE staging.
+
+
+## INV-015 — fraction stock active-session authorization (pending staging)
+
+- [ ] Open each supported faction stock legitimately, then move away and direct-call openWeaponStock; reject without opening the Fraction container.
+- [ ] Repeat after going off duty, closing IsOpenGunStock, changing dimension, leaving/changing faction, and revoking OpenWeaponStock rank; all must reject and revoke stale session.
+- [ ] After a valid open, close stock or leave the area, then direct-call inventory.move, move.stack and use with other; reject without cache/DB/item mutation.
+- [ ] Verify OnFracStock is cleared on auxiliary close, full close, timeout, disconnect and membership/rank change; no stale value survives reconnect.
+- [ ] Regression across FIB, Sheriff, Army, City Hall and Police; verify each faction's intended rank/duty rules. Static review: FRACTION_STOCK_SESSION_REVIEW.md; requires disposable RAGE/MySQL staging.
