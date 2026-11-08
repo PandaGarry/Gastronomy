@@ -125,3 +125,12 @@ Static trace of ItemsUse → LoadOtherItemsData → GetLocationName/GetItemData/
 - Re-traced `Wallet.Change` → `AddMoneyUpdate` → `Money.Worker`; found the in-memory-first balance mutation and unsynchronized queue snapshot/clear with lost failed batches.
 - Patched MONEY-002 queue synchronization and in-process retry, preserving newer absolute values when an older batch fails.
 - Durable restart recovery remains absent; static patch only, no build/concurrency/DB fault-injection. See `ECONOMY_REVIEW.md`.
+
+
+### Bank transfer and persistence — 2026-11-08
+
+- Re-traced ATM confirmation → `ATM.AcceptTransfer` → `Bank.Transfer`; found replayable pending tuple, unchecked second credit, negative/zero amount acceptance and unsynchronized mutable account balances.
+- Patched `Bank.Change`/`Bank.Transfer` with shared process lock, checked arithmetic and post-mutation notification boundary; both transfer legs update together in memory and both accounts are marked dirty.
+- Patched `ATM.AcceptTransfer` to consume the confirmation tuple before execution and revalidate the source account against the active character.
+- Patched `Bank.Save` to preserve dirty state on DB errors/concurrent mutations and reject out-of-range DB INT balances.
+- Static only. No .NET build, MySQL fault injection, concurrency or RAGE staging test. Durable DB transaction/idempotency and crash recovery remain open. See `BANK_TRANSFER_REVIEW.md`.
