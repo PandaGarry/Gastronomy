@@ -100,6 +100,8 @@
 
 - [BUSINESS_FUEL_REVIEW](BUSINESS_FUEL_REVIEW.md) — government fleet refuelling quota and consistency of fraction FuelLeft, City Hall funds, business stock and vehicle fuel (`MONEY-045`).
 
+- [PETSHOP_REMOTE_REVIEW](PETSHOP_REMOTE_REVIEW.md) — pet-shop remote authorization, stale TempBizID, teleport ordering, replay and pet-model allowlist (`PET-001`).
+
 - `BUSINESS_FUEL_REVIEW.md` also tracks `VEH-009`: petrol remote lacks active fuel-station/location context and can reuse a stale/non-fuel BizID.
 
 - [MECHANIC_SERVICE_REVIEW](MECHANIC_SERVICE_REVIEW.md) — AutoMechanic repair/fuel offer settlement, two-sided wallet results, work-vehicle fuel reserve and replay/restart tests (`JOB-005`).
