@@ -42,3 +42,12 @@ The code statically demonstrates that stock state and player/vehicle inventory a
 - `MONEY-034`: gang drug purchase arithmetic and ignored item-grant result.
 
 **Status:** Open — static review documented; no patch, build, or runtime test.
+
+## 2026-11-08 — cash stock settlement interim patch
+
+Applied a narrow result-guard/order correction in both `Fractions.Manager.inputStocks` and `Organizations.Manager.inputStocks` for the `money` branches:
+
+- `put_stock`: require `Wallet.Change(player, -amount)` to succeed before increasing faction/organization cash stock or emitting money logs.
+- `take_stock`: require `Wallet.Change(player, amount)` to succeed before decreasing faction/organization cash stock or emitting money logs.
+
+This prevents a rejected wallet mutation from changing the corresponding stock cash balance. The operations remain in-memory, separate and non-durable: a process crash or concurrent callbacks can still split or duplicate the two sides, and no transaction/receipt/lock was added. Item cargo branches remain unchanged; ignored `AddNewItem`/`Remove` results remain tracked under STOCK-001. No C# build, MySQL fault injection, concurrency or RAGE staging tests were run.
