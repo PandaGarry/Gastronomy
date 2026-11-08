@@ -235,3 +235,11 @@
 - Registered VEH-010 and created TUNING_REMOTE_REVIEW.md. Expanded STOCK-002 retail/service review to include LS Customs reservation-before-SetCustomization and unchecked wallet debit.
 - Updated ISSUES, MASTER_CHECKLIST, TEST_PLAN, AUDIT_COVERAGE, INDEX, ROADMAP, CHANGELOG and SESSION_HANDOFF. Static-only; no source patch/build/RAGE/DB tests.
 - Next: continue remote authorization review around vehicle/business and phone flows; avoid duplication with VEH-010, VEH-009, PET-001 and STOCK-002.
+
+
+## 2026-11-08 continuation — VEH-011 mileage counter wrap
+
+- Found unchecked (uint)centimeters in server.vehicle.updateMileage; negative client values wrap to large unsigned increments in transient VehicleLocalData.Centimeters. No persistent DB corruption is claimed. Existing MONEY-012/PROG-007 still cover unverified taxi fare and BattlePass progression.
+- Client mileage calc runs on a 200ms render event but adds a per-second centimeter value without elapsed-time scaling; likely ~5x at exact cadence, pending runtime measurement. Added as a client-side observation, not a separate issue.
+- Registered VEH-011; updated TAXI_MILEAGE_REVIEW, ISSUES, MASTER_CHECKLIST, TEST_PLAN, AUDIT_COVERAGE, INDEX, ROADMAP, CHANGELOG and SESSION_HANDOFF. Static-only, no source changes/build/RAGE/DB tests.
+- Next: continue uncovered vehicle sync/control and garage/storage lifecycle; avoid duplicating MONEY-012, PROG-007, VEH-007..010.
