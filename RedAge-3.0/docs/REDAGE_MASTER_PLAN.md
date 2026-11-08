@@ -461,3 +461,9 @@ Still open: direct cash SQL writers outside this coordinator (including offline 
 ### MONEY-002 — retry hand-off race fix (2026-11-08)
 
 `MoneyUpdate` previously removed `ActiveMoneyWrites` in `finally` even on SQL exception, before `Worker` requeued the failed batch. A small wallet mutation in that interval could miss queue registration. The code now keeps the marker on failed SQL and lets `RequeueMoney` atomically requeue the current version and clear the marker; successful/superseded rows release it after semaphore release. Static verification only; deterministic concurrency/DB fault tests remain mandatory. Direct SQL money writers are still not serialized by the shared protocol and must be migrated only after online/offline semantics are established.
+
+### 2026-11-08 — MONEY-002 offline admin grant acknowledgement
+
+Applied a bounded ordering fix in Core/Admin.cs: OffGiveMoney now awaits the DB update, checks for exactly one affected character row, and only then emits money/admin logs and success notification. A failed or zero-row update no longer produces a false success acknowledgement.
+
+This is not a full money-writer migration. The read-then-absolute-write remains vulnerable to concurrent offline grants and races with online wallet persistence; there is no durable receipt/idempotency or crash recovery. Static source patch only; C# build and DB fault-injection remain pending. Regression cases added to TEST_PLAN.md; see ECONOMY_REVIEW.md.
