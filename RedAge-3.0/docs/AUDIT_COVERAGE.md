@@ -103,3 +103,5 @@ InHeliCrash installs KeyClampData before GetHealth performs the ArmyLockpick che
 ### Weapon/key-ring parent subcontainer binding — 2026-11-08
 
 Static trace of ItemsUse → LoadOtherItemsData → GetLocationName/GetItemData/SetItemData → shared move/stack/use remotes confirms that the session stores only the parent-derived location string and generic mutations do not revalidate current parent ownership. Registered INV-019; created WEAPON_KEYRING_SUBCONTAINER_REVIEW.md and staging matrix. Practical cross-owner extraction is not runtime-confirmed. Warehouse location policy and HeliCrash range lifecycle remain staging/policy questions.
+
+- 2026-11-08: reviewed `ConfirmTrade` and tent `ItemBuy` wallet/item settlement paths. Added MONEY-048 in `PLAYER_TRADE_REVIEW.md`; static only, runtime/fault-injection pending.
