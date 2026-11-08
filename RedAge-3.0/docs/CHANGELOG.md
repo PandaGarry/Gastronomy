@@ -410,3 +410,8 @@
 
 - `Chars/Repository.cs`: reject negative tent purchase quantity; normalize zero to one before stock/slot validation; require positive unit price; calculate total using `long` and reject values outside the `Wallet.Change` Int32 range; validate seller reference before dereference.
 - Static assertions passed. This does not fix unchecked buyer/seller wallet results or the non-atomic item/cash settlement; `ConfirmTrade` remains unchanged. No C# build, RAGE or MySQL tests.
+
+## 2026-11-08 — MONEY-037 house-sale preflight and audit attribution
+
+- `HouseManager.cs`: validate seller reference/session/character and positive pending price before settlement; correct `sellerCharacterData` to read from seller, fixing buyer UUID duplication in money logs.
+- Static assertions passed. Buyer debit/seller credit results remain unchecked and ownership transfer is still non-atomic. No C# build, RAGE or MySQL tests.
