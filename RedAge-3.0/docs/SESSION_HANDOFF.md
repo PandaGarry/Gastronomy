@@ -490,3 +490,5 @@
 - **MONEY-059 (2026-11-08):** `Bank.Change`/`Transfer` allow cached balances above signed SQL INT although `Bank.Save` rejects out-of-range snapshots and leaves them dirty. Enforce INT bounds before mutation or migrate the schema to BIGINT; boundary/restart tests pending.
 - Tax status correction: hourly house/business tax now calls `Bank.ApplyBalanceAdjustment`, so missing dirty-flag portion of MONEY-019/MONEY-040 is source-remediated. Durable tax ledger, house PROP-003 owner persistence and business MONEY-041 compensation/repo settlement remain open.
 - No source code changed in this pass; no C# build, DB fault injection or RAGE staging performed.
+
+- **MONEY-060 (2026-11-08):** `FractionCommands.ticketConfirm` continues after both cash and bank debit fail; city 60% and officer 40% payout/success events still execute. Initial funds check happens at prompt time and is not a reservation, so target may spend before confirm. Add early return and durable one-shot fine settlement; source unchanged, tests pending.
