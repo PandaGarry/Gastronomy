@@ -46,6 +46,17 @@
 
 **Обязательные проверки:** параллельные producers и snapshot/clear; добавление нового значения во время flush; failure первой/средней/последней строки; DB disconnect/reconnect; успешная часть batch + retry; process kill/restart до flush; длительный DB outage и очередь retry. C# build и MySQL fault injection не выполнялись.
 
+### MONEY-002 follow-up — worker lifecycle and invalid snapshots (2026-11-08)
+
+- `Money.Start()` is now idempotent per process via `Interlocked` guard; duplicate lifecycle calls cannot create multiple polling workers.
+- Worker is now `Task`-based and uses `await Task.Delay(1000)` instead of blocking a thread-pool thread with `Thread.Sleep`.
+- `AddMoneyUpdate` rejects nonpositive UUIDs, negative balances and values above `Int32.MaxValue` before enqueue. This prevents an out-of-range `long` snapshot from repeatedly failing `Convert.ToInt32` and poisoning every retry batch.
+- The existing queue lock, snapshot/clear, failed-batch retry and newer-value-wins behavior are retained.
+
+**Still open:** queue is process-memory only; no durable outbox, bounded retry/backoff/dead-letter or DB transaction. A process crash can still lose pending snapshots. No C# build, concurrency execution or MySQL fault injection has been run.
+
+**Additional tests:** call `Start()` repeatedly/concurrently and assert one worker; enqueue `0`, negative, `Int32.MaxValue`, `Int32.MaxValue + 1` and long extremes; verify invalid values do not enter retry loop; confirm valid snapshot still retries after DB outage and newer producer value wins.
+
 ## MONEY-003 — банковский transfer callback повторно применим к сохранённому session state
 
 **Уверенность: высокая по статическому потоку; эксплуатацию нужно подтвердить на staging.**
