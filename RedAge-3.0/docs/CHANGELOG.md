@@ -362,3 +362,11 @@
 - Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
 
 - 2026-11-08: documented MONEY-048 — unchecked wallet settlement and item-before-payment ordering in player trades and tent-market purchases. Documentation only; no gameplay patch or runtime validation.
+
+
+## 2026-11-08 — MONEY-002 money queue synchronization and retry (source patch)
+
+- Added a shared lock for queue producers and worker snapshot/clear; switched per-key replacement to dictionary indexer.
+- Failed absolute-value DB batches are requeued; retry preserves a newer value enqueued during the previous flush.
+- The batch remains in-memory and is not crash-durable; there is no transaction/outbox, bounded backoff or dead-letter policy.
+- Updated MONEY-002 evidence and regression plan. Static review only; no C# build, concurrency test or MySQL fault injection has run.
