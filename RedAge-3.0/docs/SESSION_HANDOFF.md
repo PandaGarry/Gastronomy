@@ -213,3 +213,9 @@
 
 - Traced mechanic repair/fuel offer and acceptance plus mechanic gas-station fuel purchase. `mechanicPay` and `mechanicPayFuel` ignore both buyer debit and mechanic credit results while applying service effects and reporting success; `buyFuel` ignores buyer debit before increasing work-vehicle fuel reserve. Registered JOB-005 in MECHANIC_SERVICE_REVIEW.md.
 - Updated issue register, master checklist, test plan, coverage, index, roadmap, changelog and handoff. Static-only; no gameplay source patch, C# build, RAGE runtime or DB failure injection.
+
+
+## 2026-11-08 continuation — business admin deletion
+
+- Audited deleteBusinessCommand: DB row is deleted before a null-unsafe owner lookup; offline/government owner can throw before BizList/world cleanup and intended offline BizIDs branch. Registered BUG-002. Online owner branch ignores Wallet.Change refund result before business removal; registered MONEY-047.
+- Extended BUSINESS_OWNERSHIP_REVIEW.md and updated issue register, checklist, test plan, coverage, index, roadmap, changelog and handoff. Static-only; RAGE/admin/DB failure tests not performed.
