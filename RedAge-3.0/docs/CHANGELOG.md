@@ -530,3 +530,10 @@
 - Read the checked-in `database/main.sql`: `characters`, `money`, `accounts`, and `refferals` are declared InnoDB; `characters.money` is nullable signed INT; dump header says MariaDB 10.10.2. This is repository DDL evidence only, not confirmation of deployed schema.
 - Traced referral settlement ordering: online reward legs and success marker are separate; offline branch writes success marker, account RB/VIP, and cash in separate operations. Added fault-injection/replay cases.
 - No source code changed; no C# build, DB integration/fault-injection, concurrency, or RAGE staging test ran.
+
+
+## 2026-11-08 — MONEY-002 coordinator design gate
+
+- Defined the proposed async coordinator contract: stable operation IDs, unique receipt and bounded cash delta in one InnoDB transaction, typed duplicate/uncertain outcomes, per-character gate through cache handoff and login publication, and removal of legacy absolute worker/full-save writes.
+- Explicitly recorded that synchronous in-memory-first `Wallet.Change` callers must migrate to awaited durable outcomes before success side effects; bank accounts remain a separate ledger.
+- Design/documentation only. No C# source implementation, build, DB integration or runtime tests.
