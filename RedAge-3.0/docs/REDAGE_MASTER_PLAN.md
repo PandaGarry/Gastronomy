@@ -338,3 +338,7 @@ Finding нельзя закрывать только потому, что код
 ### 2026-11-08 — MONEY-003 bank transfer remediation
 
 Applied a bounded source patch to `MoneySystem/Bank.cs`: account balance mutations are synchronized; transfers validate both accounts and both resulting balances before changing either cache; ATM confirmation state is consumed once and source ownership is revalidated; account saves retain dirty state on DB failure or concurrent mutation and reject values outside the current INT schema range. This is an in-memory consistency improvement only. It does not replace a MySQL transaction, durable idempotency key or crash-recovery ledger. Keep MONEY-003 open until legacy-target build, DB fault injection, concurrency and RAGE replay tests pass.
+
+### 2026-11-08 — MONEY-003 follow-up: account creation and reads
+
+Applied a bounded patch: `Bank.GetBalance` uses the shared account synchronization lock; `Bank.Create` rejects invalid holder/type/negative balance and checks conversion to the existing MySQL INT balance column before insertion. The cache is initialized from the validated DB value. Regression cases were added. This does not resolve the mutable `Bank.Data` reference escape hatch, bank deletion queue races, DB transactionality or crash recovery. Static-only; no .NET build, MySQL or RAGE tests.
