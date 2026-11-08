@@ -271,6 +271,8 @@ namespace NeptuneEvo.Database.Models
                     long version = Convert.ToInt64(saveData[2]);
                     var moneyLock = GetMoneyLock(uuid);
                     await moneyLock.WaitAsync();
+                    bool writeCompleted = false;
+                    bool snapshotSuperseded = false;
                     try
                     {
                         bool isCurrent;
@@ -284,20 +286,28 @@ namespace NeptuneEvo.Database.Models
                         // A full character save or newer wallet mutation superseded this
                         // detached absolute snapshot. Do not let it roll the DB balance back.
                         if (!isCurrent)
+                        {
+                            snapshotSuperseded = true;
                             continue;
+                        }
 
                         await db.Characters
                             .Where(v => v.Uuid == uuid)
                             .Set(v => v.Money, Convert.ToInt32(saveData[1]))
                             .UpdateAsync();
+                        writeCompleted = true;
                     }
                     finally
                     {
-                        // Keep the in-flight marker until after the semaphore is released,
-                        // so a wallet mutation in this hand-off window is still queued.
+                        // On SQL failure, keep the in-flight marker until Worker calls
+                        // RequeueMoney. Otherwise a small Wallet.Change could land between
+                        // marker removal and retry registration and be lost.
                         moneyLock.Release();
-                        lock (QueueLock)
-                            ActiveMoneyWrites.Remove(uuid);
+                        if (writeCompleted || snapshotSuperseded)
+                        {
+                            lock (QueueLock)
+                                ActiveMoneyWrites.Remove(uuid);
+                        }
                     }
                 }
 
