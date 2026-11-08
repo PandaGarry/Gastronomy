@@ -257,3 +257,11 @@
 - CEF `closeOther` clears the other pane and calls `client.inventory.OtherClose`; the client bridge invokes `server.gamemenu.inventory.otherclose`. `Repository.OtherClose` clears InventoryOtherLocationName but not SelectedVeh/BagInUse. Full ItemsClose and disconnect do release BagInUse, so the stale reservation can block another player until one of those paths runs.
 - Registered VEH-012 and created VEHICLE_TRUNK_LIFECYCLE_REVIEW.md. Separate from INV-012 (per-operation authorization); no source patch/build/runtime/DB test.
 - Next: trace all remaining LoadOtherItemsData endpoints and their container-specific open/close ACLs; then continue vehicle control/garage/storage lifecycle. Do not duplicate INV-003/INV-012/VEH-012.
+
+
+## 2026-11-08 continuation — INV-013/014 event loot remotes
+
+- Mapped LoadOtherItemsData targets: vehicle, furniture safes, faction stocks, organization stock, personal warehouse, tent, AirDrop, MatWar, HeliCrash, weapon components and key ring. INVENTORY_REVIEW now records entry paths and the shared mutation-boundary caveat.
+- AirDrop: IsPlayerToEvents is a TeamsInfo membership check, not proximity/dimension; StartedHack sets a generic session Boolean without binding the player to a DropId; AirdropChangeLockStatus trusts client health; OpenInventory opens unlocked loot without proximity/dimension checks. Added INV-013 / AIRDROP_REMOTE_REVIEW.md.
+- MatWar: start-hack lacks active-war/proximity/faction checks; completion trusts client health and shares IsAirDropHacking; open checks only character + ShapeId; endWar leaves matwar_100 and lock state until next startWar. Added INV-014 / MATWAR_REMOTE_REVIEW.md.
+- Static-only; no source patches, build, RAGE exploit reproduction or DB tests. Next: continue remaining container entry points (furniture, warehouse, faction/org stocks, HeliCrash) and close lifecycle/ACL traces; then vehicle control/garage/storage. Avoid duplicates with INV-003, INV-012..014 and VEH-012.
