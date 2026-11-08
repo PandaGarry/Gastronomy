@@ -327,3 +327,5 @@
 - Traced KeyClamp.SetKeyClamp → keyClamp.end → HeliCrash End. KeyClampData is installed before ArmyLockpick validation; the end remote trusts client value, and HeliCrash End can roll an unlock at zero without verifying a successful keydown reservation. Failed rolls leave a reusable session.
 - Registered INV-018 and created HELICRASH_KEYCLAMP_REVIEW.md with direct-remote and concurrency regression matrix.
 - Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
+
+- 2026-11-08: documented MONEY-048 — unchecked wallet settlement and item-before-payment ordering in player trades and tent-market purchases. Documentation only; no gameplay patch or runtime validation.
