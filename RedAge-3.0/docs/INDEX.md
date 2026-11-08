@@ -113,3 +113,6 @@
 - [VEHICLE_TRUNK_ACCESS_REVIEW](VEHICLE_TRUNK_ACCESS_REVIEW.md) — vehicle trunk inventory session binding and per-operation authorization (`INV-012`), with explicit open-trunk policy boundary.
 
 - [VEHICLE_TRUNK_LIFECYCLE_REVIEW](VEHICLE_TRUNK_LIFECYCLE_REVIEW.md) — vehicle trunk reservation release on auxiliary-pane close/context replacement and stale-owner-safe cleanup (`VEH-012`).
+
+- [AIRDROP_REMOTE_REVIEW](AIRDROP_REMOTE_REVIEW.md) — AirDrop hack state, client-supplied lock progress and loot-open authorization (INV-013).
+- [MATWAR_REMOTE_REVIEW](MATWAR_REMOTE_REVIEW.md) — MatWar active-war/spatial authorization, client-supplied lock progress and stale loot cleanup (INV-014).
