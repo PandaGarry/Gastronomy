@@ -1,6 +1,6 @@
 # Документация RedAge 3.0
 
-Обновлено: 2026-11-07. Источник: commit `23730b8cd464f86c47eaae6f80d182cd651092b2`; рабочая копия частичная. В `SOURCE_SNAPSHOT.md` указаны границы и локально очищенные конфиги.
+Обновлено: 2026-11-08. Рабочий статус ведётся в `DOCS_STATUS.md`; согласованная стратегия — `REDAGE_MASTER_PLAN.md`; актуальные findings — `ISSUES.md`. Исторические заметки ниже не переопределяют текущие статусы.
 
 ## Текущий статус
 
@@ -29,6 +29,8 @@
 - Business retail review: `STOCK-002` records takeProd stock decrement before owner-bank confirmation and retail callers ignoring customer debit/item-grant results; `MONEY-022` now also covers stock dirty-save omissions. Static only; see `BUSINESS_RETAIL_REVIEW.md`.
 
 ## Документы
+
+- [DOCS_STATUS](DOCS_STATUS.md) — иерархия документов, единые статусы, цикл синхронизации и актуальные денежные блокеры.
 
 - [ROADMAP](ROADMAP.md) — этапы, приоритеты, статусы и блокеры.
 - [AUDIT_COVERAGE](AUDIT_COVERAGE.md) — матрица покрытия подсистем и критерии завершения полного аудита.
@@ -129,4 +131,4 @@
 
 - [BANK_TRANSFER_REVIEW](BANK_TRANSFER_REVIEW.md) — ATM confirmation replay (`MONEY-003`), non-durable two-account transfer persistence (`MONEY-058`) and signed SQL INT balance boundary (`MONEY-059`).
 
-- Fraction ticket settlement is tracked as `MONEY-060` in `ECONOMY_REVIEW.md`: split payouts currently continue after both debit methods fail; failure/replay tests pending.
+- Ticket settlement: MONEY-033 consume-once intent guard and MONEY-060 early return after both debit failures are patched; durable receipt/split payout and runtime tests remain open. See `MAIN_REMOTE_REVIEW.md`, `ECONOMY_REVIEW.md` and `TEST_PLAN.md`.
