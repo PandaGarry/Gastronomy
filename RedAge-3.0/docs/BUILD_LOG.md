@@ -36,3 +36,11 @@
 - .NET compile/test — заблокировано отсутствием .NET SDK.
 - SQL import и backup/restore — заблокированы отсутствием MySQL/MariaDB.
 - RAGE:MP server/client smoke test — заблокирован отсутствием полного runtime/assets и рабочего staging.
+
+
+### 2026-11-08 — money/bank patch validation environment
+
+- Checked the active execution environment: `dotnet`, `msbuild`, `csc`, `mcs`, `mysql` and `mariadb` are not installed.
+- Therefore no C# compilation, unit/integration execution or MySQL fault injection was performed for MONEY-002/MONEY-003/property settlement patches.
+- Static source assertions were executed against the current `redage/audit-continuation` branch for bank locking, two-leg transfer mutation, positive amount/overflow guards, one-shot ATM confirmation, revision-aware save retry, dirty marking, concurrent delete queue, and migrated bank/property call sites. Assertions passed; they are not a substitute for compiler/runtime tests.
+- RAGE:MP staging and multi-client tests remain unavailable. Do not close affected findings or claim runtime validation.
