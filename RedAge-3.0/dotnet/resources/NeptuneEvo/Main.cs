@@ -2433,8 +2433,19 @@ namespace NeptuneEvo
                                 }*/
                             }    
                             var vehicle = (ExtVehicle) player.Vehicle;
-                            VehicleManager.RepairCar(vehicle);
-                            MoneySystem.Wallet.Change(player, -500);
+                            if (!MoneySystem.Wallet.Change(player, -500))
+                            {
+                                Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.NoMoney), 3000);
+                                return;
+                            }
+                            if (!VehicleManager.RepairCar(vehicle))
+                            {
+                                if (!MoneySystem.Wallet.Change(player, 500))
+                                    Log.Write($"CRITICAL: self-repair refund failed for player {characterData.UUID}");
+
+                                Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось отремонтировать транспорт. Оплата возвращена.", 3000);
+                                return;
+                            }
                             GameLog.Money($"player({characterData.UUID})", $"server", 500, $"serviceMechanic");
                             Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.RepairPayed), 3000);
                             BattlePass.Repository.UpdateReward(player, 13);
