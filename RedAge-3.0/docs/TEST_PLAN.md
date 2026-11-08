@@ -180,3 +180,13 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - **AutoMechanic service settlement (`JOB-005`):** independently inject buyer debit and mechanic credit false/exception for repair and fuel delivery; assert no free service, unpaid mechanic, false success or quest progress. For buyFuel, fail wallet debit after takeProd and assert no increase in mechanic fuel reserve. Test stale/replaced offers, wrong buyer, movement, vehicle swap, work-duty changes, duplicate callback, disconnect and restart at each settlement boundary. Static review: `MECHANIC_SERVICE_REVIEW.md`; requires disposable RAGE/MySQL staging.
 
 - **Admin business deletion (`BUG-002`, `MONEY-047`):** delete government-owned and privately owned businesses with online/offline owners. Inject null player lookup, missing character, Wallet.Change=false/exception, SQL delete/update failure and crash between writes. Assert DB row, BizList/world objects, owner BizIDs, wallet and compensation receipt converge after restart; no success notice before committed deletion.
+
+
+## PET-001 — pet-shop remote context and one-shot purchase (pending staging)
+
+- [ ] Direct/replayed petshopBuy without active pet-shop intent; stale TempBizID from every non-pet business type must not authorize the action or teleport the player.
+- [ ] Require Type==14, proximity, dimension, current session and one-shot intent; test moving away, changing dimension, disconnect and context replacement.
+- [ ] Test all nine server-allowed pet names and arbitrary/empty/oversized values; invalid model strings must not be persisted or passed to client mp.peds.new.
+- [ ] No house, unsupported house type and no PetPosition must reject before teleport/payment.
+- [ ] Missing food product, zero/negative price, stock shortage, owner-bank failure and customer Wallet.Change=false/exception must leave house, character, stock and balances unchanged.
+- [ ] Duplicate/concurrent confirmation and replay after success must result in at most one charge and one pet-state mutation; restart after each settlement boundary must reconcile exactly once. Static review: PETSHOP_REMOTE_REVIEW.md; requires disposable RAGE/CEF/MySQL staging.
