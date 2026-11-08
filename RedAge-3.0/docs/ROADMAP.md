@@ -146,3 +146,5 @@
 - [ ] INV-016: revoke Organization inventory session on interior exit and revalidate current organization/dimension/stock state on every mutation; test stale and concurrent remotes. See ORGANIZATION_STOCK_SESSION_REVIEW.md.
 
 - [ ] INV-017: revoke furniture safe inventory on house exit and bind it to exact house/object/access mode; revalidate range, dimension and ACL on every mutation. See FURNITURE_SAFE_SESSION_REVIEW.md.
+
+- [ ] INV-018: make HeliCrash key-clamp progress server-authoritative; require exact active player/box reservation and lockpick; clear/revoke state on success, failure, exit and disconnect. See HELICRASH_KEYCLAMP_REVIEW.md.
