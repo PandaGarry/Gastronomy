@@ -140,3 +140,12 @@ Static trace of ItemsUse → LoadOtherItemsData → GetLocationName/GetItemData/
 - Bank persistence follow-up: all successful Bank.Change operations now mark dirty; background worker snapshots dirty IDs under AccountSync and uses a ConcurrentQueue with retry for failed account deletes. In-memory queue is not crash-durable; test DB failure, restart and write amplification.
 
 - Migrated active bank-balance writes in reviewed property/business callers to synchronized APIs: house/business tax, house purchase, house/business auction awards and admin bank grants. Targeted scan found no active direct Balance property writes in the reviewed callers; public Bank.Accounts exposure means repository-wide audit remains open.
+
+
+### Money persistence — direct-writer inventory continuation (2026-11-08)
+
+- Reviewed `Auction.Repository.ReturnMoney`: online result is not checked before notification; offline cash branch reads and absolute-writes `characters.money`, without operation receipt/affected-row check and with a login/cache race. Tracked as MONEY-055.
+- Reviewed `Accounts.Merger.Repository`: aggregate cash/property valuation uses signed `int`; destination bank/character/assets are created before a durable per-character checkpoint/account slot save; replay/recovery and cashback idempotency are undefined. Tracked as MONEY-056.
+- Reviewed `Table.Tasks.Repository` offline money awards: SQL-side increment is atomic at row level but lacks stable reward receipt, explicit NULL/range policy and login publication gate; partial cash/item awards are not resumable. Tracked as MONEY-057.
+- Rechecked `Core.Admin.OffGiveMoney`: it awaits UPDATE and checks affected rows before success side effects, but still uses read/absolute-write and can race a login after the initial online check. This is a bounded acknowledgement fix, not coordinator migration.
+- Source code unchanged in this pass. Static review only; no build, disposable DB, concurrency/fault-injection or RAGE staging tests.
