@@ -164,3 +164,9 @@
 
 - [ ] MONEY-017 — house purchase source patch now checks buyer debit before ownership; bank-init failure attempts refund. Validate compensation and restart consistency. See PROPERTY_PURCHASE_REVIEW.md.
 - [ ] MONEY-019 — house/business tax now uses synchronized bank adjustment and delays associated tax side effects until debit succeeds; validate DB/restart and remaining repossession owner persistence. See PROPERTY_TAX_REVIEW.md.
+
+
+## 2026-11-08 — money persistence follow-up
+
+- `MONEY-036`: partial source patch now enforces the existing signed `INT` wallet range with checked `long` arithmetic in `Wallet.Change`, validates full character saves before narrowing, and protects the offline auction refund fallback from overflow. Boundary/DB/UI tests remain pending; no BIGINT migration was made.
+- `MONEY-002`: the persistence queue still needs durable recovery and a per-character write-ordering design. A detached worker batch can race the full character save and overwrite a newer cash balance; see `ISSUES.md` and `ECONOMY_REVIEW.md`.
