@@ -273,3 +273,10 @@
 
 - Continued the taxi mileage trace. server.vehicle.updateMileage casts client-supplied signed int centimeters to uint without a positive/range check; negative values wrap into huge transient VehicleLocalData.Centimeters increments. Client meter also appears to accumulate centimeters/second on a 200ms callback without elapsed-time scaling (runtime cadence needs measurement).
 - Registered VEH-011 separately from MONEY-012/PROG-007; expanded TAXI_MILEAGE_REVIEW, issue register, checklist, regression plan, coverage, index, roadmap and handoff. No source code changed; no runtime/build/DB test.
+
+
+## 2026-11-08 — INV-012 vehicle trunk inventory context
+
+- Traced vehicleSelected branch 3 → LoadOtherItemsData → generic inventory move/stack/use remotes. Initial 5m/trunk-open gate is not revalidated on each item mutation; the generic item methods rely on InventoryOtherLocationName and do not bind it to current vehicle/access/range/dimension/door state.
+- Registered INV-012 with an explicit policy caveat: whether any nearby player may loot a physically open trunk requires gameplay-owner confirmation; stale session and missing per-operation range/context checks remain the concern. Created VEHICLE_TRUNK_ACCESS_REVIEW.md and updated inventory/issue/test/checklist/coverage/index/roadmap/handoff docs.
+- Static-only; no source patch, C# build, RAGE runtime or DB fault injection.
