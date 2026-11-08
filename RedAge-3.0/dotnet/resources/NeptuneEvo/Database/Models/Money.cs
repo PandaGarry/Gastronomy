@@ -13,7 +13,67 @@ namespace NeptuneEvo.Database.Models
     {
         private static readonly nLog Log = new nLog("Database.Money");
         private static readonly object QueueLock = new object();
+        // A fixed stripe count avoids an unbounded per-character semaphore cache.
+        private static readonly SemaphoreSlim[] MoneyLocks = Enumerable.Range(0, 64)
+            .Select(_ => new SemaphoreSlim(1, 1))
+            .ToArray();
+        private static readonly Dictionary<int, long> MoneyVersions = new Dictionary<int, long>();
         private static int _workerStarted;
+
+        private static SemaphoreSlim GetMoneyLock(int uuid)
+        {
+            return MoneyLocks[(uuid & int.MaxValue) % MoneyLocks.Length];
+        }
+
+        private static long NextMoneyVersion(int uuid)
+        {
+            long current = MoneyVersions.TryGetValue(uuid, out var version) ? version : 0;
+            long next = checked(current + 1);
+            MoneyVersions[uuid] = next;
+            return next;
+        }
+
+        private static long GetMoneyVersion(int uuid)
+        {
+            return MoneyVersions.TryGetValue(uuid, out var version) ? version : 0;
+        }
+
+        // The full character save and the detached money worker must serialize writes
+        // to characters.money. Starting a full save advances the version, invalidating
+        // any older detached worker snapshot before its SQL UPDATE can run.
+        public static async Task ExecuteCharacterSave(int uuid, long amount, Func<Task> saveAction)
+        {
+            if (uuid <= 0 || amount < 0 || amount > int.MaxValue || saveAction == null)
+                throw new ArgumentOutOfRangeException(nameof(amount), "Invalid character money save.");
+
+            var moneyLock = GetMoneyLock(uuid);
+            await moneyLock.WaitAsync();
+            long saveVersion;
+            lock (QueueLock)
+            {
+                saveVersion = NextMoneyVersion(uuid);
+                MoneyUpdateList.Remove(uuid);
+            }
+
+            try
+            {
+                await saveAction();
+            }
+            catch
+            {
+                // If a newer Wallet change was queued during this save, preserve it.
+                lock (QueueLock)
+                {
+                    if (GetMoneyVersion(uuid) == saveVersion && !MoneyUpdateList.ContainsKey(uuid))
+                        MoneyUpdateList[uuid] = new object[] { uuid, amount, saveVersion };
+                }
+                throw;
+            }
+            finally
+            {
+                moneyLock.Release();
+            }
+        }
 
         public static void Start()
         {
@@ -134,7 +194,8 @@ namespace NeptuneEvo.Database.Models
 
             lock (QueueLock)
             {
-                MoneyUpdateList[uuid] = new object[] { uuid, amount };
+                long version = NextMoneyVersion(uuid);
+                MoneyUpdateList[uuid] = new object[] { uuid, amount, version };
             }
         }
 
@@ -148,8 +209,9 @@ namespace NeptuneEvo.Database.Models
                 foreach (var saveData in batch)
                 {
                     var uuid = Convert.ToInt32(saveData[0]);
-                    // Preserve a newer absolute balance queued while this batch was being written.
-                    if (!MoneyUpdateList.ContainsKey(uuid))
+                    var version = Convert.ToInt64(saveData[2]);
+                    // Never resurrect a snapshot invalidated by a newer wallet/full-save write.
+                    if (GetMoneyVersion(uuid) == version && !MoneyUpdateList.ContainsKey(uuid))
                         MoneyUpdateList[uuid] = saveData;
                 }
             }
@@ -161,10 +223,30 @@ namespace NeptuneEvo.Database.Models
             {
                 foreach (var saveData in moneyUpdateList)
                 {
-                    await db.Characters
-                        .Where(v => v.Uuid == Convert.ToInt32(saveData[0]))
-                        .Set(v => v.Money, Convert.ToInt32(saveData[1]))
-                        .UpdateAsync();
+                    int uuid = Convert.ToInt32(saveData[0]);
+                    long version = Convert.ToInt64(saveData[2]);
+                    var moneyLock = GetMoneyLock(uuid);
+                    await moneyLock.WaitAsync();
+                    try
+                    {
+                        bool isCurrent;
+                        lock (QueueLock)
+                            isCurrent = GetMoneyVersion(uuid) == version;
+
+                        // A full character save or newer wallet mutation superseded this
+                        // detached absolute snapshot. Do not let it roll the DB balance back.
+                        if (!isCurrent)
+                            continue;
+
+                        await db.Characters
+                            .Where(v => v.Uuid == uuid)
+                            .Set(v => v.Money, Convert.ToInt32(saveData[1]))
+                            .UpdateAsync();
+                    }
+                    finally
+                    {
+                        moneyLock.Release();
+                    }
                 }
 
                 return true;
