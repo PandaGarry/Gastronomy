@@ -662,3 +662,12 @@ Static source review only. These tests require a disposable MariaDB database and
 - [ ] Inject Save retry/restart after boundary rejection; verify no permanently dirty unpersistable account.
 - [ ] If schema is migrated to BIGINT, verify ORM model, dump, migrations, all conversion sites and client formatting end-to-end.
 - Статус: статический review; tests не запускались.
+
+
+### MONEY-060 — ticket fine payout must require successful debit
+
+- [ ] Open a fine prompt while the target has sufficient funds; spend cash and bank before confirming; force both Wallet.Change and Bank.Change to return false.
+- [ ] Assert failed debit causes immediate return: no city fraction credit, no officer wallet credit, no success notification/event, and no paid GameLog.
+- [ ] Verify wallet success path and bank fallback success path each settle exactly once; force first debit failure and second success.
+- [ ] Replay/concurrently invoke confirmation and test shutdown/DB persistence boundaries; one fine intent must produce at most one debit and one split payout.
+- Статус: статический review; source patch/build/RAGE/DB tests не выполнялись.
