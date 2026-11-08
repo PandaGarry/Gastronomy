@@ -6,8 +6,8 @@
 
 **Приоритет: средний; source path подтверждён.** Нужен активный taxi ride: водитель управляет taxi-work vehicle, passenger pointer был выставлен обычным серверным seating flow, и у passenger есть средства.
 
-- `src_client/vehicle/mileage.js:13-20, 28-41` client сам суммирует скорость (`vehicle.getSpeed()`) и раз в 10 секунд отправляет `server.vehicle.updateMileage(vehicle.remoteId, this.centimeters)`. Это клиентский расчёт, а не server-measured delta.
-- `dotnet/resources/NeptuneEvo/Core/VehicleSync.cs:327-360` remote проверяет character, что sender находится в vehicle с переданным ID, и наличие `VehicleLocalData`. Он без проверки диапазона/знака/частоты прибавляет client `centimeters` к `Centimeters`, вычисляет miles из того же значения, ограничивает каждое сообщение тремя miles и для taxi driver вызывает `TaxiPay`.
+- `src_client/vehicle/mileage.js:13-20, 28-41` client сам суммирует скорость (`vehicle.getSpeed()`) и раз в 10 секунд отправляет `server.vehicle.updateMileage(vehicle.remoteId, this.centimeters)`. Это клиентский расчёт, а не server-measured delta. `calc()` is scheduled on the `200ms` render event but adds `speed * 100` (centimeters per second) without multiplying by elapsed seconds; at a stable 200ms cadence this appears to over-accumulate by approximately 5x. Exact scheduler cadence needs runtime measurement. This is another reason client accumulator values cannot be trusted for fare.
+- `dotnet/resources/NeptuneEvo/Core/VehicleSync.cs:327-360` remote проверяет character, что sender находится в vehicle с переданным ID, и наличие `VehicleLocalData`. Он без проверки диапазона/знака/частоты прибавляет client `centimeters` к `Centimeters`, вычисляет miles из того же значения, ограничивает каждое сообщение тремя miles и для taxi driver вызывает `TaxiPay`. The cast `(uint)centimeters` is unchecked: a negative signed payload wraps to a very large positive `Centimeters` increment (for example `-1` becomes `4,294,967,295`). `Centimeters` and `Mileage` belong to transient `VehicleLocalData`, so durable DB corruption is not established; the effect is in-memory counter corruption. Registered separately as `VEH-011`, distinct from the fare/progression effects in `MONEY-012`/`PROG-007`.
 - `Players/Phone/Taxi/Orders/Repository.cs:209-215` устанавливает TaxiData driver/passenger pointers, когда пассажир садится в taxi. Exit cleanup есть на `:258-280`; этим finding не утверждается отсутствие требуемого ride state.
 - `TaxiPay` (`:318-368`) получает fare из client-derived mileage: `$30` за mile, то есть до `$90` за каждое сообщение. Проверяет наличие средств через `CanIChange`, затем отображает сумму и выполняет `Wallet.Change(driver, +price)` и `Wallet.Change(passenger, -price)` без проверки результатов; нет server-side traveled-distance reconstruction или per-ride bill cap/rate gate в этих двух methods. Повторные поддельные remote calls во время ride могут начислять водителю реальные тарифные суммы и списывать их с passenger за неподтверждённую поездку.
 
@@ -37,3 +37,16 @@
 
 - Client file показывает штатный формат события, но modified-client и staging reproduction не выполнялись.
 - Нужны C# build, disposable DB и RAGE staging; issue открыт и source code не менялся.
+
+
+## VEH-011 — negative mileage payload wraps the unsigned odometer accumulator
+
+**Приоритет: низкий; signed-to-unsigned wrap is statically confirmed.**
+
+- `VehicleLocalData.Centimeters` is a `uint`, while the remote parameter `centimeters` is a signed `int` (`VehicleData/LocalData/Models/VehicleLocalData.cs:45-46`, `Core/VehicleSync.cs:327-342`).
+- The handler executes `vehicleLocalData.Centimeters += (uint) centimeters` without checking `centimeters > 0`. In the default unchecked conversion context, `-1` becomes `4,294,967,295`; other negative values map to large unsigned deltas. Repeated/large positive deltas are also not bounded by elapsed time or a server-measured movement delta.
+- `Centimeters` and `Mileage` are fields on transient `VehicleLocalData`, not demonstrated persistent vehicle DB columns. Therefore this review does not claim durable odometer/database corruption. The taxi fare and BattlePass impacts from the same untrusted delta remain MONEY-012 and PROG-007.
+
+**Remediation (not implemented):** reject zero/negative deltas, cap accepted delta using server-observed movement and elapsed time, avoid unchecked signed/unsigned conversion, and use checked/saturating counter arithmetic. Long-term, derive distance on the server and use a single verified distance receipt for display, fare and progression.
+
+**Regression:** direct event with `-1`, `int.MinValue`, `0`, `1`, `int.MaxValue`, repeated requests, fast cadence, stationary vehicle, vehicle swap, passenger seat and resource restart. Verify invalid deltas do not mutate either counter and do not trigger fare/progression; valid movement uses measured elapsed-time distance. Requires RAGE staging.
