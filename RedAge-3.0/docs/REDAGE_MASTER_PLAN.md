@@ -257,7 +257,8 @@ Finding нельзя закрывать только потому, что код
 |---|---|---|
 | MONEY-049 | Metro: checked long price calculation; success only after successful wallet debit | negative/zero/normal/max input, Wallet false/exception, no log/event/dimension on failure, real ticket flow |
 | MONEY-050 | Driving School: all six active license cases stop on failed debit before license/quest/faction/log effects | six success cases, debit false/exception, duplicate callback, shutdown/reconnect/save |
-| MONEY-051 | Street Race: both stake debits required before race status/start; compensate first stake if second fails | first/second debit failures, refund failure, duplicate/concurrent accept/finish, payout durability, restart |\n| MONEY-052 | StreetRace finish remote now requires active race and server-side 10m proximity to stored finish | pending-offer replay, outside-radius call, waypoint validation, concurrent finish, payout/recovery tests |
+| MONEY-051 | Street Race: both stake debits required before race status/start; compensate first stake if second fails | first/second debit failures, refund failure, duplicate/concurrent accept/finish, payout durability, restart |
+| MONEY-052 | StreetRace finish remote now requires active race and server-side 10m proximity to stored finish | pending-offer replay, outside-radius call, finite/min-distance waypoint validation, map bounds, concurrent finish, payout/recovery tests |
 | PERF-002 | CEF production defaults and hotReload disabled for prod | clean install/build for all scripts, output inspection, no source maps/HMR, CEF/RAGE UI smoke, size/time baseline |
 
 **Незакрытые риски Street Race:** MONEY-051 stake compensation durability; MONEY-052 client-supplied waypoint validation; winner payout result and exactly-once durable settlement; `ClearData` abort/death payout result. Ни один из этих finding'ов не закрыт runtime-тестами.
