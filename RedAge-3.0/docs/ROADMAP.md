@@ -160,8 +160,6 @@
 - [ ] MONEY-049 — Metro ticket price overflow and unchecked debit; source patch added, boundary/failure staging required. See `METRO_REVIEW.md`.
 - [ ] MONEY-048 — player cash/item trade and tent-market purchase settlement; checked pricing, exact debit/credit, durable idempotency and compensation. See `PLAYER_TRADE_REVIEW.md`.
 
-- [ ] MONEY-003 — bank transfer source patch applied: one-shot ATM confirmation, source ownership revalidation, synchronized two-account mutation, checked arithmetic, revision-aware retryable save. Validate with build, DB fault injection, concurrency and RAGE replay; design durable transaction/ledger before closure. See BANK_TRANSFER_REVIEW.md.
-
 - [ ] MONEY-017 — house purchase source patch now checks buyer debit before ownership; bank-init failure attempts refund. Validate compensation and restart consistency. See PROPERTY_PURCHASE_REVIEW.md.
 - [ ] MONEY-019 — house/business tax now uses synchronized bank adjustment and delays associated tax side effects until debit succeeds; validate DB/restart and remaining repossession owner persistence. See PROPERTY_TAX_REVIEW.md.
 
