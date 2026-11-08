@@ -182,3 +182,10 @@
 
 - Versioned in-process coordination now covers Wallet.Change, detached money worker batches and full Character.SaveSql; stale worker snapshots are skipped and small changes during pending/in-flight writes are coalesced.
 - Direct cash SQL writers outside the coordinator remain the next migration target. Durable outbox/restart recovery, retry policy, compiler, DB concurrency and RAGE tests remain open.
+
+
+## 2026-11-08 — MONEY-002 retry hand-off refinement
+
+- Fixed the SQL-failure-to-retry window: detached money writes retain their in-flight marker after a failed UPDATE until the worker requeues the current version. This prevents a small wallet mutation from slipping between marker removal and retry registration.
+- Direct SQL cash writers remain outside the shared per-character protocol and need operation-by-operation migration after online/offline and pending-snapshot semantics are established. No blind wrapping.
+- Runtime concurrency, DB fault injection, build and durable restart tests remain pending.
