@@ -179,3 +179,13 @@
 - [ ] **MONEY-058/059 — bank durability/range:** inject failure between account saves; test replay, conservation, INT_MAX and rejected destination overflow. See `BANK_TRANSFER_REVIEW.md`.
 
 - [ ] **MONEY-060 — ticket debit guard:** early return is patched when both Wallet.Change and Bank.Change reject; validate wallet success, bank fallback, both-fail after spend-after-prompt, no split credits/success effects on failure, shutdown and persistence. Durable atomic split settlement remains open; intent replay is tracked separately in MONEY-033.
+
+
+### MONEY-002 — verified direct-writer migration inventory (2026-11-08)
+
+- [ ] Migrate Character.Save.Repository.AddMoney, auction offline refund, referral reward, business repossession, admin offline grant and offline table-task cash award to durable operation IDs and the shared coordinator.
+- [ ] Treat Accounts.Merger as an idempotent import workflow, including its later absolute Characters.Money update; do not route aggregate import through a generic wallet delta without a merge checkpoint.
+- [ ] Add the login read-to-SetCharacterData publication gate; offline cash writes must serialize against it.
+- [ ] Remove Money from generic Character.Save.Repository.SaveSql and retire detached worker absolute snapshots only after all writers have migrated.
+- [ ] Keep character creation's initial cash INSERT as initialization and test it separately from post-creation ledger operations.
+- Evidence and regression matrix: ECONOMY_REVIEW.md, TEST_PLAN.md. Static inventory only; all DB/build/RAGE tests remain pending.
