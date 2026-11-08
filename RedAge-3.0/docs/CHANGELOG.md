@@ -253,3 +253,10 @@
 - Добавлен `JOB-005`: AutoMechanic repair/fuel acceptance игнорирует результаты списания клиента и начисления механику, но выполняет repair/fuel transfer, success logs и quest progress. `buyFuel` также увеличивает топливный резерв после непроверенного списания. Создан `MECHANIC_SERVICE_REVIEW.md` с failure/replay/restart matrix. Static-only; build/RAGE/DB tests не выполнялись.
 
 - Расширен `BUSINESS_OWNERSHIP_REVIEW.md`: `BUG-002` — admin delete удаляет DB row до null-unsafe owner lookup, из-за чего offline/government owner может оставить runtime BizList/world ghost; `MONEY-047` — результат online owner refund игнорируется перед удалением бизнеса. Добавлены failure/restart tests. Static-only.
+
+
+## 2026-11-08 — PET-001 pet-shop remote authorization
+
+- Traced the pet-shop client event and server petshopBuy handler. It trusts any existing TempBizID, does not validate Type==14, active location/session or pet name, teleports before house eligibility checks and leaves the intent reusable after success.
+- Added PET-001 and PETSHOP_REMOTE_REVIEW.md; expanded MONEY-045 with stale pre-clamp tfuel (stock quantity, price and applied fuel can diverge). Updated issue register, test plan, checklist, coverage, roadmap, index and handoff.
+- Static-only. No source patch, build, RAGE/CEF runtime or DB fault injection was performed.
