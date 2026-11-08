@@ -124,3 +124,5 @@
 - [FURNITURE_SAFE_SESSION_REVIEW](FURNITURE_SAFE_SESSION_REVIEW.md) — furniture safe inventory context remains mutable after house exit (`INV-017`).
 
 - [HELICRASH_KEYCLAMP_REVIEW](HELICRASH_KEYCLAMP_REVIEW.md) — HeliCrash lockpick/minigame bypass through client-controlled keyClamp.end (`INV-018`).
+
+- [WEAPON_KEYRING_SUBCONTAINER_REVIEW](WEAPON_KEYRING_SUBCONTAINER_REVIEW.md) — parent-item ownership binding for weapon attachments and CarKey subcontainers (`INV-019`); static finding, staging required.
