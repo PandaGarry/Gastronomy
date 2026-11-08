@@ -98,3 +98,5 @@ The LoadOtherItemsData call-site search found these server container families. T
 - Weapon components / key ring: Chars/Repository.cs also uses LoadOtherItemsData for weapon_<itemSqlId> and CarKey_<itemSqlId>; these are item-owned subcontainers and require source-item ownership/existence checks on every mutation.
 
 Across these families, ItemsMove, ItemsMoveStack and ItemsUse remain shared mutation endpoints. Entry-time ACL checks are not a substitute for server-side validation of the current container intent, owner/object identity, player location/dimension, role/rank and allowed item/slot pairs. Keep INV-003 as the umbrella policy gap and concrete INV-012..014 findings as separate entry-point cases.
+
+- Organization stock: Organizations/Manager.cs checks organization status, stock-open state and InsideOrganizationID at open; RemovePlayer clears InsideOrganizationID without closing/revoking the container, while generic item mutations do not repeat membership/rank/stock state. Post-exit stale context is tracked as INV-016.
