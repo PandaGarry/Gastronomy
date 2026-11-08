@@ -454,3 +454,17 @@
 - Банк — отдельный ledger; cross-ledger settlement не входит автоматически в этот coordinator.
 - Документы обновлены: ECONOMY_REVIEW, REDAGE_MASTER_PLAN, TEST_PLAN, MASTER_CHECKLIST, CHANGELOG, SESSION_HANDOFF.
 - Source code не менялся. Следующий этап — implementation design review на точных call sites и DDL, затем первый вертикальный slice (receipt schema + coordinator) с отдельным тестовым harness. Никаких build/DB/RAGE результатов не заявлено.
+
+
+
+## Контрольная точка 2026-11-08 — повторная верификация direct cash writers
+
+- На активной ветке повторно проверены `Character.Save.Repository.AddMoney`, referral settlement в `Main.CheckMyPromoCode`, `Players.Phone.Auction.Repository.ReturnMoney`, `Accounts.Merger.Repository`, `Wallet.Change`, `Money.MoneyUpdate` и `Character.Save.Repository.SaveSql`.
+- `AddMoney` по-прежнему делает SELECT → application-side addition → absolute UPDATE; `Convert.ToInt32(nullableMoney)` превращает NULL в 0. Нет row lock/transaction/receipt/per-UUID lock/affected-row acknowledgement. Promo-owner и payday callers не удерживают online/offline handoff до завершения async update.
+- Auction offline cash fallback имеет range guard, но сохраняет absolute UPDATE и login/cache race; loaded-bank route является отдельной bank-ledger операцией.
+- Referral offline path обновляет success marker, account RB/VIP и cash раздельно; online reward legs также не составляют единую durable settlement. Частичный отказ может оставить неполную награду при уже выставленном success marker.
+- Account merger импортирует агрегированный `MoneyTo` в новую character row; это отдельный idempotent migration/import flow, не обычный wallet delta. Нужны стабильный merge ID/checkpoint и overflow/failure/retry tests.
+- Admin offline grant теперь ждёт UPDATE и проверяет affected rows до success side effects, но это не закрывает гонку login между online check и DB write.
+- В `ECONOMY_REVIEW.md` зафиксировано: checked-in `database/main.sql` объявляет `characters`, `money`, `accounts`, `refferals` как InnoDB, а `characters.money` — nullable signed INT. Это только snapshot; deployed/staging `SHOW CREATE TABLE` и версия сервера обязательны до включения ledger.
+- Source code не менялся. Обновлены только аудит/тестовые документы. C# build, MariaDB fault injection, concurrency tests и RAGE staging не запускались.
+- Следующий шаг: закончить inventory всех cash writers (включая admin, business-sale/tax, account import и прямые `characters.money` writes), затем утвердить coordinator API + transaction ownership + login publication gate + legacy worker removal. Не внедрять частичный SQL increment и не закрывать MONEY-002.
