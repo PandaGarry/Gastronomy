@@ -1,6 +1,6 @@
 # Auto-mechanic repair and fuel-service settlement — static review
 
-Обновлено: 2026-11-08. Traced mechanic repair offer/acceptance, mechanic fuel purchase from a gas station, and mechanic-to-customer fuel offer/acceptance. Static-only; no C# build, RAGE runtime or wallet failure injection.
+Обновлено: 2026-11-08. Revalidated current branch source for mechanic repair offer/acceptance, mechanic fuel purchase from a gas station, and mechanic-to-customer fuel offer/acceptance. Static-only; no C# build, RAGE runtime or wallet failure injection. No gameplay patch applied in this pass: a safe fix requires durable service intent/settlement semantics, not a local bool check.
 
 ## JOB-005 — mechanic service effects proceed without confirmed two-sided wallet settlement
 
@@ -26,3 +26,9 @@
 ## Scope boundary
 
 JOB-005 covers mechanic repair/fuel service settlement. JOB-004 is Trucker payout; STOCK-002 covers shared business takeProd and retail stock settlement; VEH-009 covers the separate petrol station context authorization issue. No gameplay source was modified.
+ 
+## 2026-11-08 follow-up — patch decision
+
+Re-fetched `AutoMechanic.cs` from `redage/audit-continuation` and reconfirmed all three acceptance/purchase paths remain unchanged: `mechanicPay` mutates vehicle repair state before two unchecked wallet calls; `mechanicPayFuel` performs two unchecked wallet calls before fuel transfer; `buyFuel` calls `BusinessManager.takeProd` before unchecked wallet debit and then increases `VehLoadedFuel`. A naive `if (!Wallet.Change(...)) return` is insufficient: for player-to-player services the first leg can succeed while the second fails, and for station fuel the stock/revenue leg may already have committed. Reordering alone also creates an unpaid-stock or paid-without-fuel failure window.
+
+**Decision:** leave source unchanged until a shared atomic/durable settlement API exists. Required design: one-shot expiring service intent bound to both UUIDs, exact vehicle identity, amount/quantity and offer revision; revalidate context at acceptance; durable receipt/escrow for both wallets; commit vehicle repair/fuel and stock mutation only against that receipt; recover/reconcile after restart; only then progress quests/skills and emit success. This avoids unsafe refund loops and false assumptions that `Wallet.Change(true)` means DB durability.
