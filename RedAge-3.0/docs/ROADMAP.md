@@ -167,6 +167,7 @@
 ## Актуальный статус денежной системы — 2026-11-08
 
 - **MONEY-002 — character cash:** partial in-process coordination now orders `Wallet.Change`, detached worker snapshots and full `Character.SaveSql`; failed-SQL retry hand-off is guarded. Still not durable: queue is memory-only, direct SQL writers bypass it, and login/cache publication is not covered by one DB transaction/UUID gate.
+  - Receipt/API candidate is documented only: globally unique operation ID, same-transaction receipt + bounded delta, typed duplicate/uncertain-commit outcomes and login/cache gate. No migration runner/rollback path or MariaDB verification is established; no DDL/source coordinator is deployed.
   - Revalidated bypasses: offline `Character.Save.Repository.AddMoney`, auction refund, referral, business repossession, admin offline grant, offline table-task SQL increment and account-merger follow-up absolute UPDATE. Character login still needs a UUID gate from DB read through `SetCharacterData`; creation INSERT is initialization, not a delta. See `ECONOMY_REVIEW.md`.
 - **MONEY-003 — bank transfer:** in-memory two-account mutation, ATM consume-once and revision-aware save are partially hardened. Two account rows are still persisted separately; durable transfer receipt/transaction and crash recovery remain open.
 - **MONEY-033 — ticket intent:** session consume-once guard is patched. Durable ticket receipt and atomic split payout remain open.
