@@ -35,3 +35,13 @@ The current branch `MoneySystem/Bank.cs` contains four related two-leg cash flow
 **Remediation:** introduce one idempotent cash↔bank settlement operation that validates both accounts and resulting ranges, mutates both sides under a single settlement boundary, marks both dirty, and records a durable receipt/ledger transaction before reporting success. As a bounded interim fix, require the second leg to succeed and attempt a checked compensation of the first leg; log and surface any compensation failure, while keeping the issue open until durable transaction/restart tests pass. Keep client notifications and GameLog after settlement.
 
 **Regression:** normal deposit/withdrawal; missing bank account after UI opened; force Bank.Change false after wallet debit; force Wallet.Change false after bank debit; compensation success/failure; DB failure/restart between legs; duplicate/concurrent ATM submissions; insufficient cash/bank; near wallet/bank INT limits; verify no success log/sound/UI update before confirmed settlement and exactly one net delta on both balances. Requires disposable MySQL and RAGE staging.
+
+## 2026-11-08 implementation update — MONEY-053 (partial source patch)
+
+The regular cash ATM deposit now requires the bank credit to succeed after the wallet debit; on rejection it attempts a wallet refund and logs a critical error if compensation fails. The regular ATM withdrawal now requires the wallet credit after bank debit; on rejection it attempts to restore the bank balance and logs if compensation fails. House-account deposit now checks the house-bank credit and attempts to refund the wallet before reporting failure. Success sound, GameLog and house-deposit success message occur only after the second leg succeeds.
+
+Business-account deposit remains tracked separately as MONEY-039 and is not changed in this patch.
+
+**Limits:** these are in-memory checked compensation paths, not one durable DB transaction. A process crash between legs, a failed compensation or concurrent changes near balance limits still require ledger/outbox reconciliation. The issue remains open.
+
+**Validation:** exact source-block assertions only; no C# build, RAGE staging, MySQL failure injection or concurrency tests have run.
