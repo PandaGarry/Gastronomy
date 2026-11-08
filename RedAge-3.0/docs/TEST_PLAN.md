@@ -417,3 +417,11 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - Test successful deposit/withdrawal at exact balance and wallet upper-bound; test server-stop debit rejection.
 - Test duplicate and concurrent callbacks against a limited stock balance, process restart between wallet and stock mutations, and DB persistence failure. These scenarios must verify exact conservation and exactly-once settlement; current interim patch is not expected to satisfy crash/concurrency guarantees.
 - Static source assertions passed for all four cash branches. No C# build, RAGE staging or MySQL fault injection was run.
+
+## 2026-11-08 — STOCK-001 exact-count follow-up
+
+- Exercise faction and organization material/drug/medkit withdrawals with a full inventory, fragmented free slots, existing partial stacks and a requested quantity that exceeds the remaining free capacity by one.
+- Inject `AddNewItem` failure and partial insertion. Verify stock is not reduced by the requested amount unless the exact quantity was delivered; verify partial grants are rolled back or durably reconciled.
+- Exercise vehicle load/unload for mats, drugs and medkits with full vehicle slots, stack boundaries, stale vehicle/session, DB failure and duplicate callbacks.
+- Verify `Remove` exact-consumption behavior; current public method returns void and suppresses exceptions, so tests must detect actual inventory delta rather than trusting invocation.
+- Organization and faction cash stock branches are covered separately by MONEY-035 tests. No STOCK-001 runtime test was run; no item/cargo patch was applied.
