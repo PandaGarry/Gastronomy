@@ -439,3 +439,8 @@ Static review found unchecked second legs in regular ATM cash deposit/withdrawal
 - `AddMoneyUpdate` now rejects invalid UUID, negative balance and values above the existing signed DB INT limit before enqueue, preventing a poison retry batch caused by `Convert.ToInt32(long)` overflow.
 - Retained the existing shared queue lock, atomic snapshot/clear, failed-batch requeue and newer-value-wins behavior.
 - Remaining: in-memory-only durability, no DB outbox/transaction, retry backoff/dead-letter, and no .NET build, concurrency test or MySQL fault injection. MONEY-002 remains open.
+
+
+### MONEY-036 — wallet range contract follow-up (2026-11-08)
+
+The persisted cash column and generated model are signed INT while `CharacterData.Money` is long. `Wallet.Change` now uses long arithmetic and rejects values outside `0..Int32.MaxValue`; full `Character.SaveSql` validates the range before any save side effects or narrowing conversion. `Money.AddMoneyUpdate` already rejects invalid snapshots. This is a narrow compatibility patch, not a BIGINT migration. Keep MONEY-036 open for compiler, boundary, UI and DB round-trip tests. Also investigate stale absolute Money worker batches racing full character saves; that ordering issue belongs to MONEY-002 and is not solved by the range guard.
