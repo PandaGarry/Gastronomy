@@ -93,3 +93,14 @@ The shared account lock is now also used for `GetBalance`, holder lookup by name
 **Remaining escape hatch:** `Bank.Get(int)` still returns the mutable internal `Data` object. Its callers must be audited before changing the contract; direct writes to `Balance`, `IsSave`, `Holder` or `Revision` outside the lock would bypass synchronization. Account initialization is expected during startup; runtime reload semantics are not established.
 
 Additional tests: [ ] concurrent transfer vs account removal; [ ] transfer vs holder rename; [ ] Create with negative/overflow balance and invalid type/empty holder; [ ] concurrent GetBalance during transfer; [ ] audit every `Bank.Get(int)` caller for direct mutable property writes.
+
+
+## 2026-11-08 follow-up — bank save worker and small balance changes
+
+A further persistence gap was fixed in source:
+
+- `Bank.Change` now marks every successful balance mutation dirty, including small personal-account changes. Previously a personal-account mutation below the 10,000 threshold could remain outside the save worker until another qualifying change.
+- `Bank.GetDirtyAccountIds()` snapshots dirty account IDs under `AccountSync`; the background worker no longer enumerates mutable `Data.IsSave` fields without the lock.
+- The account deletion queue is now a `ConcurrentQueue<int>`. The worker drains a batch and requeues failed deletes; if DB setup/batch processing fails, pending IDs are requeued. Repeating a DELETE for an already-deleted row is safe.
+
+**Remaining:** the worker still has a fixed 30-second polling interval; this is not a durable delete outbox, so queued deletes can still be lost on process crash. Account balance saves are still separate UPDATEs, not one transaction for both transfer legs. The mutable `Bank.Get(int)` data escape remains open. Validate DB reconnect, partial delete batch, crash/restart and write-volume/performance before closure.
