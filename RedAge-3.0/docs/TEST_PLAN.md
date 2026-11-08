@@ -564,3 +564,12 @@ Source patch only; no compiler or disposable DB test has run.
 - Race AddMoney against disconnect/full save and worker flush in both orderings; inject delay between its SELECT and UPDATE to force interleavings.
 - Inject DB failure after SELECT and after UPDATE acknowledgement loss; retry the same logical payout and verify no duplicate credit. This requires an operation ID/receipt before exactly-once can be claimed.
 - Verify the actual storage engine for `characters` and every participating ledger/receipt table from the deployed DDL/runtime metadata; do not infer InnoDB from unrelated tables.
+
+
+### MONEY-002 — expanded direct-writer and migration regression cases
+
+- Auction offline refund: race two refunds/other offline credits for the same UUID; race refund with login and full save; simulate callback/retry after uncertain DB acknowledgement; verify one payout per auction/bid identity.
+- Referral owner reward: inject failure between referral success marker, RB/VIP writes and cash credit; test both online and offline recipient, recipient login during offline cash SELECT/UPDATE, duplicate referral processing and restart recovery.
+- Admin offline grant: force login immediately after the online-presence check but before the async DB UPDATE; verify login cache and persisted balance cannot overwrite each other. Verify no success message on failed/ambiguous write.
+- Merger/import: interrupt between destination character creation, cash/property conversion, account-slot update and completion; retry must not duplicate the imported cash or assets.
+- Confirm the actual characters storage engine from deployed schema/runtime metadata; generated C# mapping and MariaDB version do not prove InnoDB.
