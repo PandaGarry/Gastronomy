@@ -122,3 +122,5 @@
 - [ORGANIZATION_STOCK_SESSION_REVIEW](ORGANIZATION_STOCK_SESSION_REVIEW.md) — organization stock context remains mutable after leaving the organization interior (INV-016).
 
 - [FURNITURE_SAFE_SESSION_REVIEW](FURNITURE_SAFE_SESSION_REVIEW.md) — furniture safe inventory context remains mutable after house exit (`INV-017`).
+
+- [HELICRASH_KEYCLAMP_REVIEW](HELICRASH_KEYCLAMP_REVIEW.md) — HeliCrash lockpick/minigame bypass through client-controlled keyClamp.end (`INV-018`).
