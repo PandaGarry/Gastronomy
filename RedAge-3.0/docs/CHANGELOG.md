@@ -1,6 +1,18 @@
 # Журнал работ
 
-## 2026-11-08 — Аудит налога и изъятия бизнеса\n\n- Внесены `MONEY-040/041`: обычное hourly tax списание с бизнес-счёта не помечает bank account dirty; repossession игнорирует online Wallet.Change result, а offline payout запускается асинхронно без подтверждения перед очисткой владельца. Добавлены persistence/fault-injection тесты. Статический анализ; runtime не запускался. См. `BUSINESS_TAX_REVIEW.md`.\n\n## 2026-11-08 — Аудит депозитов на бизнес-счёт через ATM\n\n- Внесён `MONEY-039`: `atmVal` для бизнес-счёта сначала списывает деньги игрока, затем игнорирует результат `Bank.Change` и всё равно логирует/сообщает успех. Добавлены требования к атомарному transfer, refund/receipt и replay tests. Статический анализ; runtime fault injection не выполнялся. См. `BUSINESS_BANK_REVIEW.md`.\n\n## 2026-11-08 — Аудит розничных покупок в бизнесах\n\n- Прослежен `BusinessManager.takeProd` и основные 24/7/weapon-shop/service callers. Внесён `STOCK-002`: stock уменьшается до подтверждения owner-bank credit, отсутствующий product может вернуть success, а callers игнорируют customer Wallet.Change и item/weapon grant results. `MONEY-022` расширен на отсутствие dirty-save для retail stock changes. Только static; build/RAGE/DB fault injection не выполнялись. См. `BUSINESS_RETAIL_REVIEW.md`.\n\n## 2026-11-08 — Расширение аудита продажи бизнеса
+## 2026-11-08 — Аудит налога и изъятия бизнеса
+
+- Внесены `MONEY-040/041`: обычное hourly tax списание с бизнес-счёта не помечает bank account dirty; repossession игнорирует online Wallet.Change result, а offline payout запускается асинхронно без подтверждения перед очисткой владельца. Добавлены persistence/fault-injection тесты. Статический анализ; runtime не запускался. См. `BUSINESS_TAX_REVIEW.md`.
+
+## 2026-11-08 — Аудит депозитов на бизнес-счёт через ATM
+
+- Внесён `MONEY-039`: `atmVal` для бизнес-счёта сначала списывает деньги игрока, затем игнорирует результат `Bank.Change` и всё равно логирует/сообщает успех. Добавлены требования к атомарному transfer, refund/receipt и replay tests. Статический анализ; runtime fault injection не выполнялся. См. `BUSINESS_BANK_REVIEW.md`.
+
+## 2026-11-08 — Аудит розничных покупок в бизнесах
+
+- Прослежен `BusinessManager.takeProd` и основные 24/7/weapon-shop/service callers. Внесён `STOCK-002`: stock уменьшается до подтверждения owner-bank credit, отсутствующий product может вернуть success, а callers игнорируют customer Wallet.Change и item/weapon grant results. `MONEY-022` расширен на отсутствие dirty-save для retail stock changes. Только static; build/RAGE/DB fault injection не выполнялись. См. `BUSINESS_RETAIL_REVIEW.md`.
+
+## 2026-11-08 — Расширение аудита продажи бизнеса
 
 - Расширен `MONEY-026`: `OnSellConfirm` не проверяет результат `Wallet.Change` и очищает владельца бизнеса даже при неуспешном начислении продавцу. Добавлены fault-injection/regression требования. Статический анализ; runtime не запускался.
 
