@@ -389,3 +389,13 @@
 - Reviewed the existing per-UUID stripe semaphore/revision coordinator (`Money.ExecuteCharacterSave`, `Wallet.Change`, worker). Found a narrow gap: worker detached/cleared queue rows before marking them active; a small Wallet.Change in that interval advanced the version but did not enqueue, so the detached row was skipped and no replacement remained.
 - Patched worker snapshot section to mark all detached UUIDs `ActiveMoneyWrites` under `QueueLock` before clearing. Failed batch/context retry removes markers and restores only current revisions. Removed duplicate marker statements after verifying the final source.
 - Added deterministic interleaving cases and documented direct SQL cash writers that still bypass the coordinator. No build/DB/RAGE test.
+
+
+## 2026-11-08 continuation — MONEY-002 versioned write ordering
+
+- Added 64 striped SemaphoreSlim write gates and sync monitors. Wallet.Change balance mutation/revision and SaveSql snapshot/revision share the same per-stripe monitor.
+- Money worker snapshots carry per-UUID revision; stale detached writes are skipped and retries restore only still-current revisions. Full SaveSql invalidates old snapshots and serializes its SQL write with the worker.
+- Wallet mutations advance revisions even below 10,000. Small changes are coalesced into queue only if a batch/save is pending or in-flight, avoiding a blanket increase in DB writes.
+- Detached batches are marked in-flight at snapshot, not just when SQL begins; this closes the mutation gap before the worker gets its lock.
+- Static source assertions passed. No C# build, multithreaded stress, MySQL fault injection or RAGE tests.
+- Remaining direct writers include Character.Save.Repository.AddMoney, auction offline refund, Main referral/business repossession, Admin OffGiveMoney and Accounts.Merger; migrate/audit before closing MONEY-002. Durable outbox/restart recovery remains open.
