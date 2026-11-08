@@ -174,6 +174,8 @@
 
 | INV-017 | Высокий | Статически подтверждён; RAGE/MySQL reproduction required | objectSelected checks furniture object range, InsideHouseID and owner/roommate/burglary access before opening furniture_<houseId>. HouseManager.RemovePlayer clears InsideHouseID and exits the house without ItemsClose/OtherClose; generic ItemsMove/ItemsMoveStack/ItemsUse do not revalidate house/object/access context. A previously opened safe can remain mutable after exit. | Revoke furniture inventory on house exit; bind to exact house/object/access intent; revalidate current house, object, permission, range and dimension on every mutation. См. FURNITURE_SAFE_SESSION_REVIEW.md. |
 
+| INV-018 | Высокий | Статически подтверждён; direct-remote RAGE reproduction required | InHeliCrash installs KeyClampData before GetHealth checks for ArmyLockpick. Generic keyClamp.end accepts a client-supplied value and calls EndCB without requiring a successful keyDown/lockpick reservation; HeliCrash End assigns Health=value and performs a 50% unlock roll for value 0 without checking IsHack owner or lockpick. Failed rolls leave KeyClampData reusable, enabling repeated free attempts. | Require a server-owned active reservation and successful keyDown; bind exact box/player; calculate progress server-side; atomically consume one lockpick and clear state on every terminal path. См. HELICRASH_KEYCLAMP_REVIEW.md. |
+
 ## Не выводить из этих наблюдений
 
 - Npm audit по свежему разрешению без upstream lock не является точным отчётом о production runtime.
