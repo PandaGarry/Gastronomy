@@ -52,7 +52,8 @@
 - [ ] STOCK-001: make faction/vehicle stock item grants exact and atomic; handle partial/full-slot failures.
 - [ ] STOCK-002: replace business takeProd/customer debit/item grant sequence with idempotent atomic retail settlement; test owner-bank, wallet, item grant, missing-product and restart failures. See BUSINESS_RETAIL_REVIEW.md.
 - [ ] MONEY-039: make ATM business-account deposit an atomic/idempotent player-debit/business-credit transfer with checked result, refund/retry and stale BizID/index protection. See BUSINESS_BANK_REVIEW.md.
-- [ ] MONEY-040/041: persist hourly business tax debits and make online/offline repossession compensation durable/idempotent before ownership release. See BUSINESS_TAX_REVIEW.md.\n- [ ] MONEY-042: make player-to-player vehicle sale debit/credit and holder persistence durable/idempotent; test failed seller credit and SaveHolder DB failure/restart. See VEHICLE_PLAYER_SALE_REVIEW.md.
+- [ ] MONEY-040/041: persist hourly business tax debits and make online/offline repossession compensation durable/idempotent before ownership release. See BUSINESS_TAX_REVIEW.md.
+- [ ] MONEY-042: make player-to-player vehicle sale debit/credit and holder persistence durable/idempotent; test failed seller credit and SaveHolder DB failure/restart. See VEHICLE_PLAYER_SALE_REVIEW.md.
 
 ## Этап 3 — Аудит безопасности и надёжности (`В работе`)
 
