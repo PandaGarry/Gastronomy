@@ -342,3 +342,13 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - [ ] Race holder rename against transfer notifications and save; final holder and balance must persist without lost dirty flags.
 - [ ] Create rejects empty holder, invalid TINYINT type, negative balance and balance above INT_MAX before DB insert; cache value equals persisted value.
 - [ ] Audit all Bank.Get(int) call sites for direct writes to mutable Data fields; no external mutation may bypass AccountSync.
+
+
+### Bank save worker follow-up
+
+- [ ] A personal-account balance change below 10,000 is marked dirty and written by the next worker pass.
+- [ ] Concurrent balance mutation while GetDirtyAccountIds snapshots does not throw or omit a later dirty revision.
+- [ ] Delete account while worker drains delete queue; no collection race or lost delete.
+- [ ] Inject DB setup failure and mid-batch DELETE failure; pending delete IDs are retried on a later pass.
+- [ ] Restart after enqueue but before delete flush; document current in-memory queue loss until durable delete outbox exists.
+- [ ] Measure DB write rate and worker duration after marking every balance mutation dirty; verify 30-second polling does not create unacceptable write amplification or latency.
