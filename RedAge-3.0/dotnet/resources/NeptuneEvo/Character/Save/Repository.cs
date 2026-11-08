@@ -53,7 +53,9 @@ namespace NeptuneEvo.Character.Save
                 await Players.Phone.Repository.SaveSettings(db, player, characterData.UUID);
                 
 
-                await db.Characters
+                await Database.Models.Money.ExecuteCharacterSave(characterData.UUID, characterData.Money, async () =>
+                {
+                    await db.Characters
                     .Where(v => v.Uuid == characterData.UUID)
                     .Set(v => v.Firstname, characterData.FirstName)
                     .Set(v => v.Lastname, characterData.LastName)
@@ -106,6 +108,7 @@ namespace NeptuneEvo.Character.Save
                     .Set(v => v.FractionTasksData, JsonConvert.SerializeObject(player.FractionTasksData))
                     .Set(v => v.IsLucky, characterData.IsLucky)
                     .UpdateAsync();
+                });
                 
                 if (Admin.IsServerStoping)
                     player.IsRestartSaveCharacterData = true;
