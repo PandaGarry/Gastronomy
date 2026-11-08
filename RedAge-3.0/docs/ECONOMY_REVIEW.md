@@ -245,3 +245,15 @@ The next source pass re-opened the active branch versions of `Money.cs`, `Wallet
 - A transitional offline atomic increment is not safe until a per-UUID online/offline handoff is established; SQL atomicity alone does not stop a stale online cache/full save from overwriting it.
 - Referral and lottery require domain-level stable payout IDs, not merely a generic balance increment. The receipt and balance update must commit together, and caller-visible success/reset must follow the durable result.
 - No C# source was changed in this pass. No build, MariaDB transaction test, concurrency test, or RAGE staging test was run. MONEY-002 remains open.
+
+
+### MONEY-002 follow-up — direct offline AddMoney writer (2026-11-08)
+
+A fresh source pass confirms that `Character.Save.Repository.AddMoney(int uuid, int money)` remains outside the wallet/character-save coordinator:
+
+- It asynchronously reads `characters.money`, calculates `currentMoney + delta` in application code, then writes an absolute value in a separate SQL statement. There is no transaction, row lock, compare-and-swap predicate, or per-UUID money lock around the read/write pair. Two concurrent calls can read the same starting balance and the later absolute UPDATE can erase the earlier increment.
+- The method does not establish that the character is offline and does not synchronize the online `CharacterData.Money` cache. If the character is online or logs in while the task is running, the direct DB write can race with wallet snapshots/full character save and can be overwritten by a stale cached balance (or leave memory and DB divergent). This is a source-level race; exact timing/reproduction still requires staging.
+- The range checks protect the computed value but do not make the read-modify-write atomic. The UPDATE result is not checked for an affected row, and exceptions are only logged.
+- Current call-site examples include offline lottery payout and referral reward. They are not safe to convert to a plain SQL increment until online/offline handoff and retry/idempotency semantics are defined.
+
+**Disposition:** no source patch in this slice. Do not replace this with `SET money = money + delta` alone: it would avoid the lost-update read/write race but still race with online absolute wallet/full-save writes and would not make a retry idempotent. Route all writers through the eventual per-character money coordinator; for durable settlement, use a stable operation ID/unique receipt and balance mutation in the same transaction. Until then, MONEY-002 remains open.
