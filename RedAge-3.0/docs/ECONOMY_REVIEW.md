@@ -219,3 +219,29 @@ Core/Admin.cs OffGiveMoney previously emitted the money/admin logs and success n
 This is a bounded acknowledgement-order fix only. The method still performs a read-then-absolute-write, so concurrent offline grants and races with the online wallet worker/full character save can lose updates. It has no durable operation ID/receipt and is not crash-idempotent. Static patch only; no C# build or DB test.
 
 **Library/API reconnaissance (verified against the pinned package source):** `NeptuneEvo.csproj` pins `linq2db.MySql` 3.3.0, and generated `ServerBD` derives from `LinqToDB.Data.DataConnection`. The matching LinqToDB `v3.3.0` source exposes `BeginTransactionAsync`, `CommitTransactionAsync` and `RollbackTransactionAsync`, so an explicit transaction can be owned by the existing `ServerBD` context without introducing `TransactionScope`. Important version-specific behavior: `BeginTransactionAsync` disposes an already attached transaction (rolling it back) before starting another; therefore coordinator code must own one transaction per context and must not assume nested calls throw. This confirms API availability only—not MariaDB engine/DDL compatibility, InnoDB status, commit durability settings or runtime behavior.
+
+
+## MONEY-002 follow-up — direct cash-writer inventory (2026-11-08)
+
+The next source pass re-opened the active branch versions of `Money.cs`, `Wallet.cs`, `Character/Save/Repository.cs`, `Main.cs` and `MoneySystem/Bank.cs`. This is a targeted cash-writer inventory, not proof that every money mutation in the repository has been enumerated.
+
+### Confirmed direct character-cash writers
+
+1. **Online wallet path — `MoneySystem/Wallet.cs:Change`.** The current patch mutates `characterData.Money` under the striped character sync lock and queues an absolute snapshot. Small changes are not necessarily queued unless a prior write/save is active; they therefore depend on a later full character save. This is still an in-memory-first path and is not crash-durable. The boolean result means the in-memory mutation was accepted, not that the DB commit completed.
+2. **Offline/admin-style helper — `Character/Save/Repository.cs:AddMoney`.** It starts a fire-and-forget task, reads `characters.money`, computes a new absolute value and writes it. There is no affected-row/result returned to the caller, no operation ID, and no transaction spanning read/update. Two concurrent calls can read the same starting value and overwrite one another. It also has no explicit online-character/cache handoff; a login/full save racing the detached task can overwrite or stale-load the balance. Do not replace this with a blind SQL increment until online/offline ownership is serialized.
+3. **Referral cash reward — `Main.cs` referral completion block.** It reads the referrer's current cash, computes an absolute balance and writes it separately from referral success and account RedBucks/VIP updates. These writes are not one transaction and have no idempotent referral payout receipt. A retry/crash can leave partial reward state; concurrent cash writers can lose an increment. The code also needs a stable identity for the referral reward before any coordinator migration.
+4. **Lottery payday payout — `Main.payDayTrigger`.** Online winners use `Wallet.Change`; offline winners use `AddMoney`. Round state/logging/reset is performed independently of a durable payout acknowledgment. This remains the documented `CAS-026`/lottery settlement gap, not a separate safe writer.
+
+### Persistence and schema evidence boundary
+
+- `Money.cs` worker uses absolute `characters.money` updates; `SaveSql` also writes the whole character row, including money. Any new coordinator must prevent these legacy absolute writers from racing its balance updates.
+- `MoneySystem/Bank.cs` has a separate in-memory bank-account cache and dirty-save worker. It is a separate balance domain and should not be mixed into the first character-cash coordinator without a distinct migration plan.
+- Repository code pins `linq2db.MySql` 3.3.0 and generated `ServerBD` derives from `DataConnection`, but API availability does not establish the engine or transaction properties of production tables.
+- The attempted repository code search did not return authoritative DDL for `characters` / cash tables. A hit for `ENGINE=InnoDB` in `mainlogs.sql` concerns other tables and is not evidence for `characters`. **InnoDB for the participating tables remains unverified.** Do not create ledger tables or claim transactional durability until the exact DDL/engine for `characters`, `accounts`, `refferals` and the proposed receipt table is inspected.
+
+### Coordinator design constraints confirmed by this pass
+
+- All online wallet, offline award, referral, lottery, full-character-save and legacy snapshot-worker writes to `characters.money` must share one serialization/ownership boundary during migration.
+- A transitional offline atomic increment is not safe until a per-UUID online/offline handoff is established; SQL atomicity alone does not stop a stale online cache/full save from overwriting it.
+- Referral and lottery require domain-level stable payout IDs, not merely a generic balance increment. The receipt and balance update must commit together, and caller-visible success/reset must follow the durable result.
+- No C# source was changed in this pass. No build, MariaDB transaction test, concurrency test, or RAGE staging test was run. MONEY-002 remains open.
