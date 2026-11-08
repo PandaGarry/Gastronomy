@@ -620,3 +620,12 @@ Static source review only. These tests require a disposable MariaDB database and
 - On a disposable MariaDB 10.10-compatible instance: import the full dump, run `SHOW CREATE TABLE` and `information_schema.tables` checks for every table participating in a cash/referral/lottery settlement; assert InnoDB and expected nullability/types.
 - Verify actual deployment schema separately before rollout; repository dump is not proof of deployed engine/version.
 - Test transaction rollback across receipt + balance update, duplicate unique operation ID, concurrent updates and commit-acknowledgement loss. Current status: static dump inspection only; import/runtime DB tests not run.
+
+### MONEY-055 — auction refund durability and login race
+
+- [ ] Проверить каждый путь `ReturnMoney`: online bank, online wallet, offline bank и offline cash; credit failure не должен порождать success notification/log marker.
+- [ ] Offline cash: NULL/negative/`Int32.MaxValue`, overflow, affectedRows=0, DB exception до/после commit и потеря acknowledgement.
+- [ ] Синхронизировать login точно между initial online check и offline SQL UPDATE; проверить, что cache/full-save/worker не затирает refund.
+- [ ] Конкурентно и повторно вызвать один refund callback, включая restart после commit до ack: одна auction refund receipt и одна delta.
+- [ ] Проверить атомарность auction state transition + refund leg и отдельную идентичность нескольких законных refund legs.
+- Статус: статический review; tests не запускались, source patch отсутствует.
