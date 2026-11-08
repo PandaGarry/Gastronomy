@@ -38,3 +38,14 @@ If the buyer debit fails after the pre-check, the seller credit and property tra
 - Boundary balances including MONEY-036 Int32/Int64 values; insufficient funds and wallet persistence errors.
 
 **Status:** Open — static review documented; no patch, build or runtime test.
+
+## 2026-11-08 — bounded seller identity and audit-log correction
+
+A narrow patch was applied to `HouseManager.acceptHouseSell`:
+
+- The pending seller reference is checked for null and active character data before session/character access.
+- The seller's session and character data are both required before settlement proceeds.
+- The pending price must be positive; invalid pending state is cleared on both sides.
+- `sellerCharacterData` is now read from `seller`, not from the buyer. Money logs therefore identify the actual seller UUID instead of repeating the buyer UUID.
+
+The core MONEY-037 settlement remains unsafe and open: buyer debit and seller credit `Wallet.Change` results are still ignored, and ownership is transferred regardless of their results. This patch improves validation and audit attribution only; it is not a transaction or compensation mechanism. No build/RAGE/MySQL tests were run.
