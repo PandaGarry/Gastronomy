@@ -584,3 +584,11 @@
 - Added `DOCS_STATUS.md` with single-purpose ownership for each project document, status vocabulary, update cycle and current MONEY-002/003/033/060 truth.
 - Reconciled MONEY-033 vs MONEY-060 so ticket-intent replay and failed-debit payout are separate findings; updated issue register, reviews, checklist, test plan, roadmap, coverage, index and handoff.
 - Removed repeated MONEY-002/003 checklist entries by consolidating their outstanding validation gates. No build or runtime test is claimed.
+
+
+## 2026-11-08 — MONEY-002 direct cash writer inventory revalidation
+
+- Revalidated the active branch's character cash write paths: offline AddMoney, auction refund, referral reward, business repossession, admin offline grant, offline table-task SQL increment, and account-merger follow-up absolute UPDATE.
+- Clarified that character creation's initial INSERT is initialization, while login's DB-read-to-cache-publication interval is a required serialization point.
+- Confirmed full SaveSql and detached worker remain interim absolute writers and must relinquish cash ownership after coordinator migration.
+- No source patch or runtime test in this pass; MONEY-002 remains open.
