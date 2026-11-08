@@ -170,3 +170,9 @@
 
 - `MONEY-036`: partial source patch now enforces the existing signed `INT` wallet range with checked `long` arithmetic in `Wallet.Change`, validates full character saves before narrowing, and protects the offline auction refund fallback from overflow. Boundary/DB/UI tests remain pending; no BIGINT migration was made.
 - `MONEY-002`: the persistence queue still needs durable recovery and a per-character write-ordering design. A detached worker batch can race the full character save and overwrite a newer cash balance; see `ISSUES.md` and `ECONOMY_REVIEW.md`.
+
+
+## 2026-11-08 — MONEY-002 persistence ordering
+
+- Patched the detach→SQL hand-off gap by marking detached UUIDs active at queue snapshot time. Small wallet mutations in that interval now enqueue a newer revision rather than being skipped with no replacement.
+- Per-UUID semaphore/revision coordination between Money worker and full character save remains partial. Direct SQL cash writers outside the coordinator and volatile queue durability remain next; see `ISSUES.md`, `ECONOMY_REVIEW.md` and `TEST_PLAN.md`.
