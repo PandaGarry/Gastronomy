@@ -435,3 +435,13 @@
 - Merger записывает агрегированный MoneyTo при создании целевого персонажа; включить в миграционный/idempotency plan отдельно от обычных wallet deltas.
 - Generated mapping подтверждает nullable signed int(11) для characters.money и MariaDB 10.4.12 в комментарии генерации; engine таблицы characters по доступным артефактам всё ещё не доказан.
 - Source code не менялся. Документация/тест-план расширены; build, DB fault injection и RAGE staging не запускались.
+
+
+## Контрольная точка 2026-11-08 — DDL и referral settlement
+
+- Прочитан полный актуальный `RedAge-3.0/database/main.sql` через GitHub Contents API: checked-in DDL определяет `characters`, `money`, `accounts`, `refferals` как InnoDB; `characters.money` — nullable signed `int(11)`; заголовок dump указывает MariaDB 10.10.2.
+- Это подтверждение только repository snapshot, не production/staging: до внедрения транзакционного ledger обязательно сверить фактический `SHOW CREATE TABLE`, engine и версию сервера.
+- Уточнён `Main.CheckMyPromoCode`: online referral-owner rewards (VIP/coin/cash/RB) и success marker выполняются раздельно; offline branch помечает referral success, затем обновляет account RB/VIP, затем отдельно делает SELECT + absolute cash UPDATE. Частичный отказ после success marker может лишить части награды и остановить повтор; uncertain retry может дублировать отдельные reward legs.
+- Login race подтверждён точным порядком: DB row SELECT → создание `CharacterData.Money` → несколько async load operations → `SetCharacterData`; единый money lock вокруг всего read-to-publication интервала отсутствует.
+- Source code не менялся. Следующий шаг: зафиксировать coordinator contract (API, transaction/context ownership, result semantics, login publication gate, receipts, idempotency keys, legacy writer migration), затем реализация небольшими проверяемыми срезами. Не добавлять изолированный atomic increment.
+- C# build, disposable MariaDB transaction/fault injection, concurrency tests и RAGE staging не запускались.
