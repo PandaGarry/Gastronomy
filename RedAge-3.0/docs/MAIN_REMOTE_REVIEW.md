@@ -36,18 +36,19 @@
 
 **Regression:** inject missing/stale bank account and bank-change exception; verify treasury and personal balance remain unchanged or are reconciled exactly once. Also test normal leader withdrawal, limit boundary, repeated callback and restart between each persistence step.
 
-## MONEY-033 — ticket confirmation can pay out without a successful debit and can be replayed
+## MONEY-033 — ticket intent replay (consume-once guard patched; durable settlement open)
 
-**Приоритет: критичный для денежной целостности; both failure-to-abort and failure-to-consume ticket state confirmed statically; runtime exploitation not tested.**
+**Приоритет: высокий для денежной целостности; исходный replay path подтверждён статически, source guard внесён, runtime не проверен.**
 
-- `FractionCommands.ticketConfirm(target, true)` reads `targetSessionData.TicketsData` into `ticketsData`, copies its target/price/reason, then executes `ticketsData = new TicketsData()`. This only replaces the local variable; it does not clear `targetSessionData.TicketsData`.
-- It attempts `Wallet.Change(target, -sum)`, then `Bank.Change(targetCharacterData.Bank, -sum, false)` if the wallet debit fails. If both return false, the code sends error notifications but does not return. It continues to add 60% to the City Hall fraction and credits 40% to the issuing officer via `Wallet.Change(player, ...)`.
-- The same still-populated ticket state can be submitted again through the `TICKET` dialog callback, so a repeated confirmation may re-run settlement while the state remains available. The normal client UI is not a server-side one-shot guarantee.
-- The target/officer credits and fraction update are not wrapped in a durable transaction or idempotent settlement record. Exact persistence and online/offline behavior require staging.
+- До патча `ticketConfirm` копировал `targetSessionData.TicketsData`, но строка `ticketsData = new TicketsData()` заменяла только локальную переменную; session intent оставался доступен для повторного callback.
+- Теперь `ticketToTarget` записывает intent под `lock(targetSessionData)` и не перезаписывает уже ожидающий штраф.
+- Теперь `ticketConfirm` под тем же lock проверяет intent, затем атомарно отсоединяет его из session state до дальнейших side effects. Повторный callback не получает тот же intent. И accept, и decline потребляют pending intent.
+- Это in-process consume-once guard, а не durable ledger: debit, City Hall credit и officer credit остаются отдельными операциями; crash/partial payout и uncertain DB outcomes не восстанавливаются exactly-once.
+- Не утверждать, что replay exploit воспроизведён на RAGE:MP; требуется staging validation.
 
-**Remediation (not implemented):** atomically claim/consume the ticket intent before settlement; validate issuer/target/session and positive bounded sum; debit exactly once and abort if no debit succeeds; credit recipients only after confirmed debit; persist a unique ticket settlement ID and make retries idempotent. Clear the actual `targetSessionData.TicketsData` state in the same controlled transition. Consider a durable ledger/transaction rather than independent in-memory mutations.
+**Оставшаяся remediation:** durable ticket ID/receipt и транзакционный settlement debit + fraction/officer legs; typed result and recovery for partial/uncertain commit. Не использовать повторный Wallet.Change как безопасный retry.
 
-**Regression:** test cash-only, bank-only, combined balances, insufficient total funds, invalid/stale issuer, issuer/target disconnect, duplicate direct TICKET callback, concurrent confirmations, and crash between debit/fraction/officer credits. Every ticket must settle at most once; no payout is allowed without exactly one successful debit; balances and logs must reconcile after restart.
+**Regression:** cash-only/bank-only success, insufficient funds, accept/decline consume, duplicate/concurrent callback, second issuer while pending, stale/disconnected issuer, target disconnect, shutdown, failure after each payout leg and restart. Assert at most one intent consumption and exactly one complete settlement after durable implementation.
 
 ## Waypoint relay — reviewed, no standalone issue asserted
 
