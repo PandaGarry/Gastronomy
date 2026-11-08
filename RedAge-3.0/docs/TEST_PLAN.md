@@ -493,3 +493,15 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - With DB unavailable, enqueue a valid snapshot, restore DB and assert retry persists it. Enqueue a newer absolute value while old batch is in flight; old retry must never overwrite the newer queued value.
 - Inject partial batch failure and confirm retry remains safe because updates are absolute `SET` operations. Kill/restart before flush to document current memory-only loss; this test remains expected to fail until durable outbox is implemented.
 - No C# build, concurrent execution or MySQL fault injection has yet been performed.
+
+
+## MONEY-036 — wallet Int32 boundary and persistence contract
+
+- [ ] Unit-test `Wallet.Change` with balances `0`, `1`, `Int32.MaxValue`, and injected invalid `long` states; amounts `0`, `1`, `-1`, `Int32.MaxValue`, `Int32.MinValue`; no overflow, wrap or mutation on rejected values.
+- [ ] Verify `Int32.MaxValue + 1` is rejected before mutation; `Int32.MaxValue - 1 + 1` succeeds exactly; insufficient funds and shutdown debit remain false/no mutation.
+- [ ] Verify `client.charStore.Money` receives the expected numeric type/value at boundaries and the client UI formats the max supported balance.
+- [ ] On disposable MySQL, create/save/reload balances at `0`, `1`, and `Int32.MaxValue`; invalid negative/above-max state must be rejected before any character save side effects.
+- [ ] Race a detached Money worker batch containing balance A against full `Character.SaveSql` with newer balance B; prove stale A cannot overwrite B. Repeat with DB latency, partial failure and reconnect. If current architecture cannot guarantee ordering, implement a shared per-character persistence coordinator or remove duplicate writers before closure.
+- [ ] Confirm the generated DB model and actual schema both remain signed INT until an explicitly reviewed BIGINT migration.
+
+Static source patch only; no compiler, disposable DB or RAGE UI test has run. See `ECONOMY_REVIEW.md`.
