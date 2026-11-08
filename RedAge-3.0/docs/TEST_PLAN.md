@@ -259,3 +259,11 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] Warehouse: open the caller's own warehouse, exit to dimension 0, and verify whether personal storage access is intended to persist; if not, direct move/stack/use with other must reject outside postal storage and after quest expiry.
 - [ ] HeliCrash: verify current box index, key-clamp completion, active event generation and range on open and every item operation; leave range/replace/end event while pane is open and direct-call move/stack/use.
 - [ ] Weapon attachments and CarKey subcontainers: open from parent item, then move/drop/trade/delete/replace the parent; verify old context is revoked and cannot mutate weapon_<SqlId> or CarKey_<SqlId> after ownership changes.
+
+## INV-018 — HeliCrash key-clamp direct-remote bypass (pending staging)
+
+- [ ] Enter a locked HeliCrash box without ArmyLockpick and direct-call keyClamp.end(0); reject without changing health or rolling unlock chance.
+- [ ] Enter with ArmyLockpick but do not invoke keyClamp.keyDown; keyClamp.end(0) must still reject.
+- [ ] Verify valid server-authorized keydown/minigame progress and exactly-once lockpick consumption; forged negative/oversized values and replay reject.
+- [ ] After a failed roll, verify KeyClampData is cleared and cannot be reused for free retries; after success, revoke all sessions for that box.
+- [ ] Exit range, remove/replace box, end event or disconnect during attempt; stale end callback must not mutate the box. Two-player race: only reservation owner can complete. Static review: HELICRASH_KEYCLAMP_REVIEW.md; requires disposable RAGE staging.
