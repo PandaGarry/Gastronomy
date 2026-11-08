@@ -363,3 +363,7 @@ Hardened direct business and house purchase flows: initialize the property bank 
 - House purchase debits before initializing the property bank and ownership; if bank initialization fails it attempts a buyer refund.
 - House/business auction awards initialize their bank balances through the synchronized API before assigning ownership/committing auction state; admin bank grants require `Bank.Change` success.
 - Targeted current-branch static assertions passed for these call paths. No C# compiler, MySQL/MariaDB or RAGE runtime is installed here, so no build/integration/staging test is claimed. Crash-safe multi-ledger transaction and public `Bank.Accounts` direct-access audit remain open.
+
+### MONEY-053 — ATM cash settlement (2026-11-08)
+
+Static review found unchecked second legs in regular ATM cash deposit/withdrawal and house deposit. A bounded patch now checks both legs and attempts compensation if the second leg rejects; success effects/logging are delayed until both in-memory changes succeed. Business deposit remains MONEY-039. This is not a durable cross-wallet/bank transaction. Keep MONEY-053 open until C# build, compensation/fault injection, concurrent/replay and restart tests pass. See ATM_REVIEW.md and TEST_PLAN.md.
