@@ -493,16 +493,9 @@ Implementation sequence: schema/deployed-engine verification → receipt DDL →
 
 ### Fine/ticket settlement — MONEY-060 (2026-11-08)
 
-- [ ] Make fine confirmation fail closed: if wallet debit and bank fallback both fail, no city/officer payout, success event or paid log may run.
-- [ ] Replace prompt-time-only funds check with one-shot confirmation intent and durable idempotent fine settlement; test target spending between prompt and confirmation, both-debit failure, fallback success, replay and shutdown.
-- [ ] Keep this in the money-writer migration inventory; source fix is not yet applied and no runtime test has run.
-
-
-### MONEY-060 — ticket fine interim guard (2026-11-08)
-
-- `ticketConfirm` now stops immediately when both wallet and bank debit attempts reject; no city/officer split payout or success effects follow the failed debit.
-- This is a bounded mitigation only. Durable one-shot fine intent/receipt, online cache persistence, replay/concurrency and failure/restart validation remain open. See `ISSUES.md`, `ECONOMY_REVIEW.md`, `TEST_PLAN.md`.
-
+- [x] Interim fail-closed guard applied: when both wallet debit and bank fallback fail, no city/officer payout, success event or paid log runs.
+- [ ] Replace prompt-time-only funds check with durable one-shot fine intent and idempotent settlement; test target spending between prompt and confirmation, both-debit failure, fallback success, replay and shutdown.
+- Source guard was statically re-read; C# build, DB and RAGE runtime tests have not run. MONEY-033 separately tracks in-memory consume-once intent.
 
 ## 2026-11-08 — ticket settlement guards and documentation synchronization
 
