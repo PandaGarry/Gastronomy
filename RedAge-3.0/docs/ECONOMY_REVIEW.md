@@ -257,3 +257,16 @@ A fresh source pass confirms that `Character.Save.Repository.AddMoney(int uuid, 
 - Current call-site examples include offline lottery payout and referral reward. They are not safe to convert to a plain SQL increment until online/offline handoff and retry/idempotency semantics are defined.
 
 **Disposition:** no source patch in this slice. Do not replace this with `SET money = money + delta` alone: it would avoid the lost-update read/write race but still race with online absolute wallet/full-save writes and would not make a retry idempotent. Route all writers through the eventual per-character money coordinator; for durable settlement, use a stable operation ID/unique receipt and balance mutation in the same transaction. Until then, MONEY-002 remains open.
+
+
+### MONEY-002 follow-up — expanded direct-writer inventory (2026-11-08)
+
+The wider repository search found additional paths outside Wallet.Change/the money worker:
+
+- Players/Phone/Auction/Repository.ReturnMoney: online recipients are credited to their bank or wallet; offline recipients are read from characters and cash fallback uses SELECT → application-side addition → absolute UPDATE. It has the same lost-update and login/save handoff risks as Character.Save.Repository.AddMoney. The payout is also not tied to a durable per-auction refund receipt, so retry/restart semantics remain open.
+- Main.CheckMyPromoCode offline referral-owner reward: reads the character cash row and later writes an absolute new balance. Referral success and account RB/VIP writes occur as separate operations; this is not an atomic reward settlement. Online branch uses Wallet.Change, but its result is not used to gate the referral success state/notification.
+- Core.Admin.OffGiveMoney: it checks whether the target is online before entering an asynchronous task, then reads and writes the DB balance. A target can log in after the check and before the UPDATE; the method has no atomic offline claim/handoff with login or full save. It does check that one row was affected, which is useful but does not solve the race or idempotency.
+- Accounts.Merger.Repository creates destination character rows with a composed MoneyTo value (source cash plus converted property/business balances). Treat this as a one-time migration/import writer with its own idempotency and rollback requirements, not as a normal wallet delta.
+- Generated mapping confirms characters.money is nullable signed int(11); generated metadata reports MariaDB 10.4.12. This confirms the type contract only. The available search did not establish the storage engine for characters; InnoDB must be verified against the actual deployed DDL/runtime metadata before relying on transactional guarantees.
+
+**Current disposition:** no source change in this pass. The coordinator migration inventory must include wallet online mutations, full character save, worker flush, offline AddMoney, auction refund, referral reward, admin offline grant, lottery payout and account/server merger. Bank-account balance writers are a separate ledger and must be mapped before cross-ledger operations are designed.
