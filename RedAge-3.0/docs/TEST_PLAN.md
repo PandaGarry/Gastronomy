@@ -325,3 +325,11 @@ Static source patch only; no C# build or DB fault injection has run. See `ECONOM
 - [ ] Kill process after in-memory transfer and before DB commit; document remaining crash-consistency gap and test future ledger/outbox recovery.
 
 Static source patch only. No .NET build, MySQL fault injection, concurrency test or RAGE staging test has run. See BANK_TRANSFER_REVIEW.md.
+
+## Bank account creation and balance reads
+
+- [ ] `Bank.Create`: reject null/empty/whitespace holder, negative balance, negative type and type above `sbyte.MaxValue`; no DB row/cache entry should be created.
+- [ ] `Bank.Create`: test balance 0, `int.MaxValue`, `int.MaxValue + 1L`, `long.MaxValue`; only representable values may be inserted and cache/DB values must match.
+- [ ] Inject DB insert success followed by cache registration failure; confirm alert/reconciliation behavior and no false success to caller.
+- [ ] Run concurrent `GetBalance` reads with `Change` and `Transfer`; verify no exceptions and values correspond to serialized mutations.
+- [ ] Audit all direct `Accounts[id].Balance` and `Bank.Get(id).Balance` reads/writes; callers must not bypass `AccountSync`.
