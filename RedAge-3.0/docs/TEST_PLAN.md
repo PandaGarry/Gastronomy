@@ -240,3 +240,10 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] After a valid open, close stock or leave the area, then direct-call inventory.move, move.stack and use with other; reject without cache/DB/item mutation.
 - [ ] Verify OnFracStock is cleared on auxiliary close, full close, timeout, disconnect and membership/rank change; no stale value survives reconnect.
 - [ ] Regression across FIB, Sheriff, Army, City Hall and Police; verify each faction's intended rank/duty rules. Static review: FRACTION_STOCK_SESSION_REVIEW.md; requires disposable RAGE/MySQL staging.
+
+## INV-016 — organization stock revocation on interior exit (pending staging)
+
+- [ ] Open organization weapon stock inside the HQ, exit through RemovePlayer, then direct-call inventory.move, move.stack and use with other; reject without item/cache/DB mutation.
+- [ ] Repeat after organization membership/rank removal, stock closure and organization deactivation; revoke stale context.
+- [ ] Verify legitimate member access inside the correct organization dimension and normal/weapon-stock containers.
+- [ ] Test exit concurrent with item mutation, repeated exit, disconnect/reconnect and switching to another container; Organization_ID context must not survive revocation. Static review: ORGANIZATION_STOCK_SESSION_REVIEW.md; requires disposable RAGE/MySQL staging.
