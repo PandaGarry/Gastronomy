@@ -40,3 +40,33 @@ This is a source-level ordering defect; no live money exploit or failure injecti
 7. Disconnect/reconnect/restart around both debit and refund boundaries.
 
 No C# build, RAGE runtime, MySQL fault injection or live exploit test has been run.
+
+
+## MONEY-052 — finish remote accepted before race start / away from finish
+
+### Source path and evidence
+- `Events/StreetRace.cs`: `StreetRaceFinished(ExtPlayer player)`.
+- The remote event `server.streetrace.finished` is called by the client when it enters its local finish colshape (`src_client/vehicle/race_system.js`). Client-side colshape state is not an authorization boundary.
+- Before this patch, the server handler checked only that the caller had a character, a `PlayerToStreetRaceId` entry and a race dictionary entry. It did not require `StreetRaceData.Status == true`, nor did it check the caller's server-side position against `StreetRaceData.Position`.
+- Therefore, a participant in a pending offer could directly call the remote before the opponent accepted and receive the calculated 90% pot payout although neither stake had been debited. An active participant could also invoke the finish remote while away from the finish position. The rate is capped at 100,000 by the normal `Main.inputCallback` path; the exact exploit was not executed on a live server.
+
+### Patch applied
+- Reject finish callbacks unless the race is active (`Status == true`).
+- Require the caller's server-side position to be within 10 metres of the stored finish point.
+- This is a minimal authorization hardening patch. It does not prove a race was driven legitimately, and it does not make payout durable/idempotent.
+
+### Residual risks
+- `StreetRacePosition` still receives client-supplied waypoint coordinates. Validate finite/plausible coordinates and minimum distance server-side; client-side waypoint checks are not sufficient.
+- Winner `Wallet.Change` result remains unchecked. Wallet's bool contract is not a durable settlement receipt; do not add naive retries without resolving possible mutation-before-false behavior.
+- `ClearData` also pays the winner on death/vehicle-exit/abort paths and ignores the wallet result.
+- No per-race durable settlement record, crash recovery, or exactly-once payout exists.
+- No build, RAGE runtime, concurrency, exploit reproduction or DB fault-injection test has been run.
+
+### Regression matrix
+1. Invoke finish remote while offer is pending: no credit, no status mutation, no BattlePass progress.
+2. Invoke after acceptance but from outside 10 metres: no credit and race remains active.
+3. Enter server-side finish radius while active: normal finish path remains available.
+4. Invoke finish from the non-winning participant at finish: confirm gameplay policy; if either participant can claim, race design needs authoritative winner validation.
+5. Replay and concurrent finish callbacks: no duplicate payout or duplicate progression.
+6. Send NaN/Infinity/implausible waypoint coordinates to `server.streetrace.position`; server must reject.
+7. Inject Wallet false/exception, disconnect, shutdown and restart around winner payout and `ClearData`; verify exact balances and recoverability.
