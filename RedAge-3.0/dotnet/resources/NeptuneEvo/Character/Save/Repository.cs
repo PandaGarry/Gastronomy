@@ -239,10 +239,18 @@ namespace NeptuneEvo.Character.Save
 
                     if (character != null)
                     {
-                        await db.Characters 
-                            .Where(c => c.Uuid == character.Uuid) 
-                            .Set(c => c.Money, character.Money + money) 
-                            .UpdateAsync(); 
+                        long currentMoney = Convert.ToInt32(character.Money);
+                        long updatedMoney = currentMoney + (long)money;
+                        if (currentMoney < 0 || updatedMoney < 0 || updatedMoney > int.MaxValue)
+                        {
+                            Log.Write($"AddMoney rejected out-of-range cash update (UUID: {uuid}, current: {currentMoney}, delta: {money}).");
+                            return;
+                        }
+
+                        await db.Characters
+                            .Where(c => c.Uuid == character.Uuid)
+                            .Set(c => c.Money, (int)updatedMoney)
+                            .UpdateAsync();
                     }
                 }
                 catch (Exception e)
