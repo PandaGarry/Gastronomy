@@ -457,3 +457,13 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - Inject DB failure/crash after bank initialization, debit, owner mutation and BizIDs save; restart must reconcile one durable purchase receipt exactly once.
 - Test duplicate/concurrent purchase, stale government ownership, balance boundary and shutdown rejection.
 - Current branch static source assertions pass for checked bank initialization, checked buyer debit, compensation attempt and ownership effects after debit. No C# build, RAGE staging or MySQL fault injection was run.
+
+## 2026-11-08 — MONEY-045 government fuel quota regression additions
+
+- Remaining allowance below total monetary cost: reject before takeProd, City Hall debit, FuelLeft change, vehicle fuel or success effects.
+- Allowance exactly equal to price: accept once and reduce allowance by exact price.
+- Allowance above price: accept and deduct exact price; test unit price greater than one to catch liters/currency unit mismatch.
+- Full-tank special requests (9999/99999) must normalize to actual remaining tank capacity before price/tfuel calculations; no stale pre-clamp values.
+- Reject nonpositive product price, total price overflow beyond Int32 and final fuel beyond tank.
+- Inject failures/replay/restart between stock, business bank, FuelLeft, City Hall money and vehicle fuel; these remain required for durable exactly-once settlement.
+- Static assertions passed for wide multiplication, bounds, normalized quantity, no liters-vs-currency clamp and quota rejection before takeProd. No C# build, RAGE staging or MySQL fault injection was run.
