@@ -341,3 +341,15 @@ No new C# changes were made. The checked-in DDL evidence and referral ordering r
 **Исправление (не внедрено):** создать referral settlement с уникальным referral/reward ID; в одной DB transaction фиксировать success state, RB/VIP и cash ledger/receipt либо durable pending legs, с чёткими retry/reconciliation semantics. Cash leg должен проходить через общий MONEY-002 coordinator; не использовать SELECT → absolute UPDATE. Проверять результат каждой DB операции и уведомлять об успехе только после durable commit.
 
 **Тесты:** cash delta на границе `Int32.MaxValue`; DB failure после каждого шага; повторная проверка того же referral ID; duplicate/concurrent processing; проверка, что повтор не дублирует RB/VIP и не теряет cash; online/offline inviter и reconnect/restart. Пока только статический анализ; source не менялся, build/DB/RAGE tests не запускались.
+
+
+### MONEY-002 follow-up — business tax repossession cash writer (2026-11-08)
+
+The hourly business-tax/repossession path in `Main.payDayTrigger` is another direct cash writer not covered by the wallet snapshot coordinator:
+
+- For an online owner, it calls `Wallet.Change(player, Convert.ToInt32(biz.SellPrice * 0.8))` but ignores the bool result, then removes the business from the in-memory `BizIDs`.
+- For an offline owner, it schedules a DB task, SELECTs `characters.money` and `characters.biz`, computes the owner refund in application code, and writes both columns as absolute values. It has no per-UUID cash gate, no transaction with business ownership/bank reset, no stable operation ID and no affected-row acknowledgement.
+- After scheduling the offline task (not awaiting it), the payday flow resets the business bank balance and clears the business owner. A failure or crash can therefore leave the property repossessed with no confirmed payout; an uncertain retry can duplicate the refund. If the owner logs in between owner-presence check and DB task completion, the absolute cash update can race cache publication/full save.
+- The cash + Biz columns are updated in one SQL statement, but business owner/bank state and the referral/lottery/cash receipt are not part of the same transaction. This is not a complete exactly-once settlement.
+
+The house repossession offline path calls `Character.Save.Repository.AddMoney`, so it inherits that method's read-modify-absolute-write and login/cache race. Both property repossession flows must migrate as domain operations with stable property/tax-period identity, confirmed payout, and ownership transition recovery; do not treat them as generic anonymous increments. No source code changed in this pass.
