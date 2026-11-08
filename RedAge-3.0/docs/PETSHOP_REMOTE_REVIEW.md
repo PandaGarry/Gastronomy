@@ -4,7 +4,7 @@
 
 ## PET-001 — petshopBuy accepts stale business context and unvalidated pet model
 
-**Приоритет: высокий; missing server-side context checks statically confirmed, exact remote reachability and model behavior require staging.**
+**Приоритет: средний/высокий; missing server-side context checks, early teleport and reusable TempBizID are statically confirmed; arbitrary model-string behavior requires staging.**
 
 - OnBusinessAction assigns SessionData.BizID for every business interaction and sets TempBizID for several non-pet business types, including showrooms, gun shop, clothes and masks (Core/Businesses.cs:1036 onward). enterPetShop uses the current TempBizID and opens the client pet shop (1227-1251).
 - The client buyPet handler sends pet.model to the server as petshopBuy (src_client/player/petshop.js:87-97). The server handler checks only that TempBizID is nonnegative and resolves to a business (Core/Businesses.cs:1253-1261). It does not require biz.Type == 14, an active server-issued pet-shop session, proximity, matching dimension or an unexpired one-shot intent.
