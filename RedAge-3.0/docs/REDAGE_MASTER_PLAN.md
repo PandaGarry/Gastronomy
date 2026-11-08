@@ -258,7 +258,7 @@ Finding нельзя закрывать только потому, что код
 | MONEY-049 | Metro: checked long price calculation; success only after successful wallet debit | negative/zero/normal/max input, Wallet false/exception, no log/event/dimension on failure, real ticket flow |
 | MONEY-050 | Driving School: all six active license cases stop on failed debit before license/quest/faction/log effects | six success cases, debit false/exception, duplicate callback, shutdown/reconnect/save |
 | MONEY-051 | Street Race: both stake debits required before race status/start; compensate first stake if second fails | first/second debit failures, refund failure, duplicate/concurrent accept/finish, payout durability, restart |
-| MONEY-052 | StreetRace finish remote now requires active race and server-side 10m proximity to stored finish | pending-offer replay, outside-radius call, finite/min-distance waypoint validation, map bounds, concurrent finish, payout/recovery tests |
+| MONEY-052 | StreetRace finish remote now requires active race and server-side 10m proximity to stored finish | pending-offer replay, outside-radius call, finite/min-distance waypoint validation, map bounds, concurrent finish, payout/recovery tests |\n| MONEY-002 | Money save queue now synchronizes producers/snapshot and retries failed absolute-value batches without overwriting newer queued values | C# build; concurrent producer tests; DB partial-failure/reconnect; restart-loss test; design durable outbox/backoff/dead-letter |
 | PERF-002 | CEF production defaults and hotReload disabled for prod | clean install/build for all scripts, output inspection, no source maps/HMR, CEF/RAGE UI smoke, size/time baseline |
 
 **Незакрытые риски Street Race:** MONEY-051 stake compensation durability; MONEY-052 client-supplied waypoint validation; winner payout result and exactly-once durable settlement; `ClearData` abort/death payout result. Ни один из этих finding'ов не закрыт runtime-тестами.
@@ -323,7 +323,7 @@ Finding нельзя закрывать только потому, что код
 
 ## 12. Следующие конкретные действия
 
-1. Продолжить текущий bounded audit без дублирования уже изученных review.
+1. Проверить MONEY-002 source patch: build, concurrency and DB failure/retry tests; отдельно спроектировать durable outbox/recovery, поскольку текущая очередь остаётся in-memory.\n2. Продолжить текущий bounded audit без дублирования уже изученных review.
 2. Закончить проектирование StreetRace settlement: winner/abort payout, durable receipt/recovery, concurrency; затем покрыть MONEY-051/052 regression tests.
 3. Спроектировать безопасное решение MONEY-048 player trade/tent market.
 4. Продолжить проверку unchecked `Wallet.Change` и stock/item settlement callers, затем оставшиеся Remote Events/delegated callbacks.
