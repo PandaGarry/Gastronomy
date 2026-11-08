@@ -396,3 +396,5 @@
 - MONEY-003: added synchronized `Bank.SetBalance` and `Bank.ApplyBalanceAdjustment`; routed business/house purchase initialization, auction property balance initialization, and hourly business/house tax/repossess balance changes through the shared account lock and dirty revision tracking. Static-only; build and runtime/fault-injection tests pending.
 
 - Follow-up caller migration: hourly house/business tax uses synchronized ApplyBalanceAdjustment; house purchase debits before bank initialization and ownership; house/business auction awards initialize bank balances before ownership/state commit; admin bank grant requires Change success. Targeted current-branch scan found no active direct Balance writes in the reviewed caller files.
+
+- MONEY-053 interim ATM settlement hardening: regular cash deposit/withdrawal and house deposit now check the second balance leg, attempt compensation on rejection, and defer success side effects/logs until both in-memory changes succeed. Durable transaction and runtime validation remain open.
