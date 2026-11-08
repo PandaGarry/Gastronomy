@@ -30,3 +30,13 @@
 ## Boundaries
 
 This is static evidence for conditional stale-intent and cross-write failure paths, not proof of production exploitability or actual repeated sale. Vehicle sale/trade review remains incomplete; see `VEHICLE_ACTION_REVIEW.md`, `GARAGE_REVIEW.md` and `VEHICLE_REPAIR_REVIEW.md`.
+
+## 2026-11-08 — bounded government vehicle sale confirmation guard
+
+A narrow patch was applied in `Main.cs` for `CAR_SELL_TOGOV`:
+
+- Revalidate `vehicleData.Holder == sessionData.Name` at confirmation, not only when the dialog is opened.
+- Reject a nonpositive/unknown vehicle sale price before payout or removal.
+- Require `Wallet.Change(player, price)` to succeed before money logs, bank message and vehicle removal.
+
+This closes the stale-owner confirmation path and prevents vehicle deletion when wallet credit rejects. It does not close the crash/DB window after successful payout: `VehicleManager.Remove` still removes from memory and schedules a separate asynchronous DB delete without a durable sale receipt/retry. A DB delete failure/restart can still leave a previously paid vehicle row. No C# build, RAGE staging or MySQL fault injection was run.

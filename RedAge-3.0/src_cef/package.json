@@ -2,10 +2,10 @@
   "name": "svelte-app",
   "version": "1.0.0",
   "scripts": {
-    "build": "webpack --config webpack.config.js",
-    "buildtest": "webpack --config webpackru.config.js",
-    "builden": "webpack --config webpacken.config.js",
-    "dev": "webpack-dev-server --content-base public"
+    "build": "cross-env NODE_ENV=production webpack --config webpack.config.js",
+    "buildtest": "cross-env NODE_ENV=production webpack --config webpackru.config.js",
+    "builden": "cross-env NODE_ENV=production webpack --config webpacken.config.js",
+    "dev": "cross-env NODE_ENV=development webpack-dev-server --content-base public"
   },
   "devDependencies": {
     "@beyonk/svelte-notifications": "^1.1.2",

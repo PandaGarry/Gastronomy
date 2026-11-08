@@ -1920,12 +1920,14 @@ namespace NeptuneEvo.Core
             try
             {
                 if (!BizList.ContainsKey(bizid)) return false;
-                if (addMoney < 0) return false;
+                if (amount <= 0 || addMoney < 0) return false;
                 Business biz = BizList[bizid];
+                bool productFound = false;
                 foreach (Product p in biz.Products)
                 {
                     if (p.Name != prodname) continue;
-                    if (p.Lefts - amount < 0) return false;
+                    productFound = true;
+                    if (p.Lefts < amount) return false;
                     p.Lefts -= amount;
                     if (!biz.IsOwner()) break;
                     Bank.Data bData = Bank.Get(Main.PlayerBankAccs[biz.Owner]);
@@ -1934,7 +1936,7 @@ namespace NeptuneEvo.Core
                     GameLog.Money($"biz({bizid})", $"bank({bData.ID})", addMoney, "bizProfit");
                     break;
                 }
-                return true;
+                return productFound;
             }
             catch (Exception e)
             {
@@ -2884,7 +2886,15 @@ namespace NeptuneEvo.Core
                         lvl = VehicleManager.VehicleTank[vehicle.Class] - fuel;
                     }
 
-                    if (lvl < 0) return;
+                    if (lvl <= 0) return;
+
+                    var fractionData = player.GetFractionData();
+                    Business biz = BizList[sessionData.BizID];
+                    if (biz.Products == null || biz.Products.Count == 0) return;
+
+                    long totalPrice = (long)lvl * biz.Products[0].Price;
+                    if (totalPrice <= 0 || totalPrice > int.MaxValue) return;
+                    int price = (int)totalPrice;
 
                     int tfuel = fuel + lvl;
                     if (tfuel > VehicleManager.VehicleTank[vehicle.Class])
@@ -2892,9 +2902,6 @@ namespace NeptuneEvo.Core
                         Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.VvedireCorrect), 3000);
                         return;
                     }
-                    var fractionData = player.GetFractionData();
-                    Business biz = BizList[sessionData.BizID];
-                    int price = lvl * biz.Products[0].Price;
                     if (isGov)
                     {
                         if (fractionData == null || Fractions.Manager.FractionTypes[fractionData.Id] != FractionsType.Gov)
@@ -2907,13 +2914,11 @@ namespace NeptuneEvo.Core
                             Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.GosGosZapravit), 6000);
                             return;
                         }
-                        if (lvl > fractionData.FuelLeft) 
-                            lvl = fractionData.FuelLeft;
-                        //if (lvl <= 0 || Fractions.Stocks.fracStocks[frac].FuelLeft < lvl * biz.Products[0].Price)
-                        //{
-                        //    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, $"Лимит на заправку гос. транспорта за день исчерпан", 3000);
-                        //    return;
-                        //}
+                        if (price > fractionData.FuelLeft)
+                        {
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Лимит на заправку гос. транспорта за день исчерпан", 3000);
+                            return;
+                        }
                     }
                     else if (UpdateData.CanIChange(player, price, true) != 255) return;
                     if (!takeProd(biz.ID, lvl, "Бензин", price))
@@ -3018,7 +3023,22 @@ namespace NeptuneEvo.Core
                     Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.AdminTransferRestricted), 3000);
                     return;
                 }
-                Wallet.Change(player, -biz.SellPrice);
+                int tax = Convert.ToInt32(biz.SellPrice / 100f * biz.Tax);
+                long previousBusinessBalance = Bank.GetBalance(biz.BankID);
+                if (!Bank.SetBalance(biz.BankID, (long)tax * 2))
+                {
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось подготовить банковский счёт бизнеса. Покупка отменена.", 3000);
+                    return;
+                }
+
+                if (!Wallet.Change(player, -biz.SellPrice))
+                {
+                    if (!Bank.SetBalance(biz.BankID, previousBusinessBalance))
+                        Bank.Log.Write($"Business purchase rollback failed [business:{biz.ID}, bank:{biz.BankID}]");
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось списать оплату. Покупка отменена.", 3000);
+                    return;
+                }
+
                 GameLog.Money($"player({characterData.UUID})", $"server", biz.SellPrice, $"buyBiz({biz.ID})");
                 //Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.BizBuy, BusinessManager.BusinessTypeNames[biz.Type]), 3000);
                 Players.Phone.Messages.Repository.AddSystemMessage(player, (int)DefaultNumber.Bank, LangFunc.GetText(LangType.Ru, DataName.BizBuy, BusinessManager.BusinessTypeNames[biz.Type], biz.SellPrice), DateTime.Now);
@@ -3040,11 +3060,6 @@ namespace NeptuneEvo.Core
                 biz.Orders = orders;
                 biz.SetOwner (player.Name);
                 characterData.BizIDs.Add(id);
-                
-                int tax = Convert.ToInt32(biz.SellPrice / 100f * biz.Tax);
-                var bizBalance = Bank.Accounts[biz.BankID];
-                bizBalance.Balance = tax * 2;
-                bizBalance.IsSave = true;
                 
                 Character.Save.Repository.SaveBiz(player);
             }
@@ -3337,6 +3352,11 @@ namespace NeptuneEvo.Core
                 var characterData = player.GetCharacterData();
                 if (characterData == null) return;
                 SellItemData sellItemData = sessionData.SellItemData;
+                if (sellItemData == null || sellItemData.Seller == null || !sellItemData.Seller.IsCharacterData())
+                {
+                    sessionData.SellItemData = new SellItemData();
+                    return;
+                }
                 ExtPlayer target = sellItemData.Seller;
                 var targetSessionData = target.GetSessionData();
                 var targetCharacterData = target.GetCharacterData();
@@ -3346,6 +3366,12 @@ namespace NeptuneEvo.Core
                     return;
                 }
                 int price = sellItemData.Price;
+                if (price <= 0 || !BizList.ContainsKey(sellItemData.Count))
+                {
+                    sessionData.SellItemData = new SellItemData();
+                    targetSessionData.SellItemData = new SellItemData();
+                    return;
+                }
                 Business biz = BizList[sellItemData.Count];
                 if (player.Position.DistanceTo(target.Position) > 2)
                 {

@@ -1,5 +1,7 @@
 # План изучения и развития RedAge 3.0
 
+> **Канонический план:** [`REDAGE_MASTER_PLAN.md`](REDAGE_MASTER_PLAN.md) содержит утверждённые этапы аудита, тестирования, исправлений и оптимизации. Этот roadmap — операционная последовательность; синхронизировать его при изменении мастер-плана.
+
 Актуально на 2026-11-07. Статусы: `В работе`, `Ожидает`, `Заблокировано`, `Готово`. Пока — только изучение текущего состояния; игровые системы не меняем без отдельного согласования.
 
 ## Принципы
@@ -40,6 +42,21 @@
 - [ ] Поднять тестовый сервер без публичного объявления и без production-секретов.
 - [ ] Добавить smoke tests для входа, создания персонажа, сохранения/загрузки, инвентаря и базовых команд.
 
+- [ ] MONEY-032: исправить mayor treasury withdrawal — проверять результат bank credit до списания казначейства; транзакционная/идемпотентная модель и failure tests.
+- [ ] MONEY-033: consume-once ticket intent source guard внесён; durable ticket receipt, atomic split payout, replay/concurrency/disconnect/restart tests остаются открытыми. См. MAIN_REMOTE_REVIEW.md.
+
+- [ ] MONEY-034: gang drug purchase integer overflow — bounded quantity, checked/long arithmetic, exact grant-before-debit and overflow regression tests.
+
+- [ ] STOCK-001: fraction stock and vehicle cargo transfers — exact item/cash result, atomic/idempotent settlement, authorization and failure/restart tests; see `FRACTION_STOCK_REVIEW.md`.
+
+- [ ] MONEY-035: make faction/organization cash withdrawals atomic; verify wallet credit before stock commit.
+- [ ] MONEY-036: decide and enforce one money-width contract (Int32 cap or end-to-end BIGINT); update wallet arithmetic, generated DB model and all save workers consistently.
+- [ ] STOCK-001: make faction/vehicle stock item grants exact and atomic; handle partial/full-slot failures.
+- [ ] STOCK-002: replace business takeProd/customer debit/item grant sequence with idempotent atomic retail settlement; test owner-bank, wallet, item grant, missing-product and restart failures. See BUSINESS_RETAIL_REVIEW.md.
+- [ ] MONEY-039: make ATM business-account deposit an atomic/idempotent player-debit/business-credit transfer with checked result, refund/retry and stale BizID/index protection. See BUSINESS_BANK_REVIEW.md.
+- [ ] MONEY-040/041: persist hourly business tax debits and make online/offline repossession compensation durable/idempotent before ownership release. See BUSINESS_TAX_REVIEW.md.
+- [ ] MONEY-042: make player-to-player vehicle sale debit/credit and holder persistence durable/idempotent; test failed seller credit and SaveHolder DB failure/restart. See VEHICLE_PLAYER_SALE_REVIEW.md.
+
 ## Этап 3 — Аудит безопасности и надёжности (`В работе`)
 
 - [x] Начальный credential/config scan: локально убраны обнаруженные credentials; владельцу указана необходимость ротации, если upstream значения были активны.
@@ -58,11 +75,12 @@
 - [x] Sapper minigame review выявил critical `MONEY-008..009`: signed negative stake создаёт RedBucks, client-side RNG/outcome выбирает server payout/refund; серверный result validation отсутствует. Никаких патчей не вносил; только disposable-account regression после design server-authoritative round/ledger. См. `SAPPER_REVIEW.md`.
 - [x] Частично проверены generic quest remotes, Granny pickup и Dada/Edward objectives: `PROG-002..004`, `BUG-001` и `INV-008`. Dada/Edward objective flags client-forgeable; generic dialogue dispatcher не вызывает Valentine/Defender legacy `Perform/Take` methods (runtime activation не подтверждена); `SkipQuest` использует неверный receiver. Wedding review зарегистрировал `MONEY-010` divorce disconnect/debit gap и `WEDDING-001` null-target path. Только документы; actor handlers, build and runtime/failure tests остаются.
 - [x] Прослежены minute/hour `TimeInfo` persistence and online reward writes, плюс все активные фиксированные `Achievements[index]` sites. Добавлены `MONEY-011` (условный crash/partial-save replay/loss gap), `PROG-005` (short valid JSON list не нормализуется) и `PROG-006` (nullable `TimeInfo` может прервать shared minute pass). См. `ONLINE_REWARDS_REVIEW.md`; prevalence и runtime effects ещё не подтверждены.
-- [x] Частично прослежен taxi mileage remote до passenger billing и BattlePass IDs 2/59/159/95: `MONEY-012` (client-supplied distance может начислить fare за неподтверждённый пробег) и `PROG-007` (те же requests продвигают driver/passenger miles tasks до wallet result). Только static review; C#/RAGE/DB failure tests остаются. См. `TAXI_MILEAGE_REVIEW.md`.
+- [x] Частично прослежен taxi mileage remote до passenger billing и BattlePass IDs 2/59/159/95: `MONEY-012` (client-supplied distance может начислить fare за неподтверждённый пробег) и `PROG-007` (те же requests продвигают driver/passenger miles tasks до wallet result). Только static review; C#/RAGE/DB failure tests остаются. См. `TAXI_MILEAGE_REVIEW.md`. Дополнительно зарегистрирован `VEH-011`: отрицательный signed mileage delta unchecked-преобразованием превращается в огромный uint increment; persistent DB effect не подтверждён.
 - [x] Проверен generic passport request→accept путь для task 101. `target==player` не запрещён и то же лицо может принять own request, вызывая progress; `PROG-008` открыт с оговоркой о проверке entity marshalling на staging. См. `DOCUMENTS_REVIEW.md`.
-- [x] Vehicle/garage remote slices: `VEH-001` self-repair callback lacks pending intent (policy-dependent); `VEH-002` house parking accepts global vehicle IDs without household-holder authorization; `VEH-003` negative slot key can persist and fail spawn; `VEH-004..005` record aircraft action and entity-argument authorization gaps; `VEH-006`/`MONEY-013` record stale government-sale ownership and conditional payout/delete failure; `VEH-007..008` record vehicle-sync entity authorization and passenger radio policy gaps; one organization fleet slice is now partially reviewed (`MONEY-014..015`), with conditional sale-persistence and evacuation-debit findings; house resident ACL/save, purchase and sale slices are partially reviewed (`PROP-001..005`, `MONEY-016..019`, `MONEY-022..026`), with roommate privilege escalation, dirty-save, conditional purchase/transfer debit failures, furniture crafting ingredient-location mismatch (`INV-009`), sale payout replay, tax balance rollback, house repossession resurrection, policy-dependent ATM location/eligibility bypass (`MONEY-004`), replayable bank transfer confirmation (`MONEY-003`), business order dirty-save (`MONEY-022`), quantity-overflow bank credit (`MONEY-025`), stale-BizID business-sale payout replay (`MONEY-026`), Trucker order reservation (`JOB-001`), SMS CEF injection and image URL sink (`SEC-007`, `SEC-010`), contact BattlePass bypass (`PROG-009`), conditional message-history flush loss (`PHONE-001`), phone preference/call validation and Tinder replay (`PHONE-002..004`), Tinder avatar CSS/resource candidate (`SEC-008`), News link CSS candidate (`SEC-009`), conditional News charge-without-ad/moderation replay (`MONEY-027..028`), non-atomic SIM ownership lifecycle (`PHONE-005`) and camera animation spoof (`PHONE-006`), auction first-bid and stale-end settlement (`MONEY-023..024`), property auction listing/offline-award persistence (`PROP-004..005`), and phone taxi/mechanic dispatch takeover/repeat-call issues (`JOB-002..003`) gaps. Static-only; exact impact needs RAGE marshalling and DB fault-injection. Broader vehicle/garage/organization/property audit remains open; see `VEHICLE_REPAIR_REVIEW.md`, `GARAGE_REVIEW.md`, `VEHICLE_ACTION_REVIEW.md`, `VEHICLE_SALE_REVIEW.md`, `VEHICLE_SYNC_REVIEW.md`, `ORG_VEHICLE_REVIEW.md`, `HOUSE_RESIDENT_REVIEW.md`, `PROPERTY_PURCHASE_REVIEW.md`, `PROPERTY_SALE_REVIEW.md`, `PROPERTY_TRANSFER_REVIEW.md`, `PROPERTY_TAX_REVIEW.md`, `ATM_REVIEW.md`, `BANK_TRANSFER_REVIEW.md`, `BUSINESS_ORDER_REVIEW.md`, `BUSINESS_SALE_REVIEW.md`, `BUSINESS_DELIVERY_REVIEW.md`, `PHONE_MESSAGES_REVIEW.md`, `PHONE_CALL_TINDER_REVIEW.md`, `PHONE_NEWS_REVIEW.md`, `PHONE_SIM_REVIEW.md`, `PHONE_DISPATCH_REVIEW.md`, `HOUSE_FURNITURE_REVIEW.md`, `AUCTION_REVIEW.md`.
+- [x] Vehicle/garage remote slices: `VEH-001` self-repair callback lacks pending intent (policy-dependent); `VEH-002` house parking accepts global vehicle IDs without household-holder authorization; `VEH-003` negative slot key can persist and fail spawn; `VEH-004..005` record aircraft action and entity-argument authorization gaps; `VEH-006`/`MONEY-013` record stale government-sale ownership and conditional payout/delete failure; `VEH-007..008` record vehicle-sync entity authorization and passenger radio policy gaps; one organization fleet slice is now partially reviewed (`MONEY-014..015`), with conditional sale-persistence and evacuation-debit findings; house resident ACL/save, purchase and sale slices are partially reviewed (`PROP-001..005`, `MONEY-016..019`, `MONEY-022..026`), with roommate privilege escalation, dirty-save, conditional purchase/transfer debit failures, furniture crafting ingredient-location mismatch (`INV-009`), sale payout replay, tax balance rollback, house repossession resurrection, policy-dependent ATM location/eligibility bypass (`MONEY-004`), replayable bank transfer confirmation (`MONEY-003`), business order dirty-save (`MONEY-022`), quantity-overflow bank credit (`MONEY-025`), unchecked government-sale payout and stale-BizID replay (`MONEY-026`), Trucker order reservation (`JOB-001`) and unchecked delivery payout settlement (`JOB-004`), SMS CEF injection and image URL sink (`SEC-007`, `SEC-010`), contact BattlePass bypass (`PROG-009`), conditional message-history flush loss (`PHONE-001`), phone preference/call validation and Tinder replay (`PHONE-002..004`), Tinder avatar CSS/resource candidate (`SEC-008`), News link CSS candidate (`SEC-009`), conditional News charge-without-ad/moderation replay (`MONEY-027..028`), non-atomic SIM ownership lifecycle (`PHONE-005`) and camera animation spoof (`PHONE-006`), auction first-bid and stale-end settlement (`MONEY-023..024`), property auction listing/offline-award persistence (`PROP-004..005`), and phone taxi/mechanic dispatch takeover/repeat-call issues (`JOB-002..003`) gaps. Static-only; exact impact needs RAGE marshalling and DB fault-injection. Broader vehicle/garage/organization/property audit remains open; see `VEHICLE_REPAIR_REVIEW.md`, `GARAGE_REVIEW.md`, `VEHICLE_ACTION_REVIEW.md`, `VEHICLE_SALE_REVIEW.md`, `VEHICLE_SYNC_REVIEW.md`, `ORG_VEHICLE_REVIEW.md`, `HOUSE_RESIDENT_REVIEW.md`, `PROPERTY_PURCHASE_REVIEW.md`, `PROPERTY_SALE_REVIEW.md`, `PROPERTY_TRANSFER_REVIEW.md`, `PROPERTY_TAX_REVIEW.md`, `ATM_REVIEW.md`, `BANK_TRANSFER_REVIEW.md`, `BUSINESS_ORDER_REVIEW.md`, `BUSINESS_SALE_REVIEW.md`, `BUSINESS_DELIVERY_REVIEW.md`, `PHONE_MESSAGES_REVIEW.md`, `PHONE_CALL_TINDER_REVIEW.md`, `PHONE_NEWS_REVIEW.md`, `PHONE_SIM_REVIEW.md`, `PHONE_DISPATCH_REVIEW.md`, `HOUSE_FURNITURE_REVIEW.md`, `AUCTION_REVIEW.md`.
 - [ ] Завершить inventory trade/storage/weapon/clothes/shop permissions, исправить NoteCreate ownership/dedup, подтвердить mitigations полной сборкой и regression tests.
 - [ ] Продолжить review удалённых событий/команд: авторизация, проверка аргументов, rate limits, доверие клиенту.
+- [x] Следующий широкий проход `Main.cs`: задокументированы `MONEY-030` (условный EventCoins→RedBuck count/remove mismatch) и `MONEY-031` (прямое изменение government fuel caps без leader ACL). Статически; runtime требует RAGE/DB staging. `syncWaypoint` отдельно рассмотрен без утверждения о task bypass. См. `MAIN_REMOTE_REVIEW.md`.
 - [x] Ещё один крупный remote pass: phone contacts/blacklist/call/recents/GPS/gallery/settings/property-car и часть business/dispatch routes cross-checked; в `Core/Selecting.cs` найден `PROG-010` (belt task progress без server transition), в `Core/WeaponRepository.cs` — `INV-010` (ammo return quantity до clip-cap). Оба статически обоснованы, runtime не подтверждён; далее RAGE staging. См. `SELECTING_REMOTE_REVIEW.md` и `WEAPON_REMOTE_REVIEW.md`.
 - [x] Прослежен `Core/Carroom.cs`: `MONEY-029` — malformed client color can fail after purchase/test-drive charge and skip cleanup; test-drive model/showroom policy remains open. Только статический source trace; см. `CARROOM_REVIEW.md`.
 - [ ] Проверить SQL: параметризация, транзакции, пул соединений, таймауты, ошибки и повторные попытки.
@@ -97,3 +115,79 @@
 - Нет `dotnet` SDK в текущей рабочей среде: C# сборка пока не проверена.
 - В текущем снимке намеренно отсутствуют серверные бинарники/runtime, собранные client packages и часть тяжёлых UI/game assets.
 - Нет подтверждённой полной схемы запуска и сведений о предполагаемом production-хостинге.
+
+
+- [ ] MONEY-037: player-to-player house sale settlement — checked buyer debit/seller credit, atomic ownership handoff, offer idempotency and correct audit identities; see `HOUSE_SALE_REVIEW.md`.
+- [ ] MONEY-038: source patch now rejects nonpositive bids and uses widened `long` fee arithmetic; still needs C# build/RAGE boundary and bank-failure tests, plus owner decision on maximum bid; see `AUCTION_REVIEW.md`.
+- [ ] INV-011: Other-item auction lifecycle — either disable unsupported listing type or implement durable winner grant/no-bid return with offline/restart recovery; see `AUCTION_REVIEW.md`.
+
+- [ ] MONEY-043: make government business purchase debit and ownership/stock/order reset one durable idempotent operation; reject ownership commit on failed debit.
+- [ ] MONEY-044: make player-to-player business transfer settle buyer debit, seller credit, Owner and both BizIDs atomically/idempotently; support compensation/reconciliation and offline/restart recovery. See `BUSINESS_OWNERSHIP_REVIEW.md`.
+
+- [ ] MONEY-045: enforce government fleet fuel budget against checked monetary cost after quantity normalization; reject before any stock/funds/fuel mutation and reconcile fraction, City Hall and business ledgers. See BUSINESS_FUEL_REVIEW.md.
+
+- [ ] VEH-009: require a short-lived server-side refuelling intent bound to a nearby Type==1 station and vehicle; revalidate and consume on every petrol remote. See BUSINESS_FUEL_REVIEW.md.
+
+- [ ] PET-001: require Type==14 pet-shop intent, location/dimension and allowlisted pet model; prevent stale TempBizID teleport and replay. See PETSHOP_REMOTE_REVIEW.md.
+
+- [ ] VEH-010: clear organization tuning context on exit and require an active Type==12 one-shot tuning intent for every personal purchase remote. See TUNING_REMOTE_REVIEW.md.
+
+- [ ] JOB-005: make mechanic repair/fuel acceptance and mechanic fuel-reserve purchases exactly-once; confirm both wallet legs before repair/fuel mutation and add stale-offer/replay/restart tests. See MECHANIC_SERVICE_REVIEW.md.
+
+- [ ] BUG-002/MONEY-047: make admin business deletion null-safe and idempotent across DB row, online/offline owner BizIDs/refund, runtime cache and world cleanup; test failures/restart. See BUSINESS_OWNERSHIP_REVIEW.md.
+
+- [ ] INV-012: bind vehicle trunk inventory to exact vehicle/access session and revalidate distance, dimension, door, ownership/key and faction/org rank on every mutation; test stale context and replay. See VEHICLE_TRUNK_ACCESS_REVIEW.md.
+
+- [ ] VEH-012: make vehicle trunk reservation release idempotent and session-owner-bound; clear BagInUse/SelectedVeh on OtherClose, context replacement, full close, disconnect and vehicle deletion; test competing openers and stale close. See VEHICLE_TRUNK_LIFECYCLE_REVIEW.md.
+
+- [ ] INV-013: make AirDrop hacking and loot access server-authoritative and bind every remote to exact drop, active event, player, dimension and proximity; test client progress tampering, replay and cross-event calls. See AIRDROP_REMOTE_REVIEW.md.
+- [ ] INV-014: require active MatWar generation and exact nearby crate for status/hack/open; server-time lock progress; remove/revoke stale matwar_100 loot on endWar. See MATWAR_REMOTE_REVIEW.md.
+
+- [ ] INV-015: bind faction weapon-stock access to a short-lived player/fraction/stock intent; recheck duty, rank, stock-open state, position and dimension on open and every mutation; clear stale OnFracStock. See FRACTION_STOCK_SESSION_REVIEW.md.
+
+- [ ] INV-016: revoke Organization inventory session on interior exit and revalidate current organization/dimension/stock state on every mutation; test stale and concurrent remotes. See ORGANIZATION_STOCK_SESSION_REVIEW.md.
+
+- [ ] INV-017: revoke furniture safe inventory on house exit and bind it to exact house/object/access mode; revalidate range, dimension and ACL on every mutation. See FURNITURE_SAFE_SESSION_REVIEW.md.
+
+- [ ] INV-018: make HeliCrash key-clamp progress server-authoritative; require exact active player/box reservation and lockpick; clear/revoke state on success, failure, exit and disconnect. See HELICRASH_KEYCLAMP_REVIEW.md.
+
+- [ ] INV-019: bind weapon/key-ring subcontainer access to exact parent SqlId/type/current owner and revoke on parent transfer/drop/delete/replacement; validate every move/stack/use operation. See WEAPON_KEYRING_SUBCONTAINER_REVIEW.md.
+
+- [ ] MONEY-051 — street race two-sided stake settlement: source patch applied; validate both debit legs, refund failure, duplicate/concurrent callbacks and winner payout durability. See `STREET_RACE_REVIEW.md`.
+- [ ] MONEY-052 — street race finish authorization: source patch requires active race, server-side 10m finish proximity, finite waypoint coordinates and >50m minimum destination distance; validate map bounds, replay/concurrency and payout recovery. See `STREET_RACE_REVIEW.md`.
+- [ ] PERF-002 — deterministic CEF production builds; validate production compiler mode, no source maps/HMR, output correctness and measured bundle/startup impact. See `CEF_BUILD_REVIEW.md`.
+- [ ] MONEY-050 — driving-school license grants: source patch applied; verify all six license types, failed wallet debit, quest/faction side effects, shutdown and persistence. See `DRIVING_SCHOOL_REVIEW.md`.
+- [ ] MONEY-049 — Metro ticket price overflow and unchecked debit; source patch added, boundary/failure staging required. See `METRO_REVIEW.md`.
+- [ ] MONEY-048 — player cash/item trade and tent-market purchase settlement; checked pricing, exact debit/credit, durable idempotency and compensation. See `PLAYER_TRADE_REVIEW.md`.
+
+- [ ] MONEY-017 — house purchase source patch now checks buyer debit before ownership; bank-init failure attempts refund. Validate compensation and restart consistency. See PROPERTY_PURCHASE_REVIEW.md.
+- [ ] MONEY-019 — house/business tax now uses synchronized bank adjustment and delays associated tax side effects until debit succeeds; validate DB/restart and remaining repossession owner persistence. See PROPERTY_TAX_REVIEW.md.
+
+
+## Актуальный статус денежной системы — 2026-11-08
+
+- **MONEY-002 — character cash:** partial in-process coordination now orders `Wallet.Change`, detached worker snapshots and full `Character.SaveSql`; failed-SQL retry hand-off is guarded. Still not durable: queue is memory-only, direct SQL writers bypass it, and login/cache publication is not covered by one DB transaction/UUID gate.
+  - Receipt/API candidate is documented only: globally unique operation ID, same-transaction receipt + bounded delta, typed duplicate/uncertain-commit outcomes and login/cache gate. No migration runner/rollback path or MariaDB verification is established; no DDL/source coordinator is deployed.
+  - Revalidated bypasses: offline `Character.Save.Repository.AddMoney`, auction refund, referral, business repossession, admin offline grant, offline table-task SQL increment and account-merger follow-up absolute UPDATE. Character login still needs a UUID gate from DB read through `SetCharacterData`; creation INSERT is initialization, not a delta. See `ECONOMY_REVIEW.md`.
+- **MONEY-003 — bank transfer:** in-memory two-account mutation, ATM consume-once and revision-aware save are partially hardened. Two account rows are still persisted separately; durable transfer receipt/transaction and crash recovery remain open.
+- **MONEY-033 — ticket intent:** session consume-once guard is patched. Durable ticket receipt and atomic split payout remain open.
+- **MONEY-060 — failed fine debit:** handler now exits when both wallet and bank debit reject; no split payout/success effects follow. Durable payout legs and runtime validation remain open.
+- **MONEY-036 — balance width:** character cash remains capped to the checked-in signed INT contract; no BIGINT migration was made. Boundary/round-trip tests remain pending.
+- **DB transaction API:** checked-in stack is linq2db 3.3.0 + generated `ServerBD` DataConnection using `MySql.Data.MySqlClient`; use its verified `BeginTransaction(IsolationLevel)` and async commit/rollback API. The legacy `MySqlConnector` helper is a separate connection path.
+
+### Следующий обязательный этап
+
+1. Complete the direct `characters.money` writer and login/cache-publication inventory.
+2. Verify checked-in DDL and actual provider/engine on a disposable MariaDB instance.
+3. Implement durable receipt + conditional bounded cash delta in one transaction with stable operation IDs and typed duplicate/uncertain outcomes.
+4. Coordinate login publication and remove legacy absolute worker/full-save writes before migrating callers.
+5. Migrate direct writers one domain at a time; test DB failure, lost commit acknowledgement, duplicate/replay, concurrency, reconnect and restart.
+6. Run C# build and RAGE staging tests when the required toolchain/runtime is available.
+
+No money finding is closed by these interim guards. Detailed history belongs in `CHANGELOG.md`; current finding status belongs in `ISSUES.md`; test evidence belongs in `TEST_PLAN.md` and `BUILD_LOG.md`.
+
+## Documentation synchronization — 2026-11-08
+
+- `DOCS_STATUS.md` defines document ownership, status vocabulary and the required same-task update cycle.
+- `SESSION_HANDOFF.md` is now a concise current checkpoint, not a second historical changelog.
+- `MASTER_CHECKLIST.md` consolidates repeated MONEY-002/MONEY-003 validation items.

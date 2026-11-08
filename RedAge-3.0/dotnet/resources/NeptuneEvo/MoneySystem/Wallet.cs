@@ -19,28 +19,51 @@ namespace NeptuneEvo.MoneySystem
 
         public static bool Change(ExtPlayer player, int amount, bool isDisconnect = false)
         {
+            // Once the in-memory balance has changed, never report this operation as
+            // rejected: callers may otherwise retry or compensate an already-applied change.
+            bool balanceChanged = false;
             try
             {
                 var characterData = player.GetCharacterData();
                 if (characterData == null) return false;
-                int temp = (int)characterData.Money + amount;
-                if (temp < 0) return false;
-                if (amount < 0 && Admin.IsServerStoping) return false;
-                characterData.Money = temp;
-                
-                if (amount >= 10_000 || amount <= -10_000) 
-                    Database.Models.Money.AddMoneyUpdate(characterData.UUID, characterData.Money);
-                
+                long temp;
+                // The same striped lock protects the balance snapshot used by SaveSql.
+                // Version tracking invalidates detached worker snapshots on every mutation.
+                lock (Database.Models.Money.GetCharacterMoneySyncLock(characterData.UUID))
+                {
+                    // The persisted characters.money column is signed INT. Keep the in-memory
+                    // long contract inside that range and never narrow before validating it.
+                    temp = checked(characterData.Money + (long)amount);
+                    if (temp < 0 || temp > int.MaxValue) return false;
+                    if (amount < 0 && Admin.IsServerStoping) return false;
+                    characterData.Money = temp;
+                    balanceChanged = true;
+                    Database.Models.Money.AddMoneyUpdate(
+                        characterData.UUID,
+                        characterData.Money,
+                        amount >= 10_000 || amount <= -10_000);
+                }
+
                 if (amount >= 1) characterData.EarnedMoney += (ulong)amount;
-                if (isDisconnect) return true;
-                Trigger.ClientEvent(player, "client.charStore.Money", temp);
+                if (!isDisconnect)
+                {
+                    try
+                    {
+                        Trigger.ClientEvent(player, "client.charStore.Money", temp);
+                    }
+                    catch (Exception e)
+                    {
+                        // Notification failure must not turn an applied balance mutation into false.
+                        Log.Write($"Change notification Exception: {e}");
+                    }
+                }
 
                 return true;
             }
             catch (Exception e)
             {
-                Log.Write($"Change Exception: {e.ToString()}");
-                return false;
+                Log.Write($"Change Exception: {e}");
+                return balanceChanged;
             }
         }
 

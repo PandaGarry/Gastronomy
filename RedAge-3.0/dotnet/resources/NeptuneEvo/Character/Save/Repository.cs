@@ -28,6 +28,14 @@ namespace NeptuneEvo.Character.Save
                 var characterData = player.GetCharacterData();
                 if (characterData == null) return;
 
+                // Do not let an invalid in-memory balance overflow during conversion or
+                // silently poison the character's persisted money column.
+                if (characterData.Money < 0 || characterData.Money > int.MaxValue)
+                {
+                    Log.Write($"SaveSql rejected out-of-range character money (UUID: {characterData.UUID}, amount: {characterData.Money}).");
+                    return;
+                }
+
                 var missionData = player.GetMissionData();
 
                 Bank.SetSave(characterData.Bank);
@@ -45,7 +53,9 @@ namespace NeptuneEvo.Character.Save
                 await Players.Phone.Repository.SaveSettings(db, player, characterData.UUID);
                 
 
-                await db.Characters
+                await Database.Models.Money.ExecuteCharacterSave(characterData.UUID, () => characterData.Money, async (savedMoney) =>
+                {
+                    await db.Characters
                     .Where(v => v.Uuid == characterData.UUID)
                     .Set(v => v.Firstname, characterData.FirstName)
                     .Set(v => v.Lastname, characterData.LastName)
@@ -55,7 +65,7 @@ namespace NeptuneEvo.Character.Save
                     .Set(v => v.Armor, characterData.Armor)
                     .Set(v => v.Lvl, characterData.LVL)
                     .Set(v => v.Exp, characterData.EXP)
-                    .Set(v => v.Money, Convert.ToInt32(characterData.Money))
+                    .Set(v => v.Money, Convert.ToInt32(savedMoney))
                     .Set(v => v.Bank, characterData.Bank)
                     .Set(v => v.Work, characterData.WorkID)
                     .Set(v => v.Drugaddi, characterData.DrugsAddiction)
@@ -98,6 +108,7 @@ namespace NeptuneEvo.Character.Save
                     .Set(v => v.FractionTasksData, JsonConvert.SerializeObject(player.FractionTasksData))
                     .Set(v => v.IsLucky, characterData.IsLucky)
                     .UpdateAsync();
+                });
                 
                 if (Admin.IsServerStoping)
                     player.IsRestartSaveCharacterData = true;
@@ -228,10 +239,18 @@ namespace NeptuneEvo.Character.Save
 
                     if (character != null)
                     {
-                        await db.Characters 
-                            .Where(c => c.Uuid == character.Uuid) 
-                            .Set(c => c.Money, character.Money + money) 
-                            .UpdateAsync(); 
+                        long currentMoney = Convert.ToInt32(character.Money);
+                        long updatedMoney = currentMoney + (long)money;
+                        if (currentMoney < 0 || updatedMoney < 0 || updatedMoney > int.MaxValue)
+                        {
+                            Log.Write($"AddMoney rejected out-of-range cash update (UUID: {uuid}, current: {currentMoney}, delta: {money}).");
+                            return;
+                        }
+
+                        await db.Characters
+                            .Where(c => c.Uuid == character.Uuid)
+                            .Set(c => c.Money, (int)updatedMoney)
+                            .UpdateAsync();
                     }
                 }
                 catch (Exception e)

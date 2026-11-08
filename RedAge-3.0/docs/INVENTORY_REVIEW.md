@@ -64,3 +64,63 @@ Remote `server.note.create` принимает `type`, `ItemId`, имя и те�
 ## INV-007 — negative case-open count увеличивал stack кейсов
 
 Кейс-roulette item consumption — отдельный remote inventory path. До патча отрицательный `count` проходил `RouletteOpenCase`, пустой `RouletteCreate` не выдавал reward, но `RemoveIndex` вычитал отрицательное значение и увеличивал stack кейсов. Локально внесены guards в open/create и общий `RemoveIndex`; подробный call/data-flow, second-order BattlePass effect и staging matrix находятся в [ROULETTE_REVIEW.md](ROULETTE_REVIEW.md). Patch не собран и не runtime-tested.
+
+
+## INV-012 — vehicle trunk inventory lacks per-operation session/access revalidation
+
+**Уверенность: высокая в отсутствии повторных проверок; приоритет: средний/высокий, open-trunk access policy requires owner confirmation.**
+
+- `Core/Selecting.cs:372-381` checks only that the supplied vehicle exists and is within 5m. In `vehicleSelected` branch 3 (`:471+`), the server allows vehicle inventory for Personal/Garage/Fraction/Organization/OrganizationGarage access types. For non-admins it checks that the trunk is open, but does not repeat the owner/key, fraction membership, organization membership or minimum-rank checks present in branch 1 when opening the trunk.
+- The branch sets `vehicleLocalData.BagInUse`, stores the vehicle in `sessionData.SelectData.SelectedVeh`, and calls `LoadOtherItemsData` with the vehicle SQL ID/plate. `LoadOtherItemsData` (`Chars/Repository.cs:2877-2903`) calls `OtherClose` and stores only `sessionData.InventoryOtherLocationName`; it does not bind an authorized vehicle-inventory session with expiry, position, dimension, door or access data.
+- Generic inventory remotes `server.gamemenu.inventory.move`, `.move.stack` and `.use` (`Chars/Events.cs:185-219`) directly call `ItemsMove`, `ItemsMoveStack` and `ItemsUse`. Those methods (`Chars/Repository.cs:4882-4965`, `4933+`, `5305+`) check the special read-only-tent state but do not revalidate vehicle owner/key/rank, distance, dimension, door state or that the selected vehicle is still the active container. `ItemsUse` on `ArrayName == "other"` adds the item to the caller's inventory and clears the other slot.
+- Consequently, once a vehicle container is opened, subsequent direct inventory operations rely on the mutable session location string. A modified client can attempt extraction after moving away, changing dimension, closing/replacing the vehicle context, or losing membership/access. Initial 5m proximity and trunk-open checks do not protect later operations. The exact event sequence and whether a public open trunk is intended to be lootable by any nearby player require staging and gameplay-owner policy confirmation.
+
+**Impact boundary:** no claim of confirmed theft or successful cross-owner extraction is made. Static evidence establishes missing server-side per-operation context revalidation and a generic item extraction path. If open-trunk public access is intended, the missing proximity/session freshness checks remain a separate concern.
+
+**Remediation (not implemented):** issue a short-lived vehicle-inventory intent bound to player, exact vehicle entity/plate, access class, holder/key or faction/org membership and rank, position/dimension, trunk state and expiry. Validate/consume this intent on every move/stack/use/drop endpoint; close/revoke on movement, dimension change, door close, vehicle deletion/replacement, membership/key revocation, timeout and disconnect. Keep the policy for physically open trunks explicit, but never let a stale `InventoryOtherLocationName` alone authorize a mutation.
+
+**Regression:** open own, key-shared, foreign, faction, organization and organization-garage trunks; test member/rank changes and open-trunk public policy. After opening, walk beyond 5m, change dimension, close trunk, despawn/replace vehicle, revoke key/leave faction or organization, and replay direct move/stack/use/drop events using `other`; all stale contexts must be rejected without cache/DB changes. Verify legitimate nearby authorized access and normal close/reopen. Requires disposable RAGE/MySQL staging.
+
+
+## Container entry-point map — static continuation (2026-11-08)
+
+The LoadOtherItemsData call-site search found these server container families. This is an entry-point inventory, not proof that every policy has been fully tested:
+
+- Vehicle: Core/Selecting.cs vehicleSelected branch 3; one-time access/trunk/range checks are not rebound to each item operation (INV-012); reservation cleanup gap is VEH-012.
+- Furniture safes: Core/Selecting.cs object selection passes a furniture_<houseId> location after the object/house interaction flow. Generic item remotes do not revalidate that same house/object context on every mutation; retain under INV-003 pending complete ACL/ownership trace.
+- Fraction stocks: Fractions/Fbi.cs, Sheriff.cs, Army.cs, Cityhall.cs, Police.cs and Fractions/Manager.cs. Entry flows check faction, duty/open-stock and/or rank, but OnFracStock is not reset; openWeaponStock checks only current fraction ID and rank, not duty/open-stock/location/dimension. This stale session is tracked as INV-015; generic move/stack/use handlers still do not repeat active authorization.
+- Organization stock: Organizations/Manager.cs checks organization status, stock-open state and InsideOrganizationID at open; generic item mutations do not repeat membership/rank/stock state.
+- Personal warehouse: Chars/Stock.cs opens warehouse_<character UUID> through the quest Perform flow. The storage key is player-specific; verify quest-intent and postal-stock location/session on staging rather than assuming NPC UI is a server authorization boundary.
+- Tents: Inventory/Tent/Repository.cs opens own or visitor tent. Visitor read-only server guards are tracked in INV-002; stale own/visitor context remains in INV-003 scope.
+- AirDrop: Events/AirDrop/Repository.cs has separate hack, lock-progress and loot-open remotes; missing exact drop/dimension/proximity binding is INV-013.
+- MatWar: Fractions/Manager.cs has separate start-hack, lock-progress and loot-open remotes; missing active-war/spatial/session binding and stale event inventory lifecycle are INV-014.
+- HeliCrash: Events/HeliCrash/Repository.cs opens through the HeliCrash colshape interaction; verify exact crash object/range/dimension and session freshness for every item operation under INV-003.
+- Weapon components / key ring: Chars/Repository.cs also uses LoadOtherItemsData for weapon_<itemSqlId> and CarKey_<itemSqlId>; these are item-owned subcontainers and require source-item ownership/existence checks on every mutation.
+
+Across these families, ItemsMove, ItemsMoveStack and ItemsUse remain shared mutation endpoints. Entry-time ACL checks are not a substitute for server-side validation of the current container intent, owner/object identity, player location/dimension, role/rank and allowed item/slot pairs. Keep INV-003 as the umbrella policy gap and concrete INV-012..014 findings as separate entry-point cases.
+
+- Organization stock: Organizations/Manager.cs checks organization status, stock-open state and InsideOrganizationID at open; RemovePlayer clears InsideOrganizationID without closing/revoking the container, while generic item mutations do not repeat membership/rank/stock state. Post-exit stale context is tracked as INV-016.
+
+- Furniture safes: Core/Selecting.cs objectSelected checks the object, range, InsideHouseID and owner/roommate/burglary access at open. HouseManager.RemovePlayer clears InsideHouseID on exit without closing the container; generic item mutations do not repeat those checks. Post-exit stale context is tracked as INV-017.
+
+
+## Remaining container traces — open, not yet registered as findings (2026-11-08)
+
+- Personal warehouse: WarehouseEnter/WarehouseExit switch IsInPostalStock and dimension, but WarehouseExit does not close the other inventory; Stock.Perform opens the per-character UUID storage without checking IsInPostalStock. qMain.QuestPerform does require an active npc_stock quest record, but no current NPC-range/warehouse-dimension check was found in this path. The storage key is the caller's own UUID, so the currently supported impact is a location-rule bypass for personal storage, not cross-player theft. Confirm intended design before creating an issue.
+- HeliCrash: opening is reached through a server colshape interaction; InHeliCrash uses the box health/key-clamp state, while OpenHeliCrash itself does not revalidate the current box index/health. The generic item handlers do not bind operations to the current crash box or range, and no explicit close-on-leave path was found. Confirm interaction framework guarantees and event lifecycle on staging.
+- Weapon and CarKey subcontainers: ItemsUse opens weapon_<parent SqlId> and CarKey_<keyring SqlId>. LoadOtherItemsData stores only the location string; it does not store a server-side parent-item intent. Generic mutations do not revalidate that the parent weapon/keyring still exists and remains owned by the player. Trace trade/drop/delete/replacement and close behavior before registering a separate finding.
+
+These remain audit TODOs, not confirmed vulnerabilities. Add owner-approved behavior and direct-remote regression tests before closing the container audit.
+
+- HeliCrash key clamp: InHeliCrash installs KeyClampData before GetHealth checks ArmyLockpick; generic keyClamp.end trusts client value and HeliCrash End can unlock on value 0 without proving a successful keyDown/reservation. This is a distinct high-severity remote bypass tracked as INV-018; see HELICRASH_KEYCLAMP_REVIEW.md.
+
+
+## INV-019 — weapon/key-ring parent ownership is not rebound to the open subcontainer
+
+Static trace completed:
+- Weapon component and key-ring panes are opened from parent SqlId; LoadOtherItemsData records only `InventoryOtherLocationName`.
+- GetLocationName/GetItemData/SetItemData route generic `other` mutations through that string without verifying parent existence or current owner.
+- ItemsMove/ItemsMoveStack/ItemsUse do not revoke the pane when the parent moves; ItemsUse can retrieve child items into the caller inventory.
+- The source-level stale-context path is confirmed. Cross-owner extraction and any client-side automatic close behavior remain staging questions; no live theft/duplication is claimed.
+
+See `WEAPON_KEYRING_SUBCONTAINER_REVIEW.md` for remediation and the regression matrix. Warehouse location policy and HeliCrash open/range lifecycle remain explicit, bounded staging/policy TODOs rather than asserted findings.

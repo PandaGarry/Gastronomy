@@ -2433,8 +2433,19 @@ namespace NeptuneEvo
                                 }*/
                             }    
                             var vehicle = (ExtVehicle) player.Vehicle;
-                            VehicleManager.RepairCar(vehicle);
-                            MoneySystem.Wallet.Change(player, -500);
+                            if (!MoneySystem.Wallet.Change(player, -500))
+                            {
+                                Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.NoMoney), 3000);
+                                return;
+                            }
+                            if (!VehicleManager.RepairCar(vehicle))
+                            {
+                                if (!MoneySystem.Wallet.Change(player, 500))
+                                    Log.Write($"CRITICAL: self-repair refund failed for player {characterData.UUID}");
+
+                                Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось отремонтировать транспорт. Оплата возвращена.", 3000);
+                                return;
+                            }
                             GameLog.Money($"player({characterData.UUID})", $"server", 500, $"serviceMechanic");
                             Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.RepairPayed), 3000);
                             BattlePass.Repository.UpdateReward(player, 13);
@@ -2548,6 +2559,11 @@ namespace NeptuneEvo
                         case "BUY_CAR":
                             {
                                 ExtPlayer seller = sessionData.SellItemData.Seller;
+                                if (seller == null || !seller.IsCharacterData())
+                                {
+                                    sessionData.SellItemData = new SellItemData();
+                                    return;
+                                }
                                 var sellerSessionData = seller.GetSessionData();
                                 var sellerCharacterData = seller.GetCharacterData();
                                 if (sellerSessionData == null || sellerCharacterData == null)
@@ -2557,6 +2573,12 @@ namespace NeptuneEvo
                                 }
                                 string number = sessionData.SellItemData.Number;
                                 int price = sessionData.SellItemData.Price;
+                                if (price <= 0)
+                                {
+                                    sellerSessionData.SellItemData = new SellItemData();
+                                    sessionData.SellItemData = new SellItemData();
+                                    return;
+                                }
                                 if (player.Position.DistanceTo(seller.Position) > 3)
                                 {
                                     sellerSessionData.SellItemData = new SellItemData();
@@ -2585,8 +2607,17 @@ namespace NeptuneEvo
                                     Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.NoMoney), 3000);
                                     break;
                                 }
+                                if (!MoneySystem.Wallet.Change(seller, price))
+                                {
+                                    if (!MoneySystem.Wallet.Change(player, price))
+                                        Log.Write($"CRITICAL: BUY_CAR buyer refund failed after seller credit rejection. Buyer UUID: {characterData.UUID}, Seller UUID: {sellerCharacterData.UUID}, Vehicle: {number}, Amount: {price}");
+
+                                    sellerSessionData.SellItemData = new SellItemData();
+                                    sessionData.SellItemData = new SellItemData();
+                                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось завершить выплату продавцу. Сделка отменена.", 3000);
+                                    return;
+                                }
                                 vehicleData.Holder = player.Name;
-                                MoneySystem.Wallet.Change(seller, price);
                                 GameLog.Money($"player({characterData.UUID})", $"player({sellerCharacterData.UUID})", price, $"buyCar({vehicleData.Model}, {number})");
                                 House sellerhouse = HouseManager.GetHouse(seller);
                                 var sellerGarage = sellerhouse?.GetGarageData();
@@ -2712,6 +2743,11 @@ namespace NeptuneEvo
                                     }
                                     if (Fractions.Ticket.IsVehicleTickets(vehicleData.SqlId))
                                         return;
+                                    if (vehicleData.Holder != sessionData.Name)
+                                    {
+                                        Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Транспорт больше не принадлежит Вам. Продажа отменена.", 3000);
+                                        break;
+                                    }
                                     int price = 0;
                                     if (BusinessManager.BusProductsData.ContainsKey(vehicleData.Model))
                                     {
@@ -2734,7 +2770,16 @@ namespace NeptuneEvo
                                                 break;
                                         }
                                     }
-                                    MoneySystem.Wallet.Change(player, price);
+                                    if (price <= 0)
+                                    {
+                                        Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось определить цену транспорта. Продажа отменена.", 3000);
+                                        break;
+                                    }
+                                    if (!MoneySystem.Wallet.Change(player, price))
+                                    {
+                                        Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось зачислить оплату за транспорт. Продажа отменена.", 3000);
+                                        break;
+                                    }
                                     GameLog.Money($"server", $"player({characterData.UUID})", price, $"carSell({vehicleData.Model}, {number})");
                                     //Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.YouSellCar, vehicleData.Model, number, MoneySystem.Wallet.Format(price)), 3000);
                                     Players.Phone.Messages.Repository.AddSystemMessage(player, (int)DefaultNumber.Bank, LangFunc.GetText(LangType.Ru, DataName.YouSellCar, vehicleData.Model, number, MoneySystem.Wallet.Format(price)), DateTime.Now);
@@ -4301,10 +4346,19 @@ namespace NeptuneEvo
 
                                     if (character != null)
                                     {
-                                        await db.Characters
-                                            .Where(c => c.Uuid == character.Uuid)
-                                            .Set(c => c.Money, character.Money + refferalData.Money)
-                                            .UpdateAsync();
+                                        long currentMoney = Convert.ToInt32(character.Money);
+                                        long updatedMoney = currentMoney + Convert.ToInt64(refferalData.Money);
+                                        if (currentMoney < 0 || updatedMoney < 0 || updatedMoney > int.MaxValue)
+                                        {
+                                            Log.Write($"Referral cash reward rejected at signed INT boundary (UUID: {character.Uuid}, current: {currentMoney}, reward: {refferalData.Money}).");
+                                        }
+                                        else
+                                        {
+                                            await db.Characters
+                                                .Where(c => c.Uuid == character.Uuid)
+                                                .Set(c => c.Money, (int)updatedMoney)
+                                                .UpdateAsync();
+                                        }
                                     }
                                 }
                             }
@@ -4628,6 +4682,19 @@ namespace NeptuneEvo
                         }*/
                         if (!ServerSettings.IsBusinessTax) break;
                         if (!biz.IsOwner()) continue;
+                        int tax = Convert.ToInt32(biz.SellPrice / 100f * biz.Tax);
+                        if (tax < 0)
+                        {
+                            MoneySystem.Bank.Log.Write($"Business tax rejected: negative amount [business:{biz.ID}, tax:{tax}]", nLog.Type.Warn);
+                            continue;
+                        }
+                        if (!MoneySystem.Bank.ApplyBalanceAdjustment(biz.BankID, -tax, out long bizBalanceAfterTax))
+                        {
+                            MoneySystem.Bank.Log.Write($"Business tax bank adjustment failed [business:{biz.ID}, bank:{biz.BankID}, tax:{tax}]");
+                            continue;
+                        }
+                        biz.Zatratq += tax;
+
                         if (biz.Mafia != -1)
                         {
                             var mafiaFractionData = Fractions.Manager.GetFractionData(biz.Mafia);
@@ -4635,11 +4702,6 @@ namespace NeptuneEvo
                                 mafiaFractionData.Money += MafiaForBiz;
                         }
 
-                        int tax = Convert.ToInt32(biz.SellPrice / 100f * biz.Tax);
-                        biz.Zatratq += tax;
-                        var bizBalance = MoneySystem.Bank.Accounts[biz.BankID];
-                        bizBalance.Balance -= tax;
-                        
                         var fractionData = Fractions.Manager.GetFractionData((int) Fractions.Models.Fractions.CITY);
                         if (fractionData != null)
                             fractionData.Money += tax;
@@ -4648,7 +4710,7 @@ namespace NeptuneEvo
 
                         GameLog.Money($"biz({biz.ID})", "frac(6)", tax, "bizTaxHour");
 
-                        if (bizBalance.Balance >= 0) continue;
+                        if (bizBalanceAfterTax >= 0) continue;
 
                         string owner = biz.Owner;
                         if (PlayerNames.Values.Contains(owner) && PlayerUUIDs.ContainsKey(owner))
@@ -4700,8 +4762,8 @@ namespace NeptuneEvo
                             GameLog.Money($"server", $"player({PlayerUUIDs[biz.Owner]})", Convert.ToInt32(biz.SellPrice * 0.8), $"bizTax({biz.ID})");
                         }
 
-                        bizBalance.Balance = 0;
-                        bizBalance.IsSave = true;
+                        if (!MoneySystem.Bank.SetBalance(biz.BankID, 0))
+                            Log.Write($"Failed to reset repossessed business bank balance [business:{biz.ID}, bank:{biz.BankID}]");
                         
                         biz.ClearOwner();
                         
@@ -4722,9 +4784,8 @@ namespace NeptuneEvo
                         if (house.Owner == string.Empty) continue;
 
                         int tax = Convert.ToInt32(house.Price / 100f * HouseManager.HouseTax);
-                        if (!MoneySystem.Bank.Accounts.TryGetValue(house.BankID, out var houseBalance))
+                        if (!MoneySystem.Bank.ApplyBalanceAdjustment(house.BankID, -tax, out long houseBalanceAfterTax))
                             continue;
-                        houseBalance.Balance -= tax;
                         
                         var fractionData = Fractions.Manager.GetFractionData((int) Fractions.Models.Fractions.CITY);
                         if (fractionData != null)
@@ -4734,7 +4795,7 @@ namespace NeptuneEvo
                         if (house.Type != 7) GameLog.Money($"house({house.ID})", "frac(6)", tax, "houseTaxHour");
                         else GameLog.Money($"park({house.ID})", "frac(6)", tax, "parkTaxHour");
 
-                        if (houseBalance.Balance >= 0) continue;
+                        if (houseBalanceAfterTax >= 0) continue;
 
                         string owner = house.Owner;
                         var player = (ExtPlayer) NAPI.Player.GetPlayerFromName(owner);
@@ -4780,8 +4841,8 @@ namespace NeptuneEvo
                                 Character.Save.Repository.AddMoney(targetUuid, price);
                             }
                         }
-                        houseBalance.Balance = 0;
-                        houseBalance.IsSave = true;
+                        if (!MoneySystem.Bank.SetBalance(house.BankID, 0))
+                            Log.Write($"Failed to reset repossessed house bank balance [house:{house.ID}, bank:{house.BankID}]");
                         
                         house.ClearOwner(isSave: false);
 

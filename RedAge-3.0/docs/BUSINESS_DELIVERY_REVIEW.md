@@ -18,3 +18,17 @@
 ## Scope boundary
 
 This covers order reservation and pickup state only; delivery-point policy, driver/passenger reward policy and full product inventory fulfillment need runtime/owner-policy review. No money theft or cross-business access was established in this slice.
+
+
+## JOB-004 — Trucker delivery consumes the order even when wallet payout fails
+
+**Приоритет: средний; unchecked payout result and subsequent completion mutations statically confirmed; runtime failure path not reproduced.**
+
+- `OnTrucker` validates the delivery session/order and computes the payout, then calls `MoneySystem.Wallet.Change(player, payment)` without checking its boolean result (`Jobs/Truckers.cs:198-235`).
+- `Wallet.Change` can return `false` when the character data is unavailable, when the resulting cash balance would be negative (including an overflowed `int` sum), when a debit is rejected during shutdown, or when an exception occurs (`MoneySystem/Wallet.cs:13-34`). For a positive delivery reward, the relevant failure cases are missing/stale character state, overflow/invalid amount behavior, or exception.
+- Regardless of the return value, `OnTrucker` writes the money log, updates quest progress, replenishes the business product stock, removes the business order from `biz.Orders` and `BusinessManager.Orders`, clears the driver's order state, and sends the success notification (`Jobs/Truckers.cs:235-292`). The delivery is therefore irreversibly marked complete in memory even when no wallet credit was applied.
+- This is not a claim that ordinary successful deliveries fail; it is a settlement-integrity gap when `Wallet.Change` returns false. The current `GetPrice` calculation and the order-quantity overflow path (`MONEY-025`) also warrant separate boundary tests; this finding does not rely on an unproven client-side delivery count.
+
+**Remediation (not implemented):** compute and validate a bounded positive payout before completion; require a successful wallet credit before consuming the order, or use a durable idempotent delivery receipt/state machine that can retry payout without duplicating stock/order completion. Only log and advance quest progress after settlement succeeds. Reconcile wallet, order, stock and receipt after restart.
+
+**Regression:** inject `Wallet.Change` false/exception at delivery completion; verify order remains recoverable and stock is not replenished until payout is settled, or a durable pending-payout receipt is created. Test wallet near numeric boundaries, disconnect/state teardown around the checkpoint, duplicate colshape entry, restart/retry and successful exactly-once delivery.

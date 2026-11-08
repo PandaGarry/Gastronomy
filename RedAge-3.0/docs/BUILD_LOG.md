@@ -36,3 +36,83 @@
 - .NET compile/test — заблокировано отсутствием .NET SDK.
 - SQL import и backup/restore — заблокированы отсутствием MySQL/MariaDB.
 - RAGE:MP server/client smoke test — заблокирован отсутствием полного runtime/assets и рабочего staging.
+
+
+### 2026-11-08 — money/bank patch validation environment
+
+- Checked the active execution environment: `dotnet`, `msbuild`, `csc`, `mcs`, `mysql` and `mariadb` are not installed.
+- Therefore no C# compilation, unit/integration execution or MySQL fault injection was performed for MONEY-002/MONEY-003/property settlement patches.
+- Static source assertions were executed against the current `redage/audit-continuation` branch for bank locking, two-leg transfer mutation, positive amount/overflow guards, one-shot ATM confirmation, revision-aware save retry, dirty marking, concurrent delete queue, and migrated bank/property call sites. Assertions passed; they are not a substitute for compiler/runtime tests.
+- RAGE:MP staging and multi-client tests remain unavailable. Do not close affected findings or claim runtime validation.
+
+
+### 2026-11-08 — MONEY-002 worker follow-up static verification
+
+- Source patch: one-worker startup guard, `Task`-based loop with nonblocking delay, and `AddMoneyUpdate` validation against UUID and signed DB INT balance range.
+- Static assertions checked the guard, async worker signature, delay, range validation and removal of blocking `Thread.Sleep`. Assertions passed; no C# compiler is available, so compilation was not performed.
+- No concurrency test, MySQL fault injection, restart/crash durability test or RAGE staging test was run. Queue remains in-memory only.
+
+
+### 2026-11-08 — MONEY-036 wallet range patch static assertions
+
+- Re-fetched the working-branch sources and asserted: `Wallet.Change` uses checked `long` addition; rejects negative and above-`Int32.MaxValue` results before mutation; full `Character.SaveSql` rejects invalid balances before bank/other save side effects; generated DB model still maps `characters.money` to signed `int(11)`; `Money.AddMoneyUpdate` validates its snapshot range; offline auction refund validates DB balance and widened result before narrowing.
+- Assertions passed after correcting one documentation-status matcher. These are textual/static assertions, not C# compilation or executable unit tests.
+- Environment check: Node `v22.16.0` present; `dotnet`, `msbuild`, `csc`, `mcs`, `mysql` and `mariadb` unavailable. No build, DB round-trip/fault injection, worker concurrency or RAGE UI test was performed.
+
+
+### 2026-11-08 — MONEY-002 detached worker hand-off static review
+
+- Verified the queue snapshot marks each detached UUID in `ActiveMoneyWrites` under the same `QueueLock` before `MoneyUpdateList.Clear()` and before DB context creation. This ensures a small `Wallet.Change` during the detach→SQL interval queues a newer revision.
+- Verified one snapshot marker loop and one cleanup in `RequeueMoney`; normal `MoneyUpdate` cleanup remains in its per-row `finally`. Revision checks prevent an old detached absolute snapshot from overwriting a newer full-save/wallet version.
+- Verified `SaveSql` uses `ExecuteCharacterSave` and the shared UUID synchronization lock; `Wallet.Change` advances the revision while holding the same monitor.
+- Static source assertions only. No .NET compiler, MySQL instance or RAGE:MP runtime available; no concurrency/fault-injection test executed.
+
+
+### 2026-11-08 — MONEY-002 versioned writer coordination static assertions
+
+- Asserted shared striped monitor for Wallet mutation and SaveSql snapshot; per-UUID revision advance; stale detached snapshot check before SQL; in-flight markers at snapshot time; newer small mutation queueing during worker/full-save writes; version-aware retry; semaphore hand-off ordering.
+- All source assertions passed. No C# compiler/runtime, multithreaded stress, MySQL or RAGE staging test available. Direct cash SQL writers outside this coordinator remain explicitly uncovered.
+
+
+### 2026-11-08 — MONEY-036 direct writer range guards
+
+- Static source inspection confirms offline `Character.Save.Repository.AddMoney`, `Core.Admin.OffGiveMoney` and `Main.CheckMyPromoCode` referral reward now widen arithmetic to `long`, reject invalid/above-`Int32.MaxValue` totals and narrow only after validation.
+- These three writers still use independent DB read/modify/write paths and do not share the Money worker/full-save coordinator; no concurrency safety claim is made. Main business-tax repossession and Merger writers remain open.
+- No C# build or MySQL boundary/concurrency test performed.
+
+
+### 2026-11-08 — MONEY-002 failed retry hand-off static assertions
+
+- Re-fetched the working-branch Money.cs and verified that the worker sets writeCompleted only after successful UpdateAsync; ActiveMoneyWrites is removed only for successful or superseded snapshots after releasing the per-UUID semaphore; SQL failure leaves the marker for RequeueMoney.
+- Verified issue register, economy review, regression plan, master checklist, master plan, roadmap, changelog and session handoff reflect the new behavior and remaining direct SQL writers.
+- Assertions are static source checks only. No C# build, deterministic concurrency test, MySQL fault injection, process restart test or RAGE staging test was run. dotnet, msbuild, csc, mcs, mysql and mariadb remain unavailable in this environment.
+
+
+### 2026-11-08 — MONEY-033 / MONEY-060 ticket guard static assertions
+
+- Re-fetched `FractionCommands.cs` from `redage/audit-continuation` and ran textual assertions for: (1) pending ticket assignment protected by `lock(targetSessionData)`; (2) second pending ticket rejected; (3) `ticketConfirm` detaches the intent under the same lock before settlement; (4) both wallet and bank debit failure branch returns before City Hall split payout.
+- All four assertions passed. Documentation assertions also passed for separate MONEY-033/MONEY-060 issue entries, current INDEX→DOCS_STATUS link, updated handoff, and explicit pending test status.
+- This is static text/source inspection only. No C# compilation, MariaDB transaction/fault-injection, RAGE staging, concurrency or restart test was run. No runtime exploit/reproduction claim is made.
+
+
+### 2026-11-08 — documentation consistency/link check
+
+- Re-read the current branch documentation index, status guide and roadmap; checked relative Markdown links in `INDEX.md`, `DOCS_STATUS.md` and `ROADMAP.md` against the current `docs/` directory listing (86 files).
+- Result: 0 missing relative links in the checked documents. Reconciled ticket intent replay (MONEY-033) and failed-debit payout (MONEY-060) into separate issue/review/test entries; shortened `SESSION_HANDOFF.md` and consolidated repeated money-persistence status in `ROADMAP.md`.
+- Documentation/static-source checks only; no C# build, DB or RAGE runtime test was performed.
+
+
+### 2026-11-08 — MONEY-002 direct cash writer inventory revalidation
+
+- Re-fetched active-branch Wallet.cs, Database/Models/Money.cs, Character/Save/Repository.cs, Character/Load/Repository.cs, Character/Create/Repository.cs, Accounts/Merger/Repository.cs and traced named callers.
+- Confirmed the direct-writer set: offline AddMoney read/modify/absolute UPDATE; auction offline refund; referral cash; business repossession; admin offline grant; offline table-task SQL increment; and the account-merger follow-up absolute cash UPDATE. Confirmed SaveSql and worker are legacy absolute writers protected against each other only by the interim revision/semaphore protocol.
+- Confirmed login reads cash before later SetCharacterData without the common per-UUID gate. Character creation initializes cash in its INSERT and is not a post-creation delta.
+- Documentation updated: ECONOMY_REVIEW.md, ISSUES.md, TEST_PLAN.md, MASTER_CHECKLIST.md, SESSION_HANDOFF.md, CHANGELOG.md.
+- Static inspection only. No source code changed; no C# compiler, MariaDB, concurrency harness, process-restart test or RAGE runtime was available/run. MONEY-002 remains open.
+
+
+### 2026-11-08 — MONEY-002 receipt schema/API design checkpoint
+
+- Added a design-only candidate for character_cash_operations: globally unique operation ID, UUID/type/delta, resulting signed-INT balance and timestamp; same-transaction receipt + conditional cash delta; duplicate payload validation; uncertain-commit retry with the same ID; login/cache gate and typed outcomes.
+- Reviewed repository SQL delivery shape: checked-in SQL files are database dumps; no established versioned migration runner was identified in the reviewed project structure. Candidate DDL is intentionally documentation-only pending migration/backup/rollback approval.
+- No migration SQL was executed or added, no source coordinator was implemented, and no MariaDB/provider/affected-row/transaction test was run.

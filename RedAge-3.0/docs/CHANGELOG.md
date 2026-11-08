@@ -1,4 +1,51 @@
+## 2026-11-08 — LinqToDB 3.3.0 transaction API reconnaissance
+
+- Verified against the pinned `linq2db.MySql` 3.3.0 source that `ServerBD` inherits `DataConnection` and exposes async begin/commit/rollback transaction methods. The 3.3.0 `BeginTransactionAsync` behavior disposes/rolls back an already attached transaction before starting another; coordinator must own one transaction per context.
+- This is API-level confirmation only. MariaDB InnoDB engine, schema constraints, commit durability, affected-row semantics and runtime rollback still require disposable-DB validation. No source code or DB schema changed.
+
+## 2026-11-08 — MONEY-002 durability boundary and offline-writer test plan
+
+- Reconciled `MONEY-002` against the current source and issue register: queue synchronization/retry, revision-aware worker/full-save coordination and hand-off interleaving fixes are already present; build, concurrency and MySQL fault-injection validation remain pending.
+- Documented why a background outbox written after the in-memory `Wallet.Change` cannot guarantee crash durability; the transaction boundary must move to the original logical cash mutation and all legacy writers must be migrated together.
+- Expanded `TEST_PLAN.md` with offline direct-writer races, login/full-save overlap, receipt idempotency, InnoDB/rollback checks and mixed-version migration tests.
+- No source code changed in this step; no build or runtime result is claimed. See `ECONOMY_REVIEW.md` and `TEST_PLAN.md`.
+
+## 2026-11-08 — Phone auction settlement hardening (source patch)
+
+- Patched `Players/Phone/Auction/Repository.cs`: reject nonpositive and expired/ended bids; use `long` fee arithmetic to prevent `int.MaxValue` wraparound from turning a debit into a credit.
+- Serialize `OnBet` and `End` per auction object; `End` rechecks the ended flag under the same lock.
+- Skip the no-bid UUID-zero refund sentinel; make `ReturnMoney` null-safe so the existing offline DB fallback can execute.
+- Updated MONEY-023/024/038 status, review, checklist and regression plan. These are source patches only: no .NET build, RAGE runtime, MySQL fault injection or concurrency test has been run. Offline payout idempotency and maximum-bid policy remain open.
+
+## 2026-11-08 — INV-019 weapon/key-ring parent ownership
+
+- Traced weapon and CarKey subcontainer open paths, session location storage, generic inventory move/stack/use remotes and SetItemData cleanup.
+- Registered INV-019: the mutable `other` location is not rebound to current parent item existence/ownership; former-holder access after parent transfer/removal is a staging hypothesis, not a reproduced theft.
+- Added WEAPON_KEYRING_SUBCONTAINER_REVIEW.md and regression matrix; updated issue register, inventory review, master checklist, test plan, coverage, index, roadmap and handoff.
+- Static-only; no gameplay patch, build, RAGE/MySQL runtime or exploit reproduction.
+
 # Журнал работ
+
+## 2026-11-08 — Аудит продажи автомобиля между игроками
+
+- Внесён `MONEY-042`: BUY_CAR проверяет списание покупателя, но игнорирует результат начисления продавцу; после этого меняет владельца автомобиля и сообщает успех. `Vehicle.SaveHolder` выполняет async DB update без подтверждения/receipt/retry. Добавлены failure/restart/replay tests. Статический анализ; runtime не запускался. См. `VEHICLE_PLAYER_SALE_REVIEW.md`.
+
+## 2026-11-08 — Аудит налога и изъятия бизнеса
+
+- Внесены `MONEY-040/041`: обычное hourly tax списание с бизнес-счёта не помечает bank account dirty; repossession игнорирует online Wallet.Change result, а offline payout запускается асинхронно без подтверждения перед очисткой владельца. Добавлены persistence/fault-injection тесты. Статический анализ; runtime не запускался. См. `BUSINESS_TAX_REVIEW.md`.
+
+## 2026-11-08 — Аудит депозитов на бизнес-счёт через ATM
+
+- Внесён `MONEY-039`: `atmVal` для бизнес-счёта сначала списывает деньги игрока, затем игнорирует результат `Bank.Change` и всё равно логирует/сообщает успех. Добавлены требования к атомарному transfer, refund/receipt и replay tests. Статический анализ; runtime fault injection не выполнялся. См. `BUSINESS_BANK_REVIEW.md`.
+
+## 2026-11-08 — Аудит розничных покупок в бизнесах
+
+- Прослежен `BusinessManager.takeProd` и основные 24/7/weapon-shop/service callers. Внесён `STOCK-002`: stock уменьшается до подтверждения owner-bank credit, отсутствующий product может вернуть success, а callers игнорируют customer Wallet.Change и item/weapon grant results. `MONEY-022` расширен на отсутствие dirty-save для retail stock changes. Только static; build/RAGE/DB fault injection не выполнялись. См. `BUSINESS_RETAIL_REVIEW.md`.
+
+## 2026-11-08 — Расширение аудита продажи бизнеса
+
+- Расширен `MONEY-026`: `OnSellConfirm` не проверяет результат `Wallet.Change` и очищает владельца бизнеса даже при неуспешном начислении продавцу. Добавлены fault-injection/regression требования. Статический анализ; runtime не запускался.
+
 
 ## 2026-11-07 — Старт изучения и baseline тестов
 
@@ -142,3 +189,420 @@
 - Traced `dialogCallback("RepairMyVeh", true)`: callback branch is active, the apparent repair-point opener is commented out, there is no server-owned pending intent/location recheck, and repair is performed before unchecked `$500` Wallet debit. Added policy-dependent `VEH-001` and `VEHICLE_REPAIR_REVIEW.md`; no free-repair claim under ordinary wallet success.
 - One narrow vehicle-flow pass changes matrix status to 12 partial, 2 inventory-only, 4 not started, 1 blocked. Broader vehicle/garage scope remains unreviewed.
 - Updated issue register, coverage, index, roadmap, test plan, BattlePass producer notes and handoff. Static source-order/catalog assertions, Node syntax, 40 relative Markdown links and `git diff --check` passed; no C# build, MySQL failure injection or RAGE reproduction.
+
+
+## 2026-11-08 — GitHub write access, Draft PR and Main.cs settlement audit
+
+- Confirmed GitHub write access through successful creation of `redage/audit-continuation` and documentation commits. Created Draft PR #4 to `main`; it must remain draft until the divergent `main`/arena history and included documentation delta are reconciled.
+- Added `MASTER_CHECKLIST.md` with repository safety, audit, build/staging, remediation, test and release gates.
+- Continued delegated `Main.cs`/fraction callback review. Added `MONEY-032`: mayor treasury withdrawal ignores failed personal-bank credit before debiting City Hall treasury. Added `MONEY-033`: ticket confirmation can continue payout after both debit paths fail and the ticket intent is not consumed from session state, allowing replay.
+- Updated `MAIN_REMOTE_REVIEW.md`, `ISSUES.md`, `INDEX.md`, `AUDIT_COVERAGE.md`, `TEST_PLAN.md`, `ROADMAP.md` and `SESSION_HANDOFF.md` as applicable.
+- Static source review only. No C# build, RAGE:MP runtime, disposable MySQL or exploit reproduction was performed; findings remain open.
+
+
+## 2026-11-08 — inputCallback case inventory and delegated helper review
+
+- Enumerated all 38 `case` occurrences (32 unique callback names) in `Main.ClientEvent_inputCallback` and traced selected delegated paths.
+- Confirmed `player_medkit` and `player_heal` helpers repeat role/on-duty/price/proximity/trade checks; confirmed `mayor_put` aborts on failed bank debit; traced ticket issue-side policy checks while retaining MONEY-033 for confirmation settlement.
+- Recorded remaining delegated callback paths and explicit review gaps in `MAIN_REMOTE_REVIEW.md`. No additional independent finding was asserted without sufficient source evidence. No source code changed; no C# build or RAGE/MySQL runtime tests performed.
+
+
+## 2026-11-08 — MONEY-034 gang drug purchase arithmetic
+
+- Traced `buy_drugs` from generic input callback into `Gangs.BuyDrugs`, configured default price and `Chars.Repository.AddNewItem` stack behavior.
+- Registered MONEY-034: unchecked `int` multiplication can turn `int.MaxValue * 30` into `-30`, causing faction balance increase; unchecked capacity addition can also wrap for partially loaded vehicles. Exact item/DB corruption remains unverified.
+- Updated issue register, remote review, index, coverage, master checklist, roadmap, test plan and handoff. Documentation-only change; no source patch/build/staging test.
+
+
+## 2026-11-08 — Fraction stock/cargo remote audit
+
+- Прослежены `inputCallback` → `Stocks.inputStocks` / `Stocks.fracgarage` для character↔fraction и vehicle↔fraction transfers. Внесён `STOCK-001`: faction stock totals меняются вокруг `Remove`, `AddNewItem` и `Wallet.Change` без проверки точного результата/компенсации; точная runtime failure/exploitability не заявляется.
+- Создан `FRACTION_STOCK_REVIEW.md`; `ISSUES.md`, `MASTER_CHECKLIST.md`, `INDEX.md`, `AUDIT_COVERAGE.md` и `ROADMAP.md` обновлены. Нет source patch, C# build или RAGE/MySQL runtime tests.
+
+
+## 2026-11-08 — faction stock settlement review
+
+- Registered MONEY-035: faction cash stock is debited before Wallet.Change and its bool result is ignored; source confirms false-return paths.
+- Registered STOCK-001: faction/vehicle stock is debited despite ignored AddNewItem result; AddNewItem can fail or partially insert, and vehicle medkit slot precheck is commented out.
+- Verified generic inputCallback rejects put_stock/take_stock quantities below 1; negative-quantity exploit not asserted for this entry point.
+- Updated issue register, remote review, master checklist, test plan, index, coverage, roadmap and handoff. Documentation only; no source changes or runtime tests.
+
+- Follow-up parity check: `Organizations.Manager.inputStocks` repeats unchecked wallet and inventory settlement ordering; included under MONEY-035/STOCK-001 rather than duplicated as new IDs.
+
+
+## 2026-11-08 — MONEY-036 shared wallet integer truncation
+
+- Compared CharacterData.Money (long) with Wallet.Change arithmetic (int cast/add/store); registered MONEY-036 as a systemic economy defect. Out-of-Int32 balances can be rejected or overwritten with unrelated 32-bit values.
+- Added long-boundary, persistence and call-site regression matrix; linked with MONEY-035 stock settlement ordering.
+- No source code patch or runtime/build test; documentation only.
+
+
+## 2026-11-08 — MONEY-037 player-to-player house sale
+
+- Added `HOUSE_SALE_REVIEW.md`; registered MONEY-037 for unchecked buyer debit/seller credit followed by ownership transfer, plus incorrect seller UUID in money log.
+- Updated master checklist, index, coverage, roadmap and test plan. Static source review only; no source patch, build or runtime tests.
+
+
+## 2026-11-08 — MONEY-038 phone auction bid overflow
+
+- Extended `AUCTION_REVIEW.md` with the client-controlled `int` bid-fee overflow path: `int.MaxValue` can wrap the calculated fee total negative and reverse the subsequent bank debit into a credit.
+- Registered MONEY-038 in `ISSUES.md`, `MASTER_CHECKLIST.md`, `AUDIT_COVERAGE.md`, `ROADMAP.md`, `INDEX.md` and `TEST_PLAN.md`; added numeric-boundary staging cases.
+- Static finding only. No gameplay source patch, C# build, RAGE reproduction or DB fault-injection test was performed.
+
+
+## 2026-11-08 — INV-011 Other-item auction settlement
+
+- Extended `AUCTION_REVIEW.md`: `AuctionType.Other` moves an item into the auction location, but auction end has no Other-item award or return branch.
+- Registered INV-011 in `ISSUES.md`, `MASTER_CHECKLIST.md`, `AUDIT_COVERAGE.md`, `ROADMAP.md`, `INDEX.md` and `TEST_PLAN.md`; added item ownership, offline and restart regression cases.
+- Static finding only. UI workflow, DB persistence and runtime recovery remain to be verified; no gameplay source patch or build was performed.
+
+
+## 2026-11-08 — JOB-004 Trucker payout settlement
+
+- Extended `BUSINESS_DELIVERY_REVIEW.md`: Trucker delivery ignores the boolean result of `Wallet.Change`, then removes the order, replenishes business stock and reports success. Registered JOB-004 and added wallet-failure/retry tests.
+- Expanded `BUSINESS_ORDER_REVIEW.md` / MONEY-022: cancellation removes the order before confirming `Bank.Change` refund; a failed credit has no pending-refund retry path in the method.
+- Updated `ISSUES.md`, `MASTER_CHECKLIST.md`, `AUDIT_COVERAGE.md`, `ROADMAP.md`, `INDEX.md` and `TEST_PLAN.md`. Static-only; no runtime injection or source patch performed.
+
+## 2026-11-08 — business ownership settlement review
+
+- Добавлен `BUSINESS_OWNERSHIP_REVIEW.md`: `MONEY-043` — покупка государственного бизнеса продолжает смену владельца и сброс склада/заказов без проверки результата списания; `MONEY-044` — передача бизнеса между игроками меняет Owner/BizIDs до двух непроверенных wallet operations.
+- Обновлены issue register, master checklist, test plan, coverage, roadmap, index и session handoff. Только статический анализ; C# build, RAGE runtime и MySQL fault injection не запускались. Исходники игры не менялись.
+
+## 2026-11-08 — government fleet fuel quota review
+
+- Добавлен `MONEY-045`: `fillCar` не отклоняет государственную заправку при недостаточном `FuelLeft`; условие только пропускает списание лимита, но заправка продолжается. Дополнительно quantity/currency сравниваются некорректно, а price рассчитывается до clamp. Создан `BUSINESS_FUEL_REVIEW.md`. Static-only; требуется подтвердить бюджетную семантику и выполнить RAGE/DB tests.
+
+- Дополнен `BUSINESS_FUEL_REVIEW.md`: `VEH-009` — petrol remote не проверяет Type==1, расстояние, dimension и активную сессию заправки; BizID устанавливается при входе в любой бизнес и не сбрасывается в проверенном flow, поэтому возможен stale/non-fuel context. Связанные `STOCK-002` и `MONEY-045` не дублировались. Static-only; RAGE staging required.
+
+## 2026-11-08 — AutoMechanic service settlement review
+
+- Добавлен `JOB-005`: AutoMechanic repair/fuel acceptance игнорирует результаты списания клиента и начисления механику, но выполняет repair/fuel transfer, success logs и quest progress. `buyFuel` также увеличивает топливный резерв после непроверенного списания. Создан `MECHANIC_SERVICE_REVIEW.md` с failure/replay/restart matrix. Static-only; build/RAGE/DB tests не выполнялись.
+
+- Расширен `BUSINESS_OWNERSHIP_REVIEW.md`: `BUG-002` — admin delete удаляет DB row до null-unsafe owner lookup, из-за чего offline/government owner может оставить runtime BizList/world ghost; `MONEY-047` — результат online owner refund игнорируется перед удалением бизнеса. Добавлены failure/restart tests. Static-only.
+
+
+## 2026-11-08 — PET-001 pet-shop remote authorization
+
+- Traced the pet-shop client event and server petshopBuy handler. It trusts any existing TempBizID, does not validate Type==14, active location/session or pet name, teleports before house eligibility checks and leaves the intent reusable after success.
+- Added PET-001 and PETSHOP_REMOTE_REVIEW.md; expanded MONEY-045 with stale pre-clamp tfuel (stock quantity, price and applied fuel can diverge). Updated issue register, test plan, checklist, coverage, roadmap, index and handoff.
+- Static-only. No source patch, build, RAGE/CEF runtime or DB fault injection was performed.
+
+
+## 2026-11-08 — VEH-010 LS Customs tuning session
+
+- Traced personal and organization tuning entry/exit. Organization exit eventType=1 does not reset CharacterData.TuningShop; the personal server.custom.buy remote trusts that value without active Type==12/location/dimension intent checks. Character position resolution also reads non--1 TuningShop.
+- Registered VEH-010, created TUNING_REMOTE_REVIEW.md and expanded BUSINESS_RETAIL_REVIEW.md / STOCK-002 scope to include LS Customs stock reservation and customization settlement ordering.
+- Updated issue register, checklist, test plan, coverage, roadmap, index and handoff. Static-only; no source patch/build/RAGE/DB tests.
+
+
+## 2026-11-08 — VEH-011 signed mileage wrap
+
+- Continued the taxi mileage trace. server.vehicle.updateMileage casts client-supplied signed int centimeters to uint without a positive/range check; negative values wrap into huge transient VehicleLocalData.Centimeters increments. Client meter also appears to accumulate centimeters/second on a 200ms callback without elapsed-time scaling (runtime cadence needs measurement).
+- Registered VEH-011 separately from MONEY-012/PROG-007; expanded TAXI_MILEAGE_REVIEW, issue register, checklist, regression plan, coverage, index, roadmap and handoff. No source code changed; no runtime/build/DB test.
+
+
+## 2026-11-08 — MONEY-051 Street race stake settlement
+
+- `StreetRace.Accept` previously marked a race active and started it without checking either participant's wallet debit result. Patched it to require both stake debits; if the second fails, the first is refunded and the race is cancelled. Compensation failure is logged for reconciliation.
+- Added MONEY-051 and a failure/concurrency regression matrix. Winner payout result, durable refund receipt and duplicate/concurrent finish semantics remain open; no build or RAGE tests have been run.
+
+## 2026-11-08 — MONEY-052 Street race finish authorization
+
+- `server.streetrace.finished` previously trusted a client-triggered finish event without checking that the race had started or that the caller was near the server-side finish position. Added active-race and 10m server-position checks to prevent pre-start payout and remote finish claims.
+- Added MONEY-052 and regression scenarios. Finite/minimum-distance waypoint validation is now applied; map-boundary policy, payout result/durability, abort payout and concurrency remain open; no build or RAGE staging tests have been run.
+
+## 2026-11-08 — PERF-002 CEF production build defaults
+
+- CEF build scripts now explicitly set production mode through the already-installed `cross-env`; the dev script explicitly selects development.
+- All three Svelte loaders now enable hot reload only outside production. This prevents clean-shell build invocations from silently defaulting to development mode/source maps/HMR.
+- Added `CEF_BUILD_REVIEW.md` and PERF-002. No CEF build, bundle-size measurement or RAGE:MP smoke test has yet been run; CSS optimization and measured performance remain open.
+
+## 2026-11-08 — MONEY-050 Driving school license settlement
+
+- `Core.DrivingSchool.startDrivingCourse` previously granted each active license before the debit and ignored `Wallet.Change` results. Case 1 advanced quest state before payment; cases 3–5 credited the faction balance after an unchecked debit.
+- Patched all six active license cases to abort when the wallet debit fails and defer license/quest/faction/log/success effects until after successful payment. Added `MONEY-050`, review and regression matrix. Static patch only; C# build and RAGE/MySQL failure tests pending.
+
+## 2026-11-08 — MONEY-049 Metro ticket settlement
+
+- `Events.Metro.OnBuyTicket` previously multiplied the client-supplied `Increase` by ticket price in `int`, then ignored `Wallet.Change` and proceeded to log success and move the player into the metro dimension.
+- Patched calculation to widen to `long`, reject values outside positive `int` range, and abort all subsequent effects unless the wallet debit succeeds. Added MONEY-049 and boundary/failure regression cases. Static verification only; C# build and RAGE staging remain pending.
+
+## 2026-11-08 — INV-012 vehicle trunk inventory context
+
+- Traced vehicleSelected branch 3 → LoadOtherItemsData → generic inventory move/stack/use remotes. Initial 5m/trunk-open gate is not revalidated on each item mutation; the generic item methods rely on InventoryOtherLocationName and do not bind it to current vehicle/access/range/dimension/door state.
+- Registered INV-012 with an explicit policy caveat: whether any nearby player may loot a physically open trunk requires gameplay-owner confirmation; stale session and missing per-operation range/context checks remain the concern. Created VEHICLE_TRUNK_ACCESS_REVIEW.md and updated inventory/issue/test/checklist/coverage/index/roadmap/handoff docs.
+- Static-only; no source patch, C# build, RAGE runtime or DB fault injection.
+
+
+## 2026-11-08 — VEH-012 vehicle trunk reservation cleanup
+
+- Traced CEF closeOther → client bridge → inventory.otherclose → Repository.OtherClose. The server clears InventoryOtherLocationName but leaves SelectedVeh and BagInUse; only full ItemsClose and disconnect currently release the reservation.
+- Registered VEH-012 and created VEHICLE_TRUNK_LIFECYCLE_REVIEW.md; linked it to INV-012 while keeping authorization and cleanup findings separate.
+- Static-only; no source changes, C# build, RAGE runtime or DB tests.
+
+
+## 2026-11-08 — INV-013/014 event loot remotes
+
+- AirDrop: team membership check is not a spatial check; start-hack lacks player/crate position binding, lock completion trusts client health and open-inventory lacks caller proximity/dimension validation.
+- MatWar: start/progress/open remotes lack active-war and proximity/session checks, share a generic IsAirDropHacking flag with AirDrop, and endWar leaves matwar_100 inventory/lock state until next startWar.
+- Registered INV-013 and INV-014; created AIRDROP_REMOTE_REVIEW.md and MATWAR_REMOTE_REVIEW.md. Expanded INVENTORY_REVIEW with the LoadOtherItemsData container entry-point map.
+- Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
+
+
+## 2026-11-08 — INV-015 faction stock session authorization
+
+- Traced OnFracStock assignments across FIB, Sheriff, Army, City Hall and Police. No reset was found. The openWeaponStock remote checks only current faction ID and rank, not duty, stock-open state, location, dimension or session freshness.
+- Registered INV-015 and created FRACTION_STOCK_SESSION_REVIEW.md; added staging matrix and linked the finding to the inventory container map.
+- Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
+
+## 2026-11-08 — INV-016 organization stock exit lifecycle
+
+- Traced OpenWeaponStock → LoadOtherItemsData → RemovePlayer. Exit clears InsideOrganizationID and moves the player outside but does not close/revoke the other inventory context; generic item remotes do not recheck organization interior state.
+- Registered INV-016 and created ORGANIZATION_STOCK_SESSION_REVIEW.md; expanded inventory container map and staging matrix.
+- Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
+
+## 2026-11-08 — INV-017 furniture safe stale context
+
+- Traced objectSelected furniture-safe access and HouseManager.RemovePlayer. The exit path clears InsideHouseID and moves the player outside without closing/revoking the opened furniture inventory; generic item remotes do not revalidate the house/object/access context.
+- Registered INV-017 and created FURNITURE_SAFE_SESSION_REVIEW.md; added regression matrix and inventory map reference.
+- Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
+
+## 2026-11-08 — INV-018 HeliCrash key-clamp bypass
+
+- Traced KeyClamp.SetKeyClamp → keyClamp.end → HeliCrash End. KeyClampData is installed before ArmyLockpick validation; the end remote trusts client value, and HeliCrash End can roll an unlock at zero without verifying a successful keydown reservation. Failed rolls leave a reusable session.
+- Registered INV-018 and created HELICRASH_KEYCLAMP_REVIEW.md with direct-remote and concurrency regression matrix.
+- Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
+
+- 2026-11-08: documented MONEY-048 — unchecked wallet settlement and item-before-payment ordering in player trades and tent-market purchases. Documentation only; no gameplay patch or runtime validation.
+
+
+## 2026-11-08 — MONEY-002 money queue synchronization and retry (source patch)
+
+- Added a shared lock for queue producers and worker snapshot/clear; switched per-key replacement to dictionary indexer.
+- Failed absolute-value DB batches are requeued; retry preserves a newer value enqueued during the previous flush.
+- The batch remains in-memory and is not crash-durable; there is no transaction/outbox, bounded backoff or dead-letter policy.
+- Updated MONEY-002 evidence and regression plan. Static review only; no C# build, concurrency test or MySQL fault injection has run.
+
+
+## 2026-11-08 — MONEY-003 bank transfer hardening (source patch)
+
+- ATM transfer confirmation tuple is consumed before processing and source account is revalidated against the current character.
+- Bank.Change now serializes balance mutation and checks overflow; notification failures are isolated from the applied mutation.
+- Bank.Transfer validates positive amount/account identity/existence/funds/overflow and applies both in-memory balance legs under one lock; both accounts are marked dirty.
+- Bank.Save snapshots revision and balance, retains dirty state on DB errors/concurrent mutation, and rejects out-of-range DB INT balances without clearing pending save.
+- Updated bank transfer review, issue registry, master checklist and regression matrix. Static only; no .NET build, MySQL or RAGE tests.
+
+## 2026-11-08 — MONEY-003 bank creation/read hardening (source patch)
+
+- `Bank.GetBalance` now reads mutable account balance under the shared account lock.
+- `Bank.Create` validates holder, signed TINYINT type range and non-negative balance; checked conversion prevents truncation beyond the current DB INT balance schema.
+- Cache initialization uses the exact validated database balance.
+- Regression cases added for boundary values, invalid input and concurrent reads/mutations.
+- Static source checks only; no build, DB or RAGE runtime tests have run.
+
+- Follow-up: synchronized GetBalance, holder lookup, account cache insert/removal and holder rename with the shared account lock. Retained checked account-creation validation against current TINYINT/INT schema. Bank.Get(int)/Get(string) now return snapshots under the account lock; direct public Bank.Accounts consumers still need audit.
+
+- Follow-up: every Bank.Change balance mutation now marks the account dirty; dirty account IDs are snapshotted under AccountSync. Bank persistence worker uses ConcurrentQueue for account deletions and requeues failed delete batches after DB errors. Crash durability and write-volume profiling remain pending.
+
+
+- MONEY-003: added synchronized `Bank.SetBalance` and `Bank.ApplyBalanceAdjustment`; routed business/house purchase initialization, auction property balance initialization, and hourly business/house tax/repossess balance changes through the shared account lock and dirty revision tracking. Static-only; build and runtime/fault-injection tests pending.
+
+- Follow-up caller migration: hourly house/business tax uses synchronized ApplyBalanceAdjustment; house purchase debits before bank initialization and ownership; house/business auction awards initialize bank balances before ownership/state commit; admin bank grant requires Change success. Targeted current-branch scan found no active direct Balance writes in the reviewed caller files.
+
+- MONEY-053 interim ATM settlement hardening: regular cash deposit/withdrawal and house deposit now check the second balance leg, attempt compensation on rejection, and defer success side effects/logs until both in-memory changes succeed. Durable transaction and runtime validation remain open.
+\n## 2026-11-08 — MONEY-039 interim business ATM settlement patch\n\n- `MoneySystem/Bank.cs`: business ATM deposit now checks `Bank.Change` after the wallet debit; on rejection it attempts wallet compensation, critically logs a failed refund, notifies failure and returns before success log/message/UI refresh.\n- Updated `ISSUES.md`, `BUSINESS_BANK_REVIEW.md`, `ATM_REVIEW.md`, `TEST_PLAN.md`, master plan and checklist.\n- Static assertions passed for second-leg check, compensation call and success-log ordering. No C# build, MySQL fault injection or RAGE runtime test was available; durable settlement, replay and stale BizIDs validation remain open.\n
+ 
+## 2026-11-08 — JOB-005 / StreetRace settlement revalidation
+
+- Re-fetched current branch AutoMechanic and StreetRace sources. Confirmed JOB-005's three unchecked settlement paths remain; intentionally made no unsafe partial patch pending a durable multi-entity settlement API.
+- Confirmed StreetRace normal finish and death/vehicle-exit abort ignore winner payout results; documented receipt/idempotency requirements and cleanup ordering.
+- Updated mechanic and street-race reviews, master plan, checklist, test plan and handoff. Static-only; no build or runtime tests.
+
+## 2026-11-08 — MONEY-048 tent input hardening
+
+- `Chars/Repository.cs`: reject negative tent purchase quantity; normalize zero to one before stock/slot validation; require positive unit price; calculate total using `long` and reject values outside the `Wallet.Change` Int32 range; validate seller reference before dereference.
+- Static assertions passed. This does not fix unchecked buyer/seller wallet results or the non-atomic item/cash settlement; `ConfirmTrade` remains unchanged. No C# build, RAGE or MySQL tests.
+
+## 2026-11-08 — MONEY-037 house-sale preflight and audit attribution
+
+- `HouseManager.cs`: validate seller reference/session/character and positive pending price before settlement; correct `sellerCharacterData` to read from seller, fixing buyer UUID duplication in money logs.
+- Static assertions passed. Buyer debit/seller credit results remain unchecked and ownership transfer is still non-atomic. No C# build, RAGE or MySQL tests.
+
+## 2026-11-08 — MONEY-035 faction/organization cash stock guards
+
+- `Fractions/Manager.cs` and `Organizations/Manager.cs`: check `Wallet.Change` before cash stock mutation for both `put_stock` and `take_stock`; success logs follow the guard.
+- Static assertions passed for all four cash paths. Durable transaction/receipt, replay/concurrency/restart behavior and STOCK-001 item paths remain open. No C# build, RAGE or MySQL tests.
+
+## 2026-11-08 — STOCK-001 organization and partial-grant revalidation
+
+- Expanded stock audit to `Organizations.Manager.inputStocks` and traced `AddNewItem`/`Remove` contracts. AddNewItem can return a slot after partial insertion; Remove returns void and catches failures internally. Existing item/cargo callers cannot verify exact quantity transfer.
+- No source patch applied to item/cargo paths pending exact-count API and rollback/reconciliation design. MONEY-035 cash branch guards remain separate. No C# build or runtime tests.
+
+## 2026-11-08 — STOCK-002 takeProd validation patch
+
+- `Core/Businesses.cs`: reject `amount <= 0`, use bounded stock comparison after positive validation, and return false when no matching product is found.
+- Owner-bank failure rollback, unchecked customer wallet debit, exact item/weapon grant, dirty-save and durable idempotent settlement remain open. Static assertions only; no C# build, RAGE or MySQL tests.
+
+## 2026-11-08 — MONEY-042 BUY_CAR settlement guard
+
+- `Main.cs`: validate seller/price; check seller wallet credit before vehicle holder mutation; attempt buyer refund on seller-credit rejection and critically log failed compensation.
+- Static assertions passed. Durable idempotent receipt, async holder DB retry/reconciliation and all RAGE/MySQL tests remain pending.
+
+## 2026-11-08 — MONEY-044 acceptance preflight guard
+
+- `Core/Businesses.cs`: validate pending offer, seller reference/character/session, positive price and current business ID before transfer logic.
+- Core settlement remains unsafe: owner/BizIDs mutate before unchecked buyer debit and seller credit. Durable transaction/receipt required. Static assertions only; no build/RAGE/MySQL tests.
+
+## 2026-11-08 — MONEY-043 current-branch audit correction
+
+- Revalidated `buyBusinessCommand`: checked bank initialization and buyer debit are already present; bank balance compensation is attempted on debit rejection; ownership effects follow successful debit.
+- Updated stale MONEY-043 documentation. Durable cross-entity receipt and restart recovery remain open. No C# build, RAGE or MySQL tests.
+
+## 2026-11-08 — MONEY-045 government fuel quota guard
+
+- `Core/Businesses.cs`: normalize final refuel quantity, calculate bounded price in `long`, remove liters-vs-currency clamp and reject monetary cost above FuelLeft before stock/city/vehicle effects.
+- Static assertions passed. Durable cross-entity receipt and VEH-009 station authorization remain open. No C# build, RAGE or MySQL tests.
+
+## 2026-11-08 — VEH-006 / MONEY-013 government vehicle sale guard
+
+- `Main.cs`: revalidate holder at confirmation; reject nonpositive sale price; check wallet payout before logging/reporting/removing the vehicle.
+- Static assertions passed. Async DB delete/restart exactly-once settlement remains open; no C# build, RAGE or MySQL tests.
+
+## 2026-11-08 — VEH-001 self-repair guard
+
+- `Core/Vehicle.cs`: RepairCar now returns bool for successful repair vs invalid/missing state/exception.
+- `Main.cs`: require successful $500 wallet debit before repair; attempt refund on repair failure and critically log failed compensation. Dialog-intent/location policy remains open. No C# build/RAGE tests.
+
+
+## 2026-11-08 — MONEY-002 persistence worker follow-up
+
+- `Database/Models/Money.cs`: prevent duplicate worker startup; use async task loop/nonblocking delay; reject invalid UUID and balances outside the current DB signed-INT range before enqueue.
+- Existing lock/retry/newer-value-wins logic retained. Static source checks only; no C# build, concurrency or MySQL fault-injection tests. Durable queue/restart recovery remains open.
+
+
+## 2026-11-08 — MONEY-036 wallet Int32 range guard
+
+- Patched `Wallet.Change` to calculate the new balance in `long` and reject values outside the existing signed DB INT range before mutating character state.
+- Patched `Character.Save.Repository.SaveSql` to reject invalid cash balance before related save side effects and `Convert.ToInt32`.
+- Confirmed `CharacterData.Money` is `long`; generated `characters.money` model is `int?` (`int(11)`). No schema migration performed.
+- Added boundary, UI, round-trip and concurrent worker/full-save tests. Static review only; no C# build, MySQL or RAGE tests.
+
+
+- 2026-11-08: MONEY-036 follow-up in `Players/Phone/Auction/Repository.cs`: offline auction refund fallback now widens balance addition to `long`, rejects null/negative/out-of-range DB INT balances and narrows only after validation. This prevents overflow in that direct SQL write but does not fix async refund acknowledgement/idempotency. Static only; build/DB/RAGE tests pending.
+
+
+- 2026-11-08: MONEY-002 worker hand-off hardening: mark detached UUID snapshots as in-flight at the same locked snapshot/clear boundary, so small wallet changes during the gap before SQL setup enqueue a newer revision rather than being lost when the old snapshot is skipped. Failed context/batch retry clears the marker and restores only a still-current version. Static only; direct SQL writers and durable outbox remain open.
+
+
+## 2026-11-08 — MONEY-002 versioned writer ordering patch
+
+- Added fixed 64-stripe async write gates and sync balance monitors to coordinate Wallet.Change, detached Database.Models.Money worker snapshots and full Character.Save.Repository.SaveSql writes.
+- Added per-UUID revision counters; the worker checks detached revision immediately before SQL, skips stale snapshots, and retries only revisions that remain current.
+- SaveSql captures the cash balance under the shared monitor, invalidates older queued snapshots, serializes its SQL update and restores the snapshot after failure unless a newer Wallet mutation replaced it.
+- Wallet.Change advances revision on every mutation. Small changes are coalesced into the queue only when a batch/save is pending or in-flight, preserving the existing eager-write threshold otherwise.
+- Detached batches are marked in-flight at snapshot time to close the gap before worker SQL setup.
+- Remaining direct DB cash writers and durable outbox/restart recovery are not yet covered. Static checks only; no compiler, concurrency or DB tests.
+
+
+## 2026-11-08 — MONEY-002 failed-write retry hand-off
+
+- Fixed a race in `Database/Models/Money.MoneyUpdate`: on SQL failure, a detached row now retains its `ActiveMoneyWrites` marker until `Worker` registers the failed batch for retry. Successful and superseded rows still release the marker after the UUID semaphore is released.
+- This prevents a small wallet mutation in the failure-to-requeue interval from being omitted from the queue. Added deterministic interleaving and multi-row failure test cases.
+- Static source review only; no compiler, DB fault injection or concurrency stress test has run. Direct SQL money writers remain open.
+
+## 2026-11-08 — MONEY-002 offline admin grant acknowledgement
+
+- Core/Admin.OffGiveMoney now awaits the character cash UPDATE and requires exactly one affected row before writing money/admin logs or showing success.
+- Failed/zero-row persistence is logged and reported to the administrator without success side effects.
+- This does not remove the read-modify-write race, coordinate with the online money worker, or provide durable idempotency/restart recovery. Static patch only; no C# build or DB test.
+
+- 2026-11-08: Повторно проверены `Wallet.Change`, `Character.Save.Repository.AddMoney`, referral cash reward и payday lottery payout. Зафиксированы lost-update/read-modify-write и online/offline cache handoff constraints; InnoDB для `characters` не подтверждён. Обновлён `ECONOMY_REVIEW.md`; source code/build/runtime tests не менялись/не запускались.
+
+
+## 2026-11-08 — MONEY-002 direct cash writer inventory expansion
+
+- Traced offline auction refund, offline referral-owner reward and admin offline grant paths in addition to AddMoney and lottery payout. Recorded read-modify-absolute-write lost-update risks and login/full-save handoff races; account merger is tracked as a separate migration/import writer.
+- Expanded MONEY-002 regression cases for concurrent offline credits, login races, reward partial failures, retry/idempotency and merger interruption. No source code changed; storage engine for `characters` remains unverified.
+
+
+## 2026-11-08 — MONEY-002 schema and referral settlement evidence
+
+- Read the checked-in `database/main.sql`: `characters`, `money`, `accounts`, and `refferals` are declared InnoDB; `characters.money` is nullable signed INT; dump header says MariaDB 10.10.2. This is repository DDL evidence only, not confirmation of deployed schema.
+- Traced referral settlement ordering: online reward legs and success marker are separate; offline branch writes success marker, account RB/VIP, and cash in separate operations. Added fault-injection/replay cases.
+- No source code changed; no C# build, DB integration/fault-injection, concurrency, or RAGE staging test ran.
+
+
+## 2026-11-08 — MONEY-002 coordinator design gate
+
+- Defined the proposed async coordinator contract: stable operation IDs, unique receipt and bounded cash delta in one InnoDB transaction, typed duplicate/uncertain outcomes, per-character gate through cache handoff and login publication, and removal of legacy absolute worker/full-save writes.
+- Explicitly recorded that synchronous in-memory-first `Wallet.Change` callers must migrate to awaited durable outcomes before success side effects; bank accounts remain a separate ledger.
+- Design/documentation only. No C# source implementation, build, DB integration or runtime tests.
+
+
+
+## 2026-11-08 — MONEY-002 direct cash writer revalidation
+
+- Revalidated `Character.Save.Repository.AddMoney`: SELECT/application delta/absolute UPDATE remains non-atomic; nullable cash is converted to zero; no row lock, per-UUID gate, receipt or affected-row acknowledgement.
+- Revalidated referral online/offline reward ordering, offline auction refund fallback, admin offline grant acknowledgement vs login race, and account merger aggregate cash import.
+- Added regression cases for NULL cash, recipient login during offline writes, partial referral settlement, auction refund identity, merger restart/idempotency and admin login handoff.
+- No source code changed. No C# build, MariaDB fault injection, concurrency or RAGE staging tests ran.
+
+- 2026-11-08 — Добавлен MONEY-054: referral completion/RB/VIP persistence precedes cash reward; out-of-range cash or DB failure can leave a partially settled reward. Статический finding; source не менялся, tests pending.
+
+
+- 2026-11-08: MONEY-002 inventory extension — traced business tax repossession online/offline payout. Online Wallet.Change result is ignored; offline path performs async cash/Biz absolute UPDATE while business bank reset and owner clear continue independently. House repossession uses AddMoney fallback. Added payout/ownership/restart regression cases; no source/build/runtime tests.
+
+- 2026-11-08 — MONEY-002 schema reconnaissance: checked-in MariaDB 10.10.2 dump declares character cash, bank accounts, accounts, referrals and lottery tables InnoDB; character cash is nullable signed INT. This is snapshot evidence only; disposable import and live schema verification remain pending.
+
+- 2026-11-08 — Добавлен MONEY-055: auction `ReturnMoney` logs before confirmed credit; offline cash refund uses read-modify-absolute UPDATE without coordinator/receipt/affected-row check and can race login/cache publication. Source unchanged; tests pending.
+
+- 2026-11-08 — Добавлен MONEY-056: account merger aggregates money in signed INT without checked overflow and lacks durable merge checkpoint/idempotency across bank/character/assets/cashback steps. Source unchanged; tests pending.
+
+- 2026-11-08 — Добавлен MONEY-057: offline table-task reward uses SQL-side increment (avoids application-side lost update) but has no stable receipt, affected-row/range handling or login cache gate; replay and partial-award recovery remain unsafe. Source unchanged; tests pending.
+
+- 2026-11-08 — MONEY-058: documented that Bank.Transfer's two-account cache mutation is not a durable DB transaction; background worker saves each account separately, leaving a conditional one-sided crash window. No runtime crash reproduction.
+- 2026-11-08 — MONEY-059: documented signed INT mismatch: Bank.Change/Transfer permit long balances beyond schema range, while Bank.Save rejects conversion and leaves the account dirty. Boundary tests pending.
+- 2026-11-08 — Reconciled MONEY-019/MONEY-040 status: reviewed house/business hourly tax paths now use ApplyBalanceAdjustment and dirty the bank account; durable cross-ledger tax settlement and repossession owner/payout issues remain open.
+
+- 2026-11-08 — MONEY-060 initial finding (before the guard patch): `ticketConfirm` continued to split fine proceeds and emit success events after both wallet and bank debit attempts returned false. Failure/replay regression plan was added; the source guard is recorded in the later MONEY-060 changelog entry below.
+
+
+## 2026-11-08 — MONEY-060 ticket settlement guard
+
+- `FractionCommands.ticketConfirm` now returns immediately after both wallet and bank debit attempts fail, before city/officer credits, success events or paid fine log.
+- This is a narrow guard for the confirmed free-fine payout path; it does not provide one-shot replay protection or durable atomic settlement. C# build, RAGE staging and DB/failure tests remain pending.
+
+
+## 2026-11-08 — MONEY-033 ticket intent consume-once guard
+
+- `ticketToTarget` now protects pending ticket assignment with the same session lock used by confirmation and refuses to overwrite an existing pending ticket.
+- `ticketConfirm` now validates and detaches the pending ticket intent under that lock before settlement; accept/decline consumes the in-memory intent and a duplicate callback cannot reuse it.
+- This is not a durable settlement receipt. Split payout atomicity, uncertain DB outcome and restart recovery remain open. Static source review only; build/RAGE/DB tests pending.
+
+## 2026-11-08 — documentation status reconciliation
+
+- Added `DOCS_STATUS.md` with single-purpose ownership for each project document, status vocabulary, update cycle and current MONEY-002/003/033/060 truth.
+- Reconciled MONEY-033 vs MONEY-060 so ticket-intent replay and failed-debit payout are separate findings; updated issue register, reviews, checklist, test plan, roadmap, coverage, index and handoff.
+- Removed repeated MONEY-002/003 checklist entries by consolidating their outstanding validation gates. No build or runtime test is claimed.
+
+
+## 2026-11-08 — MONEY-002 direct cash writer inventory revalidation
+
+- Revalidated the active branch's character cash write paths: offline AddMoney, auction refund, referral reward, business repossession, admin offline grant, offline table-task SQL increment, and account-merger follow-up absolute UPDATE.
+- Clarified that character creation's initial INSERT is initialization, while login's DB-read-to-cache-publication interval is a required serialization point.
+- Confirmed full SaveSql and detached worker remain interim absolute writers and must relinquish cash ownership after coordinator migration.
+- No source patch or runtime test in this pass; MONEY-002 remains open.
+
+
+## 2026-11-08 — MONEY-002 receipt schema/API design checkpoint
+
+- Defined a documentation-only candidate for a globally unique character cash operation receipt and same-transaction bounded cash delta.
+- Specified duplicate payload conflict, uncertain commit acknowledgement retry with the same operation ID, typed outcomes and login/cache publication gate.
+- No executable migration or source implementation was added. Migration delivery/rollback, pinned-provider SQL semantics and disposable MariaDB verification remain prerequisites.
+
+
+## 2026-11-08 — MONEY-002 stable operation identity map
+
+- Mapped candidate stable IDs for lottery, auction refunds, referral reward, business repossession, admin offline grants, offline table-task awards, account merger and generic AddMoney/Wallet callers.
+- Recorded missing source event identities (notably mutable auction LastBetUUID/LastPrice and non-persisted lottery draw result) as prerequisites to exactly-once retries.
+- Design-only; no source patch, DDL or runtime test.

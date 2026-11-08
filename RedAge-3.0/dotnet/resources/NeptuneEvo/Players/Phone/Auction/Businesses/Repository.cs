@@ -44,7 +44,13 @@ namespace NeptuneEvo.Players.Phone.Auction.Businesses
             if (uuid != -1 && playerName != String.Empty)
             {
                 var biz = BusinessManager.BizList[auctionData.ElementId];
-                
+                long initialBusinessBalance = checked((long)Convert.ToInt32(biz.SellPrice / 100f * biz.Tax) * 72L);
+                if (!MoneySystem.Bank.SetBalance(biz.BankID, initialBusinessBalance))
+                {
+                    MoneySystem.Bank.Log.Write($"Auction business bank balance initialization failed [business:{biz.ID}, bank:{biz.BankID}]");
+                    return;
+                }
+
                 biz.IsAuction = false;
                 
                 foreach (var product in biz.Products) 
@@ -62,10 +68,6 @@ namespace NeptuneEvo.Players.Phone.Auction.Businesses
                 
                 biz.Orders = orders;
                 biz.SetOwner(playerName);
-                
-                var bizBalance = MoneySystem.Bank.Accounts[biz.BankID];
-                bizBalance.Balance = Convert.ToInt32(biz.SellPrice / 100f * biz.Tax) * 72;
-                bizBalance.IsSave = true;
                 
                 var player = Main.GetPlayerByUUID(uuid);
                 var characterData = player.GetCharacterData();

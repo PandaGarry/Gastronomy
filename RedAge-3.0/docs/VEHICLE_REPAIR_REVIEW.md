@@ -22,3 +22,12 @@ The branch also calls `UpdateReward(player, 13)`, but `13` is not a task ID in t
 ## Границы
 
 Только source evidence; owner gameplay policy, actual deployment, event marshalling, C# build, wallet failure and RAGE runtime remain unverified. Общий vehicle/garage/property audit остаётся открытым.
+
+## 2026-11-08 — self-repair cash/result guard
+
+A bounded patch was applied:
+
+- `VehicleManager.RepairCar` now returns a boolean: false for null vehicle, missing local vehicle data or caught repair exception; true only after `vehicle.Repair()` returns.
+- The `RepairMyVeh` callback now checks the $500 wallet debit before repair. If the repair helper returns false, it attempts a $500 refund and critically logs a failed compensation; success money log and success notification are reached only after repair succeeds.
+
+This closes the specific free-repair-on-wallet-rejection path and avoids silently treating a failed repair helper as success. It does not address the untrusted generic dialog callback/no server-owned repair intent or the policy-dependent physical location/mechanic availability check. The refund is in-memory compensation, not a durable receipt. No C# build or RAGE staging was run.

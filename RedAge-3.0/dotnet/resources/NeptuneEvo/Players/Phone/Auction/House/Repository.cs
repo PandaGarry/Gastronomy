@@ -41,11 +41,13 @@ namespace NeptuneEvo.Players.Phone.Auction.House
 
                 if (house != null)
                 {
+                    long initialHouseBalance = checked((long)Convert.ToInt32(house.Price / 100f * HouseManager.HouseTax) * 72L);
+                    if (!MoneySystem.Bank.SetBalance(house.BankID, initialHouseBalance))
+                    {
+                        MoneySystem.Bank.Log.Write($"Auction house bank balance initialization failed [house:{house.ID}, bank:{house.BankID}]");
+                        return;
+                    }
                     house.SetOwner(playerName);
-
-                    var houseBalance = MoneySystem.Bank.Accounts[house.BankID];
-                    houseBalance.Balance = Convert.ToInt32(house.Price / 100f * HouseManager.HouseTax) * 72;
-                    houseBalance.IsSave = true;
                 }
                 //var player = Main.GetPlayerByUUID(uuid);
             }

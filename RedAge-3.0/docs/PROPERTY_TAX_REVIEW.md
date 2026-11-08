@@ -29,3 +29,19 @@
 ## Boundaries
 
 This is not a full bank/ATM or business-tax review. Owner-only ATM access and the house transfer/sale/purchase paths are documented separately in `PROPERTY_PURCHASE_REVIEW.md`, `PROPERTY_SALE_REVIEW.md`, and `PROPERTY_TRANSFER_REVIEW.md`. Neither tax finding was runtime-confirmed.
+
+
+## 2026-11-08 source remediation update — MONEY-019 (partial)
+
+The hourly house and business tax paths in `Main.cs` now call `Bank.ApplyBalanceAdjustment` rather than mutating `Bank.Accounts[id].Balance` directly. The helper serializes the arithmetic under `AccountSync`, checks overflow/current DB INT range, allows the legacy temporary-negative balance policy for tax/repossession, increments revision and marks the account dirty. Tax/faction/city-hall side effects occur only after the bank adjustment succeeds. This addresses the lost-dirty-flag bank-balance portion of MONEY-019.
+
+**Still open:** bank and faction/city-hall credits are not a single DB transaction/ledger; house repossession owner persistence remains separately tracked as PROP-003; DB failure/restart behavior is not tested. Static patch only.
+
+- Business tax follow-up: the Mafia faction credit is now applied only after `ApplyBalanceAdjustment` successfully debits the business bank. This prevents a failed bank debit from granting the associated Mafia tax share. City-hall/faction credits and bank debit still lack one durable cross-ledger transaction.
+
+
+## Follow-up clarification — source status
+
+The reviewed hourly house/business bank tax debit now uses `Bank.ApplyBalanceAdjustment`; the previous direct-balance-mutation / missing-dirty-flag finding is therefore partially remediated in source (MONEY-019/MONEY-040). The helper marks the account dirty and increments its revision after checked arithmetic. This is not a durable tax ledger: bank debit and City Hall/faction credit remain separate, and no DB restart/failure test has been run.
+
+`PROP-003` remains open independently: house repossession still calls `house.ClearOwner(isSave: false)` in the reviewed path. The bank-account fix does not prove that house ownership/roommates are persisted before restart. Keep the repossession finding open until house row persistence and compensation behavior are verified.

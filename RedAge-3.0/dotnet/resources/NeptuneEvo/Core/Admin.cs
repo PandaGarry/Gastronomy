@@ -1076,18 +1076,22 @@ namespace NeptuneEvo.Core
                 var characterData = player.GetCharacterData();
 
                 if (characterData == null) return;
-                if (!MoneySystem.Bank.Accounts.ContainsKey(bankid))
+                MoneySystem.Bank.Data data = MoneySystem.Bank.Get(bankid);
+                if (data == null)
                 {
                     Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Игрок с таким ID/номером банк.счёта не найден", 3000);
                     return;
                 }
-                MoneySystem.Bank.Data data = MoneySystem.Bank.Accounts[bankid];
                 if (data.Type != 1)
                 {
                     Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Банковский счёт, который Вы пытаетесь вписать - не принадлежит человеку.", 3000);
                     return;
                 }
-                MoneySystem.Bank.Change(bankid, amount, false);
+                if (!MoneySystem.Bank.Change(bankid, amount, false))
+                {
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось изменить баланс банковского счёта", 3000);
+                    return;
+                }
                 GameLog.Money($"player({characterData.UUID})", $"bank({bankid})", amount, "admin");
                 GameLog.Admin($"{player.Name}", $"giveBankMoney({amount})", $"{data.Holder}");
                 Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, $"Вы выдали человеку {data.Holder} {amount}$ на банковский счёт {bankid}", 3000);
@@ -1189,19 +1193,35 @@ namespace NeptuneEvo.Core
                             return;
                         }
                         
-                        var money = Convert.ToInt32(character.Money) + amount;
-                        if (money < 0) 
-                            money = 0;
+                        long updatedMoney = Convert.ToInt32(character.Money) + (long)amount;
+                        if (updatedMoney < 0)
+                            updatedMoney = 0;
+                        if (updatedMoney > int.MaxValue)
+                        {
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Баланс превысит допустимый предел", 3000);
+                            return;
+                        }
+                        int money = (int)updatedMoney;
                         
+                        int affectedRows = await db.Characters
+                            .Where(c => c.Uuid == character.Uuid)
+                            .Set(c => c.Money, money)
+                            .UpdateAsync();
+
+                        // Do not report an offline grant as successful before the DB confirms
+                        // that the target row was updated. A zero-row result can mean the row
+                        // disappeared between the read and write (or the value was unchanged).
+                        if (affectedRows != 1)
+                        {
+                            Log.Write($"OffGiveMoney did not update exactly one character row (UUID: {character.Uuid}, affected: {affectedRows}).");
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось сохранить баланс игрока", 3000);
+                            return;
+                        }
+
                         GameLog.Money($"player({characterData.UUID})", $"player({character.Uuid})", amount, "admin");
                         GameLog.Admin($"{sessionData.Name}", $"offGiveMoney({amount})", $"{name}");
                         //Players.Phone.Messages.Repository.AddSystemMessage(target, (int)DefaultNumber.Bank, LangFunc.GetText(LangType.Ru, DataName.MoneyIncome, amount), DateTime.Now); //НЕ РАБОТАЕТ
                         Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, $"Вы установили {name} {money}$ (+{amount}$)", 3000);
-                        
-                        await db.Characters
-                            .Where(c => c.Uuid == character.Uuid)
-                            .Set(c => c.Money, money)
-                            .UpdateAsync();
                     }
                     catch (Exception e)
                     {

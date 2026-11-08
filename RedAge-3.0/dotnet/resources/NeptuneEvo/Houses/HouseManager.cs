@@ -1441,9 +1441,37 @@ namespace NeptuneEvo.Houses
                             Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, $"Недвижимость, которую Вы покупаете, имеет {maxcars} машиномест, продайте лишние машины", 3000);
                             return;
                         }*/
+                        if (house.Price <= 0)
+                        {
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.CanNotTransact), 3000);
+                            return;
+                        }
+
+                        var propertyBank = MoneySystem.Bank.Get(house.BankID);
+                        if (propertyBank == null || propertyBank.Type == 1)
+                        {
+                            MoneySystem.Bank.Log.Write($"House purchase rejected: invalid property bank [house:{house.ID}, bank:{house.BankID}]");
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось создать банковский баланс объекта. Покупка отменена.", 3000);
+                            return;
+                        }
+
+                        long initialHouseBalance = checked((long)Convert.ToInt32(house.Price / 100f * HouseManager.HouseTax) * 2L);
+                        // Debit first; do not overwrite an existing property balance just to preflight the account.
+                        if (!MoneySystem.Wallet.Change(player, -house.Price))
+                        {
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось списать оплату. Покупка отменена.", 3000);
+                            return;
+                        }
+
+                        if (!MoneySystem.Bank.SetBalance(house.BankID, initialHouseBalance))
+                        {
+                            if (!MoneySystem.Wallet.Change(player, house.Price))
+                                MoneySystem.Bank.Log.Write($"CRITICAL: house purchase refund failed [player:{characterData.UUID}, house:{house.ID}, price:{house.Price}]");
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось создать банковский баланс объекта. Покупка отменена.", 3000);
+                            return;
+                        }
+
                         Players.Phone.Messages.Repository.AddSystemMessage(player, (int)DefaultNumber.Bank, LangFunc.GetText(LangType.Ru, DataName.BuyHouse, house.Price), DateTime.Now);
-                        //Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, $"Вы купили эту недвижимость, не забудьте внести налог за неё в банкомате", 3000);
-                       // Notify.Send(player, NotifyType.Success, NotifyPosition.Center, $"НЕ ЗАБУДЬТЕ ВНЕСТИ НАЛОГИ В БЛИЖАЙШЕМ БАНКОМАТЕ!", 8000);
                         CheckAndKick(player);
                         if (house.Type != 7)
                         {
@@ -1454,12 +1482,6 @@ namespace NeptuneEvo.Houses
                         }
                         house.SetOwner(player.Name);
                         Trigger.ClientEvent(player, "client.rieltagency.delBlip", 374, house.ID);
-                        
-                        var houseBalance = MoneySystem.Bank.Accounts[house.BankID];
-                        houseBalance.Balance = Convert.ToInt32(house.Price / 100f * HouseManager.HouseTax) * 2;
-                        houseBalance.IsSave = true;
-                        
-                        MoneySystem.Wallet.Change(player, -house.Price);
                         //Chars.Repository.PlayerStats(player);
                         if (house.Type == 7) GameLog.Money($"player({characterData.UUID})", $"server", house.Price, $"parkBuy({house.ID})");
                         else GameLog.Money($"player({characterData.UUID})", $"server", house.Price, $"houseBuy({house.ID})");
@@ -2975,14 +2997,25 @@ namespace NeptuneEvo.Houses
                 var characterData = player.GetCharacterData();
                 if (characterData == null) return;
                 ExtPlayer seller = sessionData.SellItemData.Seller;
-                var sellerSessionData = seller.GetSessionData();
-                if (sellerSessionData == null) return;
-                int price = sessionData.SellItemData.Price; 
-                var sellerCharacterData = player.GetCharacterData();
-                if (sellerCharacterData == null)
+                if (seller == null || !seller.IsCharacterData())
                 {
                     sessionData.SellItemData = new SellItemData();
                     Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.SellerNotOnline), 3000);
+                    return;
+                }
+                var sellerSessionData = seller.GetSessionData();
+                var sellerCharacterData = seller.GetCharacterData();
+                if (sellerSessionData == null || sellerCharacterData == null)
+                {
+                    sessionData.SellItemData = new SellItemData();
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.SellerNotOnline), 3000);
+                    return;
+                }
+                int price = sessionData.SellItemData.Price;
+                if (price <= 0)
+                {
+                    sellerSessionData.SellItemData = new SellItemData();
+                    sessionData.SellItemData = new SellItemData();
                     return;
                 }
                 if (GetHouse(player, true) != null)

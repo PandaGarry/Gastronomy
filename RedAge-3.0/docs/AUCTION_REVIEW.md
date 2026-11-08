@@ -1,29 +1,30 @@
 # Phone auction lifecycle — static review
 
-Обновлено: 2026-11-07. Traced property listing creation, first/subsequent bids, auction end and house/business award settlement. Narrow auction lifecycle slice; no code changes, .NET build, RAGE staging or DB fault injection.
+Обновлено: 2026-11-08. Traced property listing creation, first/subsequent bids, auction end and house/business award settlement. Source patch now present on `redage/audit-continuation`; no .NET build, RAGE staging or DB fault injection has been performed.
 
-## MONEY-023 — first bid debits the bidder before refunding the no-bid sentinel
+## MONEY-023 — first bid sentinel and offline previous-bidder lookup
 
-**Приоритет: высокий; static control flow confirmed, runtime not reproduced.**
+**Приоритет: высокий; source patch applied, offline settlement still needs staging.**
 
-- New auction rows initialize `LastBetUUID = 0` and `LastPrice = price` (`Players/Phone/Auction/Repository.cs:290-305, 309-324`).
-- `OnBet` debits `price + 1%` from the bidder before unconditionally calling `ReturnMoney(auctionData.LastBetUUID, auctionData.LastPrice, ...)` (`:525-538`).
-- `ReturnMoney` treats the UUID as a connected-player lookup and immediately dereferences the result (`:562-568`). The first-bid sentinel `0` has no connected player in the normal character model, so the initial bid can throw after the debit and before `LastBetUUID`/`LastPrice` are updated. The event wrapper simply forwards to `OnBet` (`Events.cs:24-25`); no compensating refund is visible.
-- The bidder's own selected bid is the only account debited here; this is not evidence of cross-player debit. The in-memory debit may later be persisted by character save/disconnect. Test the sentinel on a disposable server before reporting as runtime-proven.
+- New auction rows initialize `LastBetUUID = 0` and `LastPrice = price`. UUID zero is a no-bid sentinel, not a funded prior bid.
+- `OnBet` now calls `ReturnMoney` only when `LastBetUUID > 0 && LastPrice > 0`, so the first bidder is not charged and then interrupted by a bogus refund to UUID zero.
+- `ReturnMoney` now uses `player?.GetCharacterData()`; when the prior bidder/seller is offline, execution can reach the existing asynchronous DB fallback instead of throwing on a null player.
+- The offline fallback is not yet a durable idempotent receipt, and online/offline `Bank.Change` / `Wallet.Change` results are still not checked here. The broader refund/payout atomicity problem remains open.
 
-**Remediation (not implemented):** refund the previous leader only when `LastBetUUID` identifies an actual prior bidder; settle debit/refund/bid update atomically or compensate on any exception. Require a valid positive starting price and use an explicit nullable/no-bid state rather than UUID zero.
+**Patch:** `Players/Phone/Auction/Repository.cs` on `redage/audit-continuation`.
 
-**Regression:** first bid on a fresh auction of each type; confirm debit exactly once and state advances, no `ReturnMoney(0,...)`; injected refund/update failure must restore or retain funds consistently.
+**Regression:** first bid on a fresh auction of each type; overbid while previous bidder is offline; auction end while seller is offline for house/business/vehicle; confirm exact debit/refund/proceeds and asset handoff after reconnect/restart. Inject refund/update failure and verify durable retry/compensation; no `ReturnMoney(0,...)`.
 
 ## MONEY-024 — expired/ended auctions still accept bids while the row remains cached
 
-**Приоритет: средний; conditional stale-cache window, not reproduced.**
+**Приоритет: средний; source guard/serialization patch applied, runtime concurrency pending.**
 
-- `OnBet` finds by ID but does not reject `auctionData.IsEnd` or compare `auctionData.Time` to current time (`:466-504`).
-- `End` marks the record ended and settles the asset (`:426-455`), but the ended auction is removed from `AuctionsData` only after `SaveAuctions` writes it (`:393-418`). That persistence worker sleeps 30 seconds (`Database/Models/Phone.cs:19-42`).
-- During the window after settlement and before cache removal, a direct `server.phone.auction.bet` call with the known ID can still debit the caller. With an existing top bidder, `OnBet` can also return that bidder's previous stake, mutate the already-ended auction, and never reassign the already-settled asset. Separately, bids submitted after `Time` but before the periodic `GetEnd` pass can be accepted late. The range is timing-dependent and has not been reproduced.
+- `OnBet` now rejects `auctionData.IsEnd` and `DateTime.Now >= auctionData.Time` before any debit.
+- `OnBet` and `End` now share `lock (auctionData)`; `End` also rechecks `IsEnd` while holding the lock. This serializes the bid/end transition for the same in-memory auction record.
+- The ended row may still remain cached until the existing save worker removes it, but stale IDs now hit the state/deadline guard.
+- Other readers/writers of `AuctionsData` and the DB persistence worker have not been proven to share this lock; durable concurrency and restart behavior remain staging tasks.
 
-**Remediation (not implemented):** atomically check both `!IsEnd` and `DateTime.Now < Time` at bid settlement; serialize end/bid transitions on one authoritative lock/state machine and remove or reject ended records immediately.
+**Patch:** `Players/Phone/Auction/Repository.cs` on `redage/audit-continuation`.
 
 **Regression:** bid before/at/after deadline, callback after `End` but before DB flush, repeated stale IDs, and concurrent end/bid. Assert no post-end debit/refund or auction-state mutation and exactly one asset transfer.
 
@@ -54,3 +55,39 @@
 ## Boundaries
 
 House auctions do not need a separate character house-ID list in the inspected `GetHouse` path; the offline winner observation above is specific to business `BizIDs`. Vehicle/other-item auction mutations and auction escrow persistence require separate review.
+
+
+## MONEY-038 — unchecked auction bid fee arithmetic could turn a debit into a credit
+
+**Приоритет: высокий до прохождения build/RAGE boundary tests. Source patch applied.**
+
+- The remote still supplies `price` as an `int`, but `OnBet` now rejects `price <= 0` before any money/state mutation.
+- Fee arithmetic now widens before addition: `long priceAndPercent = (long)price + (price / 100L)`. For `int.MaxValue`, the total is 2,168,958,483 and remains positive; negating it therefore remains a debit when passed to `Bank.Change`, not the previous wrapped positive credit.
+- The computed fee is passed to `GameLog.Money` as a `long`; the API supports that type.
+- No server-defined maximum auction bid was found in the inspected config/UI path. The patch removes signed-int wraparound but does not invent an economy cap; owner policy for a maximum bid remains open.
+
+**Patch:** `Players/Phone/Auction/Repository.cs` on `redage/audit-continuation`.
+
+**Regression:** direct remote bids at `int.MaxValue`, `int.MaxValue-1`, configured/policy maximum once established, zero, negative and `int.MinValue`; verify the bank balance never increases from a bid, no integer wrap occurs, and no state/log/notification is committed on rejected input. Inject bank debit failure and test concurrency/restart persistence.
+
+## INV-011 — Other-item auction escrow has no end-of-auction award or return path
+
+**Приоритет: высокий; missing settlement branch statically confirmed, runtime item recovery not tested.**
+
+- The public remote server.phone.auction.add casts a client-supplied integer to AuctionType and calls OnCreate (Players/Phone/Auction/Events.cs:17-20).
+- OnCreate has an AuctionType.Other branch that reads the character inventory item, clears its inventory slot, and moves its SQL item record to locationName/location `auction` / `auction` via UpdateSqlItemData (Players/Phone/Auction/Repository.cs:253-273; Chars/Repository.cs:4622-4678).
+- The auction End method marks the auction ended, but its settlement dispatch handles only House, Biz and Vehicle. There is no Other award/return branch (`Players/Phone/Auction/Repository.cs:426-447`). SaveAuctions later removes ended auctions from the in-memory list after persisting IsEnd (`:393-418`).
+- Therefore an Other item can be detached from the seller inventory and placed in the auction location without a corresponding winner grant or no-bid return in the reviewed auction lifecycle. The item may remain orphaned in that storage location after the auction is removed from active memory. Exact persistence/recovery behavior needs disposable DB verification.
+- The client-facing item-picker path GetItem also has no AuctionType.Other branch (`:121-185`), so the intended UI workflow is unclear; nevertheless the server add remote and Other mutation branch are present. Do not assume the UI makes this safe.
+
+**Remediation (not implemented):** either disable AuctionType.Other at the server boundary until complete, or implement explicit item settlement for winner/no-bid/cancel paths. Reserve and move the exact owned item with a durable auction ID; atomically grant it to the winner or return it to the seller; support offline recipients, retry and exactly-once receipts. Validate the item ID belongs to the caller and reject unsupported enum values.
+
+**Regression:** direct add remote for Other with valid, foreign, nonexistent and stale item IDs; auction end with and without bids; winner/seller online and offline; DB failure at reserve/grant/return; restart before and after end; verify the item exists exactly once in the correct owner container and never remains stranded in auction storage.
+
+
+## Offline auction refund — signed INT boundary follow-up (MONEY-036)
+
+- `ReturnMoney` has an offline fallback when the previous bidder/seller is not online and no bank account is available in the cache. It reads `characters.money` and writes `character.Money + price` directly.
+- Patched this fallback to reject a missing DB balance, nonpositive refund, negative stored balance and any result above `Int32.MaxValue`; addition is widened to `long` and only then narrowed to `int` for the signed INT column.
+- This prevents a direct overflow/narrowing write but does not make the asynchronous refund durable or acknowledged. `ReturnMoney` still logs before confirming the credit and its online Bank/Wallet result handling remains incomplete. Keep MONEY-023/038 open.
+- Static only; test offline bidder, missing bank cache, null DB balance, exact max boundary, over-max refund, DB failure, reconnect/restart and duplicate payout.

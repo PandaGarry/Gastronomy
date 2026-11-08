@@ -262,7 +262,22 @@ namespace NeptuneEvo.Events
                 else if (!PlayerToStreetRaceId.ContainsKey(player.Value)) return;
                 else if (!StreetRaceList.ContainsKey(player.Value)) return;
                 StreetRaceData streetRaceData = StreetRaceList[player.Value];
-                streetRaceData.Position = new Vector3(sr_X, sr_Y, sr_Z);
+                if (streetRaceData.Status)
+                    return;
+
+                if (float.IsNaN(sr_X) || float.IsInfinity(sr_X) ||
+                    float.IsNaN(sr_Y) || float.IsInfinity(sr_Y) ||
+                    float.IsNaN(sr_Z) || float.IsInfinity(sr_Z))
+                    return;
+
+                var finishPosition = new Vector3(sr_X, sr_Y, sr_Z);
+                if (player.Position.DistanceTo(finishPosition) <= 50f)
+                {
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.CantGonkaNow), 3000);
+                    return;
+                }
+
+                streetRaceData.Position = finishPosition;
                 if (!sessionData.CuffedData.Cuffed && !sessionData.DeathData.InDeath)
                 {
                     var targetSessionData = streetRaceData.joined.GetSessionData();
@@ -331,12 +346,24 @@ namespace NeptuneEvo.Events
                 var joinedSessionData = streetRaceData.joined.GetSessionData();
                 if (joinedSessionData == null) return;
 
-                StreetRaceList[streetRaceId].Status = true;
                 if (streetRaceData.rate > 0)
                 {
-                    Wallet.Change(streetRaceData.created, -streetRaceData.rate);
-                    Wallet.Change(streetRaceData.joined, -streetRaceData.rate);
+                    if (!Wallet.Change(streetRaceData.created, -streetRaceData.rate))
+                    {
+                        ClearData(streetRaceData.created, 0);
+                        return;
+                    }
+
+                    if (!Wallet.Change(streetRaceData.joined, -streetRaceData.rate))
+                    {
+                        if (!Wallet.Change(streetRaceData.created, streetRaceData.rate))
+                            Log.Write($"Accept: failed to refund street race stake {streetRaceData.rate} to player {streetRaceData.created.Value} after opponent debit failed.");
+                        ClearData(streetRaceData.joined, 0);
+                        return;
+                    }
                 }
+
+                StreetRaceList[streetRaceId].Status = true;
                 createdSessionData.StreetRaceTime = DateTime.Now.AddSeconds(10);
                 joinedSessionData.StreetRaceTime = DateTime.Now.AddSeconds(10);
                 Trigger.ClientEvent(streetRaceData.created, "client.streetrace.start", streetRaceData.Position.X, streetRaceData.Position.Y, streetRaceData.Position.Z, true);
@@ -358,6 +385,15 @@ namespace NeptuneEvo.Events
                 int streetRaceId = PlayerToStreetRaceId[player.Value];
                 if (!StreetRaceList.ContainsKey(streetRaceId)) return;
                 StreetRaceData streetRaceData = StreetRaceList[streetRaceId];
+
+                // The finish event is client-triggered; only an active race participant
+                // physically at the server-side finish position may claim the result.
+                if (!streetRaceData.Status)
+                    return;
+
+                if (player.Position.DistanceTo(streetRaceData.Position) > 10f)
+                    return;
+
                 int cost = Convert.ToInt32(streetRaceData.rate * 2 * 0.9);
                 Wallet.Change(player, cost);
                 //Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.YouWinGonka, cost), 8000);

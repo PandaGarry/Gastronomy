@@ -1844,13 +1844,13 @@ namespace NeptuneEvo.Organizations
                         }
                         else if (item == "money")
                         {
+                            if (!MoneySystem.Wallet.Change(player, -amount)) return;
                             var lastMulti = organizationData.MoneyMultiplier();
                             organizationData.Money += amount;
                             var newMulti = organizationData.MoneyMultiplier();
                             if (lastMulti != newMulti) 
                                 UpdateForMembers(organizationData.Id, OrganizationOfficeTypeUpdate.Money, newMulti);
                             
-                            MoneySystem.Wallet.Change(player, -amount);
                             GameLog.Money($"player({characterData.UUID})", $"org({organizationData.Id})", amount, $"putStock");
                             Table.Logs.Repository.AddLogs(player, OrganizationLogsType.TakeMoney, $"Положил на склад деньги (${MoneySystem.Wallet.Format(amount)})");
                         }
@@ -1935,13 +1935,13 @@ namespace NeptuneEvo.Organizations
                         }
                         else if (item == "money")
                         {
+                            if (!MoneySystem.Wallet.Change(player, amount)) return;
                             var lastMulti = organizationData.MoneyMultiplier();
                             organizationData.Money -= amount;
                             var newMulti = organizationData.MoneyMultiplier();
                             if (lastMulti != newMulti) 
                                 UpdateForMembers(organizationData.Id, OrganizationOfficeTypeUpdate.Money, newMulti);
                             
-                            MoneySystem.Wallet.Change(player, amount);
                             GameLog.Money($"org({organizationData.Id})", $"player({characterData.UUID})", amount, $"takeStock");
                             Table.Logs.Repository.AddLogs(player, OrganizationLogsType.TakeMoney, $"Взял со склада деньги (${MoneySystem.Wallet.Format(amount)})");
                         }

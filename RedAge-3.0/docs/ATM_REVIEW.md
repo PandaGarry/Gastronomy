@@ -1,6 +1,6 @@
 # ATM remotes — static review
 
-Обновлено: 2026-11-07. Traced the ATM interaction and `atmCB` → `atmVal` server events, including house-account deposit selection. This is a narrow cash ATM slice, not a full bank/transfer review. No build, RAGE staging or policy confirmation.
+Обновлено: 2026-11-08. Traced the ATM interaction and `atmCB` → `atmVal` server events, including house-account deposit selection. This is a narrow cash ATM slice, not a full bank/transfer review. No build, RAGE staging or policy confirmation.
 
 ## MONEY-004 — ATM withdrawal remote lacks server-side location and eligibility checks
 
@@ -17,3 +17,32 @@
 ## House-account selection boundary
 
 The ATM menu's house-account branch separately requires `HouseManager.GetHouse(player, true)` (`Bank.cs:825-856`), and the house deposit path re-checks owner-only house access before changing the house bank balance (`:522-569`). This does not repair the general ATM proximity/eligibility gap. The broader issue record remains `ECONOMY_REVIEW.md` (`MONEY-004`). House tax persistence/repossessions are covered in `PROPERTY_TAX_REVIEW.md` (`MONEY-019`, `PROP-003`).
+
+
+## MONEY-053 — cash ATM and house deposit ignore the second settlement leg
+
+**Приоритет: средний; static ordering confirmed, runtime failure path not reproduced.**
+
+The current branch `MoneySystem/Bank.cs` contains four related two-leg cash flows in `ClientEvent_ATMVAL`:
+
+- Regular cash deposit (`type == 0`): the wallet debit and bank credit are checked; a rejected bank credit triggers an attempted wallet refund. The handler still plays the success sound and writes the ATM-in log. If the bank credit returns false (e.g. account disappeared or an exception occurs before mutation), the wallet debit remains applied without a matching bank credit.
+- Regular cash withdrawal (`type == 1`): the bank debit and wallet credit are checked; a rejected wallet credit triggers an attempted bank refund. The handler still logs the ATM-out flow after a rejected wallet credit; the bank debit may remain without cash received.
+- House deposit (`type == 2`): wallet debit and house-bank credit are checked; a rejected house-bank credit triggers an attempted wallet refund.
+- Business deposit (`type == 3`): tracked as MONEY-039 in `BUSINESS_BANK_REVIEW.md`; an interim check-and-wallet-refund patch is now present there. Do not duplicate the finding here.
+
+`Wallet.Change` in the current branch tracks whether the in-memory balance was mutated and catches notification exceptions separately, so a false result should represent a rejected/unapplied wallet mutation under the reviewed flow. `Bank.Change` similarly isolates notification failures after its locked mutation. Nevertheless, these pairs are not one DB transaction: process failure between legs or failed compensation can still leave partial settlement. Do not retry the original leg blindly.
+
+**Remediation:** introduce one idempotent cash↔bank settlement operation that validates both accounts and resulting ranges, mutates both sides under a single settlement boundary, marks both dirty, and records a durable receipt/ledger transaction before reporting success. As a bounded interim fix, require the second leg to succeed and attempt a checked compensation of the first leg; log and surface any compensation failure, while keeping the issue open until durable transaction/restart tests pass. Keep client notifications and GameLog after settlement.
+
+**Regression:** normal deposit/withdrawal; missing bank account after UI opened; force Bank.Change false after wallet debit; force Wallet.Change false after bank debit; compensation success/failure; DB failure/restart between legs; duplicate/concurrent ATM submissions; insufficient cash/bank; near wallet/bank INT limits; verify no success log/sound/UI update before confirmed settlement and exactly one net delta on both balances. Requires disposable MySQL and RAGE staging.
+
+## 2026-11-08 implementation update — MONEY-053 (partial source patch)
+
+The regular cash ATM deposit now requires the bank credit to succeed after the wallet debit; on rejection it attempts a wallet refund and logs a critical error if compensation fails. The regular ATM withdrawal now requires the wallet credit after bank debit; on rejection it attempts to restore the bank balance and logs if compensation fails. House-account deposit now checks the house-bank credit and attempts to refund the wallet before reporting failure. Success sound, GameLog and house-deposit success message occur only after the second leg succeeds.
+
+Business-account deposit remains tracked separately as MONEY-039 and is not changed in this patch.
+
+**Limits:** these are in-memory checked compensation paths, not one durable DB transaction. A process crash between legs, a failed compensation or concurrent changes near balance limits still require ledger/outbox reconciliation. The issue remains open.
+
+**Validation:** exact source-block assertions only; no C# build, RAGE staging, MySQL failure injection or concurrency tests have run.
+\n\n## MONEY-039 cross-reference — business ATM deposit\n\nThe business-account path is tracked separately in `BUSINESS_BANK_REVIEW.md`. The current branch now checks the business-bank credit after wallet debit, attempts a wallet refund on rejection, and delays success effects. This remains an interim in-memory compensation, not a durable transaction.\n
