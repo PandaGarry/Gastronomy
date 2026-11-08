@@ -1,0 +1,22 @@
+# Системный мусор
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Редакторы
+.vscode/
+.idea/
+*.swp
+
+# Временное
+__pycache__/
+*.py[cod]
+.venv/
+*.tmp
+*.bak
+_scratch/
+
+# Личные данные — НЕ коммитить
+*.phone
+secret*
+personal/
