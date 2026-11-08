@@ -1455,9 +1455,12 @@ namespace NeptuneEvo.Houses
                         house.SetOwner(player.Name);
                         Trigger.ClientEvent(player, "client.rieltagency.delBlip", 374, house.ID);
                         
-                        var houseBalance = MoneySystem.Bank.Accounts[house.BankID];
-                        houseBalance.Balance = Convert.ToInt32(house.Price / 100f * HouseManager.HouseTax) * 2;
-                        houseBalance.IsSave = true;
+                        long initialHouseBalance = (long)Convert.ToInt32(house.Price / 100f * HouseManager.HouseTax) * 2;
+                        if (!MoneySystem.Bank.SetBalance(house.BankID, initialHouseBalance))
+                        {
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось создать банковский баланс объекта. Покупка отменена.", 3000);
+                            return;
+                        }
                         
                         MoneySystem.Wallet.Change(player, -house.Price);
                         //Chars.Repository.PlayerStats(player);
