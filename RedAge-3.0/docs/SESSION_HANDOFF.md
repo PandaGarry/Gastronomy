@@ -38,6 +38,7 @@
 - Direct SQL cash writers ещё обходят coordinator: offline AddMoney/refund/referral/business repossession/admin/merger и другие domain-specific paths требуют повторной inventory и миграции.
 - Durable operation receipt/outbox, единый per-UUID transaction owner, login/cache publication gate, bounded retry/backoff/dead-letter и удаление legacy absolute writers ещё не реализованы.
 - MONEY-003: банковский transfer синхронизирован в памяти, но две DB записи не являются одной durable transaction; bank ledger — отдельная область от character cash.
+- DB API reconnaissance: `ServerBD` — linq2db `DataConnection` с `MySql.Data.MySqlClient`; linq2db 3.3.0 имеет sync `BeginTransaction(IsolationLevel)` и async `CommitAsync/RollbackAsync`. Legacy `MySQL` helper использует отдельный `MySqlConnector` path и не должен смешиваться с coordinator transaction.
 
 Не объявлять MONEY-002 или MONEY-003 закрытыми.
 
@@ -55,7 +56,7 @@
 ## 5. Следующие шаги
 
 1. Повторно инвентаризировать все writers `characters.money` и все точки login/cache publication; составить полный список call sites с семантикой online/offline.
-2. Проверить реальные linq2db/ServerBD transaction APIs и совместимость legacy `netcoreapp3.1`; проверить DDL в disposable MariaDB, не в production.
+2. Runtime-проверить фактический `ServerBD` provider и InnoDB DDL в disposable MariaDB; API reconnaissance уже выполнен: linq2db 3.3.0 использует `BeginTransaction(IsolationLevel)` + `CommitAsync/RollbackAsync`.
 3. Утвердить durable receipt schema, operation ID policy, conditional bounded delta, transaction ownership и typed outcomes.
 4. Реализовать coordinator вместе с login/cache gate; только затем по одному мигрировать direct writers и success side effects.
 5. Для каждого шага синхронно обновлять ISSUE, review, TEST_PLAN, checklist, master plan, roadmap, handoff и changelog.
