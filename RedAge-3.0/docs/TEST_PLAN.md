@@ -247,3 +247,9 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] Repeat after organization membership/rank removal, stock closure and organization deactivation; revoke stale context.
 - [ ] Verify legitimate member access inside the correct organization dimension and normal/weapon-stock containers.
 - [ ] Test exit concurrent with item mutation, repeated exit, disconnect/reconnect and switching to another container; Organization_ID context must not survive revocation. Static review: ORGANIZATION_STOCK_SESSION_REVIEW.md; requires disposable RAGE/MySQL staging.
+
+## INV-017 — furniture safe revocation on house exit (pending staging)
+
+- [ ] Open each furniture safe type as owner, authorized roommate and through legitimate burglary; exit house and direct-call inventory.move, move.stack and use with other. All must reject without item/cache/DB mutation.
+- [ ] While the pane is open, revoke roommate furniture permission, transfer house ownership or remove/replace the furniture object; stale operations must reject.
+- [ ] Verify HouseManager.RemovePlayer revokes the other-container session before InsideHouseID is cleared; test CEF-only close, repeated exit, disconnect/reconnect and normal valid in-house use. Static review: FURNITURE_SAFE_SESSION_REVIEW.md; requires disposable RAGE/MySQL staging.
