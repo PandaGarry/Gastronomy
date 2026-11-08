@@ -746,10 +746,21 @@ namespace NeptuneEvo.Fractions
                     Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.PlayerNotEnoughMoney), 3000);
                     return;
                 }
-                TicketsData ticketsData = targetSessionData.TicketsData;
-                ticketsData.Price = sum;
-                ticketsData.Target = player;
-                ticketsData.Reason = reason;
+                lock (targetSessionData)
+                {
+                    if (targetSessionData.TicketsData == null)
+                        targetSessionData.TicketsData = new TicketsData();
+
+                    if (targetSessionData.TicketsData.Target != null)
+                    {
+                        Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "У игрока уже есть неподтвержденный штраф", 3000);
+                        return;
+                    }
+
+                    targetSessionData.TicketsData.Price = sum;
+                    targetSessionData.TicketsData.Target = player;
+                    targetSessionData.TicketsData.Reason = reason;
+                }
                 Trigger.ClientEvent(target, "openDialog", "TICKET", $"{player.Name} выписал Вам штраф в размере {sum}$ за {reason}. Оплатить?");
                 Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, $"Вы выписали штраф для {target.Name} в размере {sum}$ за {reason}", 3000);
                 Fractions.Table.Logs.Repository.AddLogs(player, FractionLogsType.Ticket, $"Выписал штраф {target.Name} ({targetCharacterData.UUID})");
@@ -767,11 +778,21 @@ namespace NeptuneEvo.Fractions
                 if (targetSessionData == null) return;
                 var targetCharacterData = target.GetCharacterData();
                 if (targetCharacterData == null) return;
-                TicketsData ticketsData = targetSessionData.TicketsData;
+                TicketsData ticketsData;
+                lock (targetSessionData)
+                {
+                    ticketsData = targetSessionData.TicketsData;
+                    if (ticketsData == null || ticketsData.Target == null || ticketsData.Price <= 0)
+                        return;
+
+                    // Consume the server-side ticket intent before any settlement side effects.
+                    // A repeated/concurrent TICKET callback must not reuse the same fine.
+                    targetSessionData.TicketsData = new TicketsData();
+                }
+
                 ExtPlayer player = ticketsData.Target;
                 int sum = ticketsData.Price;
-                string reason = ticketsData.Reason;
-                ticketsData = new TicketsData();
+                string reason = ticketsData.Reason ?? string.Empty;
                 var characterData = player.GetCharacterData();
                 if (characterData == null) return;
                 if (confirm)
