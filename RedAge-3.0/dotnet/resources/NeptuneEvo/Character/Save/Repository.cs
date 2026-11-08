@@ -28,6 +28,14 @@ namespace NeptuneEvo.Character.Save
                 var characterData = player.GetCharacterData();
                 if (characterData == null) return;
 
+                // Do not let an invalid in-memory balance overflow during conversion or
+                // silently poison the character's persisted money column.
+                if (characterData.Money < 0 || characterData.Money > int.MaxValue)
+                {
+                    Log.Write($"SaveSql rejected out-of-range character money (UUID: {characterData.UUID}, amount: {characterData.Money}).");
+                    return;
+                }
+
                 var missionData = player.GetMissionData();
 
                 Bank.SetSave(characterData.Bank);
