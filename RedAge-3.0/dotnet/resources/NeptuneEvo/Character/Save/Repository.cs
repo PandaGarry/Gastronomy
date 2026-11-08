@@ -53,7 +53,7 @@ namespace NeptuneEvo.Character.Save
                 await Players.Phone.Repository.SaveSettings(db, player, characterData.UUID);
                 
 
-                await Database.Models.Money.ExecuteCharacterSave(characterData.UUID, characterData.Money, async () =>
+                await Database.Models.Money.ExecuteCharacterSave(characterData.UUID, () => characterData.Money, async (savedMoney) =>
                 {
                     await db.Characters
                     .Where(v => v.Uuid == characterData.UUID)
@@ -65,7 +65,7 @@ namespace NeptuneEvo.Character.Save
                     .Set(v => v.Armor, characterData.Armor)
                     .Set(v => v.Lvl, characterData.LVL)
                     .Set(v => v.Exp, characterData.EXP)
-                    .Set(v => v.Money, Convert.ToInt32(characterData.Money))
+                    .Set(v => v.Money, Convert.ToInt32(savedMoney))
                     .Set(v => v.Bank, characterData.Bank)
                     .Set(v => v.Work, characterData.WorkID)
                     .Set(v => v.Drugaddi, characterData.DrugsAddiction)
