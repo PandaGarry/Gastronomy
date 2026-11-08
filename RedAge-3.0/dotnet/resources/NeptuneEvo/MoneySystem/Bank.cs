@@ -106,10 +106,8 @@ namespace NeptuneEvo.MoneySystem
 
                     bank.Balance = newBalance;
                     bank.Revision++;
-                    if (bank.Type == 1 && amount >= 10000)
-                        bank.IsSave = true;
-                    else if (bank.Type != 1)
-                        bank.IsSave = true;
+                    // Every balance mutation must be persisted, including small personal-account changes.
+                    bank.IsSave = true;
                 }
 
                 // Notifications are deliberately outside the mutation boundary. A UI failure
@@ -255,6 +253,12 @@ namespace NeptuneEvo.MoneySystem
                 }
             }
         }
+        public static List<int> GetDirtyAccountIds()
+        {
+            lock (AccountSync)
+                return Accounts.Where(account => account.Value.IsSave).Select(account => account.Key).ToList();
+        }
+
         public static async Task Save(ServerBD db, int bankId)
         {
             Data bank;
