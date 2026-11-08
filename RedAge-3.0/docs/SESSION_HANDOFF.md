@@ -329,3 +329,12 @@
 - Patched `Money.cs`: common lock around producers and atomic snapshot/clear; failed DB batch requeued; older failed value cannot overwrite newer queued value. DB flush remains absolute SET, so retry of partially successful batch is idempotent with respect to delta duplication.
 - Important limitation: pending queue is still memory-only and lost on process crash; no transaction/outbox/backoff/dead-letter. No build, concurrency or MySQL fault-injection tests.
 - Next: validate this patch and design durable outbox before claiming money persistence reliable. Do not mistake Wallet.Change(true) for DB commit.
+
+
+## 2026-11-08 continuation — MONEY-003 bank transfer patch
+
+- Patched MoneySystem/Bank.cs: synchronized Bank.Change, checked arithmetic, isolated notifications after mutation; Bank.Transfer now validates and changes both in-memory balances in one critical section and marks both accounts dirty.
+- ATM.AcceptTransfer consumes the pending tuple before execution and verifies the source account still matches the player's character bank.
+- Bank.Save now snapshots balance/holder/revision, clears dirty flags only after DB success and only if no newer mutation occurred; exceptions retain dirty state. Values outside DB INT range are not silently narrowed.
+- Remaining: process-local lock only; no durable transaction/idempotency ledger; crash between cache mutation and DB write can still leave stale/lost state; asynchronous save ordering is not crash-safe. Keep MONEY-003 open.
+- Validation: static source review only. No .NET SDK/MSBuild in current runtime; no build, MySQL fault injection, concurrency or RAGE staging test executed.
