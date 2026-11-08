@@ -901,7 +901,14 @@ namespace NeptuneEvo.MoneySystem
                             Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.NoMoney), 3000);
                             return;
                         }
-                        Bank.Change(biz.BankID, +myamount);
+                        if (!Bank.Change(biz.BankID, +myamount))
+                        {
+                            if (!Wallet.Change(player, +myamount))
+                                Bank.Log.Write($"Business deposit compensation failed [player:{characterData.UUID}, bank:{biz.BankID}, amount:{myamount}]", nLog.Type.Error);
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.CanNotTransact), 3000);
+                            return;
+                        }
+
                         GameLog.Money($"player({characterData.UUID})", $"bank({biz.BankID})", myamount, $"atmBiz");
                         //Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.SucTransact), 3000);
                         Players.Phone.Messages.Repository.AddSystemMessage(player, (int)DefaultNumber.Bank, LangFunc.GetText(LangType.Ru, DataName.SucTransactB, myamount, (bankBalance+myamount), maxMoney), DateTime.Now);
