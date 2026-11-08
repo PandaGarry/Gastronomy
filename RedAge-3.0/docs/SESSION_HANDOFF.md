@@ -56,8 +56,8 @@
 ## 5. Следующие шаги
 
 1. На основе обновлённой inventory определить stable operation IDs и typed outcomes для каждого direct writer; не заменять SELECT/absolute UPDATE на голый SQL increment без login gate и receipt.
-2. Runtime-проверить фактический `ServerBD` provider и InnoDB DDL в disposable MariaDB; API reconnaissance уже выполнен: linq2db 3.3.0 использует `BeginTransaction(IsolationLevel)` + `CommitAsync/RollbackAsync`.
-3. Утвердить durable receipt schema, operation ID policy, conditional bounded delta, transaction ownership и typed outcomes.
+2. Проверить candidate receipt DDL/API на disposable MariaDB и actual ServerBD provider. Схема и typed outcomes описаны как design-only в ECONOMY_REVIEW.md; не создавать production migration до согласования delivery/rollback.
+3. Утвердить durable receipt schema, operation ID policy, conditional bounded delta, transaction ownership, duplicate/uncertain-commit semantics и typed outcomes.
 4. Реализовать coordinator вместе с login/cache gate; только затем по одному мигрировать direct writers и success side effects.
 5. После реализации coordinator по одному мигрировать direct writers, затем удалить legacy cash write из full SaveSql/worker; синхронно обновлять ISSUE, review, TEST_PLAN, checklist, master plan, roadmap, handoff и changelog.
 6. Запустить build, DB failure/commit-ack tests, concurrency/replay/restart tests и RAGE staging, когда доступно соответствующее окружение.
