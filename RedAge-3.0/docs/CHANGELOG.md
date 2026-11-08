@@ -455,3 +455,8 @@
 
 - `Main.cs`: revalidate holder at confirmation; reject nonpositive sale price; check wallet payout before logging/reporting/removing the vehicle.
 - Static assertions passed. Async DB delete/restart exactly-once settlement remains open; no C# build, RAGE or MySQL tests.
+
+## 2026-11-08 — VEH-001 self-repair guard
+
+- `Core/Vehicle.cs`: RepairCar now returns bool for successful repair vs invalid/missing state/exception.
+- `Main.cs`: require successful $500 wallet debit before repair; attempt refund on repair failure and critically log failed compensation. Dialog-intent/location policy remains open. No C# build/RAGE tests.
