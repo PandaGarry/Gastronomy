@@ -151,4 +151,5 @@
 
 - [ ] INV-019: bind weapon/key-ring subcontainer access to exact parent SqlId/type/current owner and revoke on parent transfer/drop/delete/replacement; validate every move/stack/use operation. See WEAPON_KEYRING_SUBCONTAINER_REVIEW.md.
 
+- [ ] MONEY-049 — Metro ticket price overflow and unchecked debit; source patch added, boundary/failure staging required. See `METRO_REVIEW.md`.
 - [ ] MONEY-048 — player cash/item trade and tent-market purchase settlement; checked pricing, exact debit/credit, durable idempotency and compensation. See `PLAYER_TRADE_REVIEW.md`.
