@@ -113,3 +113,14 @@ Across these families, ItemsMove, ItemsMoveStack and ItemsUse remain shared muta
 These remain audit TODOs, not confirmed vulnerabilities. Add owner-approved behavior and direct-remote regression tests before closing the container audit.
 
 - HeliCrash key clamp: InHeliCrash installs KeyClampData before GetHealth checks ArmyLockpick; generic keyClamp.end trusts client value and HeliCrash End can unlock on value 0 without proving a successful keyDown/reservation. This is a distinct high-severity remote bypass tracked as INV-018; see HELICRASH_KEYCLAMP_REVIEW.md.
+
+
+## INV-019 — weapon/key-ring parent ownership is not rebound to the open subcontainer
+
+Static trace completed:
+- Weapon component and key-ring panes are opened from parent SqlId; LoadOtherItemsData records only `InventoryOtherLocationName`.
+- GetLocationName/GetItemData/SetItemData route generic `other` mutations through that string without verifying parent existence or current owner.
+- ItemsMove/ItemsMoveStack/ItemsUse do not revoke the pane when the parent moves; ItemsUse can retrieve child items into the caller inventory.
+- The source-level stale-context path is confirmed. Cross-owner extraction and any client-side automatic close behavior remain staging questions; no live theft/duplication is claimed.
+
+See `WEAPON_KEYRING_SUBCONTAINER_REVIEW.md` for remediation and the regression matrix. Warehouse location policy and HeliCrash open/range lifecycle remain explicit, bounded staging/policy TODOs rather than asserted findings.
