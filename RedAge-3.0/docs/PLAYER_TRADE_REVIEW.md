@@ -53,3 +53,13 @@ The unchecked call order and missing result handling are confirmed in source. Th
 - `Wallet.Change` uses an `int` intermediate and persists large changes through the existing int-based character-money contract; MONEY-036 remains a separate low/latent type-contract issue.
 - Other unchecked wallet settlements already tracked include MONEY-035, MONEY-037, MONEY-039..044, MONEY-047, STOCK-001/002 and JOB-005. Do not duplicate those findings.
 - No gameplay source patch is included in this documentation commit. C# build and runtime tests remain pending.
+
+## 2026-11-08 — bounded tent input hardening
+
+A narrow source patch was applied in `Chars/Repository.cs`:
+
+- `ItemBuy` rejects negative quantities before price or wallet calculations. The existing zero-quantity UI convention is normalized to one item before stock/slot checks.
+- Unit price must be positive; total price is calculated in `long` and rejected unless it fits the `int` amount accepted by `Wallet.Change`. This closes the negative-quantity/overflow path that could otherwise invert or corrupt the cash leg before `ItemStack` rejects an invalid quantity.
+- The tent seller reference is checked for null and active character data before dereference.
+
+This is only input/arithmetic hardening. The buyer debit and seller credit return values are still ignored; seller proceeds, buyer item grant, BattlePass progress and notifications are not a durable atomic settlement. `ConfirmTrade` remains unchanged because item movement precedes two unchecked cash legs and a safe local reorder/compensation is not available. MONEY-048 remains open.
