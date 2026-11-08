@@ -109,3 +109,6 @@
 - [ ] VEH-009 — bind petrol remote to active nearby Type==1 fuel station and current vehicle; stale BizID/non-fuel business must not authorize refuelling. Test direct remote, move-away, dimension swap, replay and legitimate station use. See BUSINESS_FUEL_REVIEW.md.
 
 - [ ] JOB-005 — AutoMechanic repair/fuel service: confirm buyer debit and mechanic credit before repair/fuel transfer; durable one-shot offer, retry/compensation, buyFuel debit-before-reserve and replay/restart tests. See MECHANIC_SERVICE_REVIEW.md.
+
+- [ ] BUG-002 — admin business deletion: handle null/offline owner before DB delete and keep DB row, BizIDs, runtime cache/world and restart state consistent. See BUSINESS_OWNERSHIP_REVIEW.md.
+- [ ] MONEY-047 — admin business deletion refund: verify online owner compensation or persist retryable refund receipt before final delete. See BUSINESS_OWNERSHIP_REVIEW.md.
