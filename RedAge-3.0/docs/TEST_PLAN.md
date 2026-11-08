@@ -299,3 +299,13 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] Long DB outage: measure retry/log volume and memory growth; define bounded backoff/dead-letter before production closure.
 
 Static source patch only; no C# build or DB fault injection has run. See `ECONOMY_REVIEW.md`.
+
+
+## Wallet.Change post-mutation result semantics
+
+- [ ] Inject a client balance-event exception after `characterData.Money` changes; method must not return `false` for the applied mutation.
+- [ ] Inject an exception in the large-balance queue call after the in-memory mutation; confirm returned state and verify recovery/reconciliation policy (a `true` result is not proof of DB durability).
+- [ ] Verify insufficient funds, missing character and server-stopping debit still return `false` without changing balance.
+- [ ] Verify disconnect path and positive `EarnedMoney` accounting.
+- [ ] Build against the repository's legacy target and run RAGE staging tests.
+
