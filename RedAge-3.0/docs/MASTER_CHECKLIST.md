@@ -156,3 +156,6 @@
 
 
 - [ ] MONEY-003 follow-up — audit and remove every direct mutable bank balance write; property acquisition/tax/auction settlement must use synchronized bank APIs. Validate buyer debit/ownership ordering and DB failure compensation. See `BANK_TRANSFER_REVIEW.md`.
+
+- [ ] MONEY-017 — house purchase: validate bank, debit buyer before bank initialization/ownership, refund on bank-init failure; test shutdown, duplicate buyer, compensation failure and restart. See PROPERTY_PURCHASE_REVIEW.md.
+- [ ] MONEY-019 — hourly house/business tax: synchronized checked bank adjustment and side effects only after debit; test DB retry/restart, faction/city-hall credit consistency and repossession owner persistence (PROP-003). See PROPERTY_TAX_REVIEW.md.
