@@ -19,3 +19,14 @@
 ## Scope and confidence
 
 Static ordering and API return contracts are visible. No live exploitation, runtime reproduction or DB failure test is claimed.
+
+## 2026-11-08 — bounded BUY_CAR settlement guard
+
+A narrow patch was applied in `Main.cs` for `BUY_CAR`:
+
+- Reject a null/non-character seller before reading seller session/character state; reject a nonpositive pending sale price.
+- Buyer debit remains checked as before.
+- Seller credit is now checked. If seller credit rejects, the code attempts to refund the buyer; a failed refund emits a critical log with buyer/seller UUIDs, vehicle plate and amount.
+- Vehicle holder mutation now occurs only after seller credit succeeds. Success log, garage changes and success notifications remain after that point.
+
+This closes the specific path where seller credit rejects but vehicle ownership was already transferred and the method still reported success. It remains an in-memory compensating sequence, not a durable sale transaction: buyer debit/refund and seller credit are not tied to a durable receipt, compensation can fail, and `VehicleManager.SaveHolder` remains asynchronous without durable retry/reconciliation. No C# build, RAGE staging or MySQL fault injection was run.
