@@ -309,3 +309,19 @@ Static source patch only; no C# build or DB fault injection has run. See `ECONOM
 - [ ] Verify disconnect path and positive `EarnedMoney` accounting.
 - [ ] Build against the repository's legacy target and run RAGE staging tests.
 
+
+
+## MONEY-003 — bank transfer and save consistency (source patch pending validation)
+
+- [ ] Verify valid A→B transfer conserves total balance and changes both sides exactly once.
+- [ ] Reject amount <= 0, same/missing account IDs, insufficient source, server-stop debit and destination overflow without changing either balance.
+- [ ] Run 2..100 concurrent withdrawals against a boundary balance; assert no negative balance or lost update.
+- [ ] Run simultaneous A→B and B→A transfers; assert no deadlock and total conservation.
+- [ ] Replay AcceptBankTransfer, invoke with no pending tuple, cancel then replay, and change character bank before acceptance; at most one valid transfer.
+- [ ] Inject notification/GameLog exceptions after mutation; verify callers do not retry an already-applied transfer.
+- [ ] Inject DB failure before and during Bank.Save; dirty flag remains and save retries after reconnect.
+- [ ] Mutate balance/holder during async save; revision mismatch leaves account dirty.
+- [ ] Test balance outside DB INT range; save must not clear dirty state or silently narrow value.
+- [ ] Kill process after in-memory transfer and before DB commit; document remaining crash-consistency gap and test future ledger/outbox recovery.
+
+Static source patch only. No .NET build, MySQL fault injection, concurrency test or RAGE staging test has run. See BANK_TRANSFER_REVIEW.md.
