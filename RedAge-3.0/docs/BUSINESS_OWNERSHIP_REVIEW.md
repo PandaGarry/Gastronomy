@@ -65,3 +65,13 @@ A narrow patch was applied to `acceptBuyBusiness` in `Core/Businesses.cs`:
 - Reject a nonpositive pending price and a business ID that is no longer present in `BizList`; clear both pending offer objects for these invalid states.
 
 The core transfer is intentionally unchanged: buyer/seller BizIDs and `biz.Owner` are still mutated before two unchecked `Wallet.Change` calls. No naive reorder or compensating patch was applied because the subsequent ownership/BizIDs persistence APIs do not provide a durable transaction/commit result. MONEY-044 remains high/open.
+
+## 2026-11-08 — MONEY-043 current-branch source revalidation
+
+The current branch already contains an interim source guard in `buyBusinessCommand` (re-fetched from `Core/Businesses.cs`):
+
+- Business bank balance initialization is attempted first through `Bank.SetBalance`; purchase aborts if it fails.
+- The buyer debit is checked. If it rejects, the code attempts to restore the previous business bank balance and logs a failure if that compensation fails.
+- Ownership, stock/order reset and buyer BizIDs mutation occur only after the wallet debit succeeds.
+
+This is materially safer than the earlier static review text, which described the debit as unchecked. The finding remains open because bank initialization/debit/ownership/BizIDs are still separate in-memory/DB writes without one durable purchase receipt; a crash or later save failure can leave partial state. No C# build, RAGE staging or MySQL fault injection was run.
