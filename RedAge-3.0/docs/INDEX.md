@@ -120,3 +120,5 @@
 - [FRACTION_STOCK_SESSION_REVIEW](FRACTION_STOCK_SESSION_REVIEW.md) — stale OnFracStock authorization and faction weapon-stock remote access (INV-015).
 
 - [ORGANIZATION_STOCK_SESSION_REVIEW](ORGANIZATION_STOCK_SESSION_REVIEW.md) — organization stock context remains mutable after leaving the organization interior (INV-016).
+
+- [FURNITURE_SAFE_SESSION_REVIEW](FURNITURE_SAFE_SESSION_REVIEW.md) — furniture safe inventory context remains mutable after house exit (`INV-017`).
