@@ -399,3 +399,11 @@
 - Detached batches are marked in-flight at snapshot, not just when SQL begins; this closes the mutation gap before the worker gets its lock.
 - Static source assertions passed. No C# build, multithreaded stress, MySQL fault injection or RAGE tests.
 - Remaining direct writers include Character.Save.Repository.AddMoney, auction offline refund, Main referral/business repossession, Admin OffGiveMoney and Accounts.Merger; migrate/audit before closing MONEY-002. Durable outbox/restart recovery remains open.
+
+
+## 2026-11-08 — MONEY-002 failed retry hand-off fix
+
+- Patched `Database/Models/Money.MoneyUpdate`: `ActiveMoneyWrites` now remains set after SQL failure until `Worker` invokes `RequeueMoney`; success/superseded snapshots clear the marker only after releasing the UUID semaphore. This closes a narrow small-wallet-change loss window between failed UPDATE and retry registration.
+- Updated issue register, economy review, master plan, changelog and regression plan.
+- Remaining direct cash SQL writers: `Character.Save.Repository.AddMoney`, auction offline refund, Main referral/business repossession, Admin OffGiveMoney, Accounts.Merger. Do not migrate blindly; establish online/offline state and pending snapshot semantics first.
+- Static source assertions only. No C# build, DB fault injection, interleaving test or RAGE runtime test has run.
