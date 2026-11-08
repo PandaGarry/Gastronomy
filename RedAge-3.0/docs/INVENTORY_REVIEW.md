@@ -102,3 +102,12 @@ Across these families, ItemsMove, ItemsMoveStack and ItemsUse remain shared muta
 - Organization stock: Organizations/Manager.cs checks organization status, stock-open state and InsideOrganizationID at open; RemovePlayer clears InsideOrganizationID without closing/revoking the container, while generic item mutations do not repeat membership/rank/stock state. Post-exit stale context is tracked as INV-016.
 
 - Furniture safes: Core/Selecting.cs objectSelected checks the object, range, InsideHouseID and owner/roommate/burglary access at open. HouseManager.RemovePlayer clears InsideHouseID on exit without closing the container; generic item mutations do not repeat those checks. Post-exit stale context is tracked as INV-017.
+
+
+## Remaining container traces — open, not yet registered as findings (2026-11-08)
+
+- Personal warehouse: WarehouseEnter/WarehouseExit switch IsInPostalStock and dimension, but WarehouseExit does not close the other inventory; Stock.Perform opens the per-character UUID storage without checking IsInPostalStock. qMain.QuestPerform does require an active npc_stock quest record, but no current NPC-range/warehouse-dimension check was found in this path. The storage key is the caller's own UUID, so the currently supported impact is a location-rule bypass for personal storage, not cross-player theft. Confirm intended design before creating an issue.
+- HeliCrash: opening is reached through a server colshape interaction; InHeliCrash uses the box health/key-clamp state, while OpenHeliCrash itself does not revalidate the current box index/health. The generic item handlers do not bind operations to the current crash box or range, and no explicit close-on-leave path was found. Confirm interaction framework guarantees and event lifecycle on staging.
+- Weapon and CarKey subcontainers: ItemsUse opens weapon_<parent SqlId> and CarKey_<keyring SqlId>. LoadOtherItemsData stores only the location string; it does not store a server-side parent-item intent. Generic mutations do not revalidate that the parent weapon/keyring still exists and remains owned by the player. Trace trade/drop/delete/replacement and close behavior before registering a separate finding.
+
+These remain audit TODOs, not confirmed vulnerabilities. Add owner-approved behavior and direct-remote regression tests before closing the container audit.
