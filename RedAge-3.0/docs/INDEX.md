@@ -75,7 +75,8 @@
 - [BUSINESS_ORDER_REVIEW](BUSINESS_ORDER_REVIEW.md) — business phone purchase/cancel/price mutation, quantity-overflow bank-credit path and dirty-save persistence review.
 - [BUSINESS_RETAIL_REVIEW](BUSINESS_RETAIL_REVIEW.md) — retail stock decrement, owner bank credit, customer debit and item/weapon grant settlement.
 - [BUSINESS_BANK_REVIEW](BUSINESS_BANK_REVIEW.md) — ATM business-account deposit, unchecked second-leg credit and BizID/session validation.
-- [BUSINESS_TAX_REVIEW](BUSINESS_TAX_REVIEW.md) — hourly business tax bank persistence and online/offline repossession compensation.\n- [VEHICLE_PLAYER_SALE_REVIEW](VEHICLE_PLAYER_SALE_REVIEW.md) — player-to-player vehicle sale debit/credit and asynchronous holder persistence.
+- [BUSINESS_TAX_REVIEW](BUSINESS_TAX_REVIEW.md) — hourly business tax bank persistence and online/offline repossession compensation.
+- [VEHICLE_PLAYER_SALE_REVIEW](VEHICLE_PLAYER_SALE_REVIEW.md) — player-to-player vehicle sale debit/credit and asynchronous holder persistence.
 - [BUSINESS_SALE_REVIEW](BUSINESS_SALE_REVIEW.md) — generic phone sale callback, business/BizIDs persistence ordering and conditional payout replay.
 - [BUSINESS_DELIVERY_REVIEW](BUSINESS_DELIVERY_REVIEW.md) — Trucker order reservation, cargo acquisition and cancellation/disconnect state review.
 - [PHONE_MESSAGES_REVIEW](PHONE_MESSAGES_REVIEW.md) — contact-task progress, SMS CEF rendering/bridge sinks and message-history queue persistence review.
