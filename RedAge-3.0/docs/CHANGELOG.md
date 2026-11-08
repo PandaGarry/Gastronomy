@@ -289,6 +289,11 @@
 - Registered VEH-011 separately from MONEY-012/PROG-007; expanded TAXI_MILEAGE_REVIEW, issue register, checklist, regression plan, coverage, index, roadmap and handoff. No source code changed; no runtime/build/DB test.
 
 
+## 2026-11-08 — MONEY-049 Metro ticket settlement
+
+- `Events.Metro.OnBuyTicket` previously multiplied the client-supplied `Increase` by ticket price in `int`, then ignored `Wallet.Change` and proceeded to log success and move the player into the metro dimension.
+- Patched calculation to widen to `long`, reject values outside positive `int` range, and abort all subsequent effects unless the wallet debit succeeds. Added MONEY-049 and boundary/failure regression cases. Static verification only; C# build and RAGE staging remain pending.
+
 ## 2026-11-08 — INV-012 vehicle trunk inventory context
 
 - Traced vehicleSelected branch 3 → LoadOtherItemsData → generic inventory move/stack/use remotes. Initial 5m/trunk-open gate is not revalidated on each item mutation; the generic item methods rely on InventoryOtherLocationName and do not bind it to current vehicle/access/range/dimension/door state.
