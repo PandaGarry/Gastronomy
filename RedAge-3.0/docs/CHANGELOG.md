@@ -208,3 +208,10 @@
 - Extended `AUCTION_REVIEW.md`: `AuctionType.Other` moves an item into the auction location, but auction end has no Other-item award or return branch.
 - Registered INV-011 in `ISSUES.md`, `MASTER_CHECKLIST.md`, `AUDIT_COVERAGE.md`, `ROADMAP.md`, `INDEX.md` and `TEST_PLAN.md`; added item ownership, offline and restart regression cases.
 - Static finding only. UI workflow, DB persistence and runtime recovery remain to be verified; no gameplay source patch or build was performed.
+
+
+## 2026-11-08 — JOB-004 Trucker payout settlement
+
+- Extended `BUSINESS_DELIVERY_REVIEW.md`: Trucker delivery ignores the boolean result of `Wallet.Change`, then removes the order, replenishes business stock and reports success. Registered JOB-004 and added wallet-failure/retry tests.
+- Expanded `BUSINESS_ORDER_REVIEW.md` / MONEY-022: cancellation removes the order before confirming `Bank.Change` refund; a failed credit has no pending-refund retry path in the method.
+- Updated `ISSUES.md`, `MASTER_CHECKLIST.md`, `AUDIT_COVERAGE.md`, `ROADMAP.md`, `INDEX.md` and `TEST_PLAN.md`. Static-only; no runtime injection or source patch performed.
