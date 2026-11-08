@@ -512,3 +512,17 @@ Static source patch only; no compiler, disposable DB or RAGE UI test has run. Se
 - [ ] With previous bidder offline and bank account absent from cache, verify `ReturnMoney` accepts only a non-null DB balance and positive refund; reject negative state and any `current + refund > Int32.MaxValue` without SQL mutation.
 - [ ] Test exact boundary `current + refund == Int32.MaxValue`, `Int32.MaxValue + 1`, DB null balance, missing character row, DB exception, duplicate refund and reconnect/restart.
 - [ ] Confirm refund log/notification only after a durable credit receipt; current source still logs before DB/online credit acknowledgement, so this test remains expected to fail until settlement is redesigned.
+
+
+### MONEY-002 — worker/full-save interleaving extension (2026-11-08)
+
+- [ ] Deterministic race: worker snapshots+clears UUID A and pauses before DB context/SQL; apply a small `Wallet.Change` (<$10,000); resume worker. Assert old detached version is skipped and the newer balance remains queued and is eventually persisted.
+- [ ] Full save obtains UUID semaphore before detached worker: save latest balance; resume old worker batch; assert revision mismatch skips it and DB retains the full-save balance.
+- [ ] Worker obtains semaphore and begins SQL first: full save waits, then writes latest in-memory balance; assert no rollback.
+- [ ] Apply small and large wallet mutations while `ExecuteCharacterSave` is in flight; small mutation must queue because `ActiveCharacterSaves` is set, and final DB balance must equal latest in-memory balance.
+- [ ] Force full-save DB exception: if no newer wallet revision exists, captured amount is requeued; if a newer revision exists, preserve only that newer snapshot.
+- [ ] Fail DB context creation after detached snapshot: `RequeueMoney` restores a still-current row and clears `ActiveMoneyWrites`; verify next small mutation does not remain stuck behind a phantom marker.
+- [ ] Fail midway through a multi-UUID batch; successfully written absolute rows may be safely retried, failed/current rows return to queue, newer versions are never replaced.
+- [ ] Audit and test remaining direct SQL writers outside the coordinator: `Character.Save.Repository.AddMoney`, auction offline refund, Main referral/business-tax, Admin OffGiveMoney and Accounts.Merger.
+
+Source assertions only; no C# build or DB fault-injection has run. See `ECONOMY_REVIEW.md`.
