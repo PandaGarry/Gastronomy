@@ -379,3 +379,11 @@
 - Bank.Transfer validates positive amount/account identity/existence/funds/overflow and applies both in-memory balance legs under one lock; both accounts are marked dirty.
 - Bank.Save snapshots revision and balance, retains dirty state on DB errors/concurrent mutation, and rejects out-of-range DB INT balances without clearing pending save.
 - Updated bank transfer review, issue registry, master checklist and regression matrix. Static only; no .NET build, MySQL or RAGE tests.
+
+## 2026-11-08 — MONEY-003 bank creation/read hardening (source patch)
+
+- `Bank.GetBalance` now reads mutable account balance under the shared account lock.
+- `Bank.Create` validates holder, signed TINYINT type range and non-negative balance; checked conversion prevents truncation beyond the current DB INT balance schema.
+- Cache initialization uses the exact validated database balance.
+- Regression cases added for boundary values, invalid input and concurrent reads/mutations.
+- Static source checks only; no build, DB or RAGE runtime tests have run.
