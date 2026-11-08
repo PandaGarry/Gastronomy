@@ -68,3 +68,6 @@ A further petrol remote boundary was traced: `VEH-009` records that any business
 
 
 AutoMechanic service settlement received a broader static pass: `JOB-005` records unchecked buyer debit and mechanic credit for repair/fuel acceptance, with repair/fuel effects, success logs and quest progress proceeding regardless; `buyFuel` also ignores customer debit before increasing mechanic fuel reserve. No runtime failure injection performed. See `MECHANIC_SERVICE_REVIEW.md`.
+
+
+Business admin deletion was added to the ownership lifecycle review: `BUG-002` records DB deletion before a null-unsafe owner lookup, which can leave runtime BizList/world state and owner BizIDs inconsistent for offline/government owners; `MONEY-047` records unchecked online owner refund before business removal. Static-only; admin/RAGE/DB failure tests remain. See `BUSINESS_OWNERSHIP_REVIEW.md`.
