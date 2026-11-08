@@ -671,3 +671,14 @@ Static source review only. These tests require a disposable MariaDB database and
 - [ ] Verify wallet success path and bank fallback success path each settle exactly once; force first debit failure and second success.
 - [ ] Replay/concurrently invoke confirmation and test shutdown/DB persistence boundaries; one fine intent must produce at most one debit and one split payout.
 - Статус: source guard внесён и повторно прочитан; C# build, RAGE/DB, replay/concurrency и restart tests не выполнялись.
+
+
+### MONEY-002 — linq2db transaction contract verification (before coordinator implementation)
+
+- [ ] On disposable MariaDB, open the actual `ServerBD` configured as `MySql.Data.MySqlClient`; record provider/version and verify InnoDB for receipt + character tables.
+- [ ] Use the checked-in linq2db 3.3.0 API (`BeginTransaction(IsolationLevel)`, then `CommitAsync/RollbackAsync`); do not rely on a newer `BeginTransactionAsync` API.
+- [ ] Inject failure after receipt insert and before cash update; assert rollback removes receipt and leaves balance unchanged.
+- [ ] Inject failure after conditional cash update and before commit; assert rollback leaves both absent.
+- [ ] Commit once, simulate lost acknowledgement, retry the same operation ID; assert one receipt and one cash delta.
+- [ ] Confirm every command uses the same `ServerBD` connection/transaction; a separate `MySqlConnector` connection must not participate in this transaction.
+- Статус: design/API reconnaissance only; no MariaDB instance or transaction test was run.
