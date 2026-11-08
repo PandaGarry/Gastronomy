@@ -460,3 +460,9 @@
 
 - `Core/Vehicle.cs`: RepairCar now returns bool for successful repair vs invalid/missing state/exception.
 - `Main.cs`: require successful $500 wallet debit before repair; attempt refund on repair failure and critically log failed compensation. Dialog-intent/location policy remains open. No C# build/RAGE tests.
+
+
+## 2026-11-08 — MONEY-002 persistence worker follow-up
+
+- `Database/Models/Money.cs`: prevent duplicate worker startup; use async task loop/nonblocking delay; reject invalid UUID and balances outside the current DB signed-INT range before enqueue.
+- Existing lock/retry/newer-value-wins logic retained. Static source checks only; no C# build, concurrency or MySQL fault-injection tests. Durable queue/restart recovery remains open.
