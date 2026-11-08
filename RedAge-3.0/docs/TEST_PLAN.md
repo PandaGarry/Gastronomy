@@ -467,3 +467,12 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - Reject nonpositive product price, total price overflow beyond Int32 and final fuel beyond tank.
 - Inject failures/replay/restart between stock, business bank, FuelLeft, City Hall money and vehicle fuel; these remain required for durable exactly-once settlement.
 - Static assertions passed for wide multiplication, bounds, normalized quantity, no liters-vs-currency clamp and quota rejection before takeProd. No C# build, RAGE staging or MySQL fault injection was run.
+
+## 2026-11-08 — VEH-006 / MONEY-013 government vehicle sale regression additions
+
+- Open a sale dialog as the current owner, transfer/change vehicle holder before confirmation, then confirm: holder mismatch must reject without payout or vehicle removal.
+- Submit confirmation with missing model price/zero computed price: reject before wallet or delete.
+- Force wallet credit false/exception: vehicle remains present; no money log, message or success side effect.
+- Retain required DB cases: successful payout followed by VehicleManager.Remove DB delete failure/delay, restart and replay; verify vehicle cannot be sold twice and wallet/vehicle row/cache/garage reconcile exactly once.
+- Test duplicate/concurrent confirmation, ticket added after offer, stale plate reuse and disconnect.
+- Static assertions passed for holder revalidation, positive-price guard and checked payout before removal. No C# build, RAGE staging or MySQL fault injection was run.
