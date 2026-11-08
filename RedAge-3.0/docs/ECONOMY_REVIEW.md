@@ -404,3 +404,22 @@ This is useful evidence that a transaction-backed coordinator is compatible with
 **Исправление (не внедрено):** introduce a stable source-server + source-account + source-character merge ID; persist a durable per-character migration journal/checkpoint and destination IDs; make each import step idempotent; use checked `long` valuation and explicit conversion/range policy before narrowing to DB INT; transactionally bind destination character/bank and merge receipt where possible; issue cashback only from a durable once-only settlement leg. Define compensation/reconciliation for external assets that cannot share one DB transaction.
 
 **Тесты:** values at INT boundaries and multiplication/addition overflow; fail after bank create, character insert, vehicle import, organization conversion, inventory import and before/after account slot save; replay same merge ID and restart; prove one destination character/bank/asset set and one cashback. Static review only; no migration DB test/build/RAGE run.
+
+
+## MONEY-057 — offline table-task cash award is atomic SQL increment but not idempotent or cache-coordinated
+
+**Уверенность: высокая по source path; повторный запуск и login race требуют runtime reproduction. Приоритет: высокий.**
+
+Файл: `Table/Tasks/Repository.cs`, offline awards loop (`TSGiveBonusOffline`).
+
+- Для `BattlePassRewardType.Money` код выполняет SQL-side increment `UPDATE characters SET money = money + award.Count WHERE uuid = ...`. В отличие от нескольких других offline writers, это не SELECT → absolute UPDATE и потому не теряет конкурентный SQL increment только из-за read-modify-write.
+- Но операция не проверяет affected rows и не записывает stable task/reward receipt. Повторный запуск того же offline awards loop может начислить cash второй раз; GameLog записывается после UPDATE, но log не является idempotency guard.
+- Не проверяется signed INT верхняя граница/NULL policy до increment; фактический overflow behavior зависит от MariaDB SQL mode и должен быть проверен на disposable instance.
+- Offline UUID list/task processing и DB update не синхронизированы с login publication gate. Если игрок вошёл до выполнения update, его in-memory CharacterData может быть уже загружен; следующий full save/wallet snapshot может затереть DB increment.
+- Cash update и прочие offline item rewards выполняются отдельными операциями без общего per-task settlement journal; exception посреди списка может оставить частично выданный набор наград, а безопасный retry не определён.
+
+**Риск:** duplicate offline cash award при replay; потеря increment через stale online cache/full save; частично выданный набор cash/items после исключения.
+
+**Исправление (не внедрено):** идентифицировать reward как `table-task:{season/task-cycle}:{uuid}:{awardId}`; в одной транзакции записывать unique receipt и conditional balance increment с явной NULL/range policy. Встроить login publication gate/общий coordinator. Для mixed item/cash awards использовать durable per-award journal и resume только незавершённых legs.
+
+**Тесты:** повтор/конкурентная обработка одного offline reward; player login between list construction and UPDATE; NULL, INT_MAX и overflow при разных SQL modes; affectedRows=0; failure посреди cash/item award list и restart; проверка exactly-once per reward ID. Static review only; source/build/DB/RAGE tests not run.
