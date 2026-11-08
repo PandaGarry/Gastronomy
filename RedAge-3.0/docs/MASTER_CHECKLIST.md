@@ -41,7 +41,7 @@
 ## Этап C — Критичные деньги, платежи и игровые активы
 
 - [ ] MONEY-008/009, PROG-001 — Sapper: серверная state machine, RNG, ход, cashout, exactly-once settlement.
-- [ ] STOCK-001 — faction/organization/vehicle stock and cargo transfers: exact Remove/AddNewItem/Wallet.Change result, atomicity, authorization, idempotency and restart recovery; include partial grants and all stock containers. See `FRACTION_STOCK_REVIEW.md` and `ISSUES.md`.\n- [ ] STOCK-002 — business retail stock and customer settlement: takeProd rollback, owner-bank credit, customer Wallet.Change, exact item/weapon grant, missing product rejection, dirty-save and exactly-once behavior. See BUSINESS_RETAIL_REVIEW.md.
+- [ ] STOCK-001 — faction/organization/vehicle stock and cargo transfers: exact Remove/AddNewItem/Wallet.Change result, atomicity, authorization, idempotency and restart recovery; include partial grants and all stock containers. See `FRACTION_STOCK_REVIEW.md` and `ISSUES.md`.\n- [ ] MONEY-039 — ATM business-account deposit: atomic player debit/business credit, result checking, stale BizID/index validation, retry/refund and replay protection. See BUSINESS_BANK_REVIEW.md.\n- [ ] STOCK-002 — business retail stock and customer settlement: takeProd rollback, owner-bank credit, customer Wallet.Change, exact item/weapon grant, missing product rejection, dirty-save and exactly-once behavior. See BUSINESS_RETAIL_REVIEW.md.
 - [ ] MONEY-030 — EventCoins: точное списание из разрешённого контейнера до начисления RB.
 - [ ] MONEY-031 — Fuel Control: server-side role/fraction authorization и input bounds.
 - [ ] MONEY-032 — Mayor treasury withdrawal: confirm bank credit before treasury debit; transactional/restart-safe settlement.
