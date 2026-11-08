@@ -480,3 +480,5 @@
 - **MONEY-002 schema check (2026-11-08):** retrieved the full checked-in SQL dump (MariaDB 10.10.2 header). `characters`, `money`, `accounts`, `refferals` and `lottery` are declared InnoDB; `characters.money` is nullable signed INT and `money.balance` non-null signed INT. This supports the design direction but is not proof of deployed schema. Disposable import + `SHOW CREATE TABLE` + actual environment verification still required. No DB was started or modified.
 
 - **Новый finding MONEY-055 (2026-11-08):** `Auction.Repository.ReturnMoney` не подтверждает online credit перед success effects; offline cash refund — SELECT/absolute UPDATE без receipt, coordinator и affected-row check, с login/cache race. Finding записан в economy review, issues, test plan и changelog. Source не менялся.
+
+- **Новый finding MONEY-056 (2026-11-08):** account merger sums cash/property valuations in signed INT without checked overflow and creates destination bank/character/assets before durable merge checkpoint/account-slot completion. Failure/replay may orphan or duplicate imported records and cashback. Added to economy review, issues, test plan and changelog; no source changes.
