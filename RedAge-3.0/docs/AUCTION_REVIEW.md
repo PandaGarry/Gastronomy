@@ -83,3 +83,11 @@ House auctions do not need a separate character house-ID list in the inspected `
 **Remediation (not implemented):** either disable AuctionType.Other at the server boundary until complete, or implement explicit item settlement for winner/no-bid/cancel paths. Reserve and move the exact owned item with a durable auction ID; atomically grant it to the winner or return it to the seller; support offline recipients, retry and exactly-once receipts. Validate the item ID belongs to the caller and reject unsupported enum values.
 
 **Regression:** direct add remote for Other with valid, foreign, nonexistent and stale item IDs; auction end with and without bids; winner/seller online and offline; DB failure at reserve/grant/return; restart before and after end; verify the item exists exactly once in the correct owner container and never remains stranded in auction storage.
+
+
+## Offline auction refund — signed INT boundary follow-up (MONEY-036)
+
+- `ReturnMoney` has an offline fallback when the previous bidder/seller is not online and no bank account is available in the cache. It reads `characters.money` and writes `character.Money + price` directly.
+- Patched this fallback to reject a missing DB balance, nonpositive refund, negative stored balance and any result above `Int32.MaxValue`; addition is widened to `long` and only then narrowed to `int` for the signed INT column.
+- This prevents a direct overflow/narrowing write but does not make the asynchronous refund durable or acknowledged. `ReturnMoney` still logs before confirming the credit and its online Bank/Wallet result handling remains incomplete. Keep MONEY-023/038 open.
+- Static only; test offline bidder, missing bank cache, null DB balance, exact max boundary, over-max refund, DB failure, reconnect/restart and duplicate payout.
