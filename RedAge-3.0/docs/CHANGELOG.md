@@ -515,3 +515,5 @@
 - Core/Admin.OffGiveMoney now awaits the character cash UPDATE and requires exactly one affected row before writing money/admin logs or showing success.
 - Failed/zero-row persistence is logged and reported to the administrator without success side effects.
 - This does not remove the read-modify-write race, coordinate with the online money worker, or provide durable idempotency/restart recovery. Static patch only; no C# build or DB test.
+
+- 2026-11-08: Повторно проверены `Wallet.Change`, `Character.Save.Repository.AddMoney`, referral cash reward и payday lottery payout. Зафиксированы lost-update/read-modify-write и online/offline cache handoff constraints; InnoDB для `characters` не подтверждён. Обновлён `ECONOMY_REVIEW.md`; source code/build/runtime tests не менялись/не запускались.
