@@ -116,3 +116,5 @@
 
 - [AIRDROP_REMOTE_REVIEW](AIRDROP_REMOTE_REVIEW.md) — AirDrop hack state, client-supplied lock progress and loot-open authorization (INV-013).
 - [MATWAR_REMOTE_REVIEW](MATWAR_REMOTE_REVIEW.md) — MatWar active-war/spatial authorization, client-supplied lock progress and stale loot cleanup (INV-014).
+
+- [FRACTION_STOCK_SESSION_REVIEW](FRACTION_STOCK_SESSION_REVIEW.md) — stale OnFracStock authorization and faction weapon-stock remote access (INV-015).
