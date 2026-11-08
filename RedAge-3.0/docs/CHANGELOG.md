@@ -289,6 +289,12 @@
 - Registered VEH-011 separately from MONEY-012/PROG-007; expanded TAXI_MILEAGE_REVIEW, issue register, checklist, regression plan, coverage, index, roadmap and handoff. No source code changed; no runtime/build/DB test.
 
 
+## 2026-11-08 — PERF-002 CEF production build defaults
+
+- CEF build scripts now explicitly set production mode through the already-installed `cross-env`; the dev script explicitly selects development.
+- All three Svelte loaders now enable hot reload only outside production. This prevents clean-shell build invocations from silently defaulting to development mode/source maps/HMR.
+- Added `CEF_BUILD_REVIEW.md` and PERF-002. No CEF build, bundle-size measurement or RAGE:MP smoke test has yet been run; CSS optimization and measured performance remain open.
+
 ## 2026-11-08 — MONEY-050 Driving school license settlement
 
 - `Core.DrivingSchool.startDrivingCourse` previously granted each active license before the debit and ignored `Wallet.Change` results. Case 1 advanced quest state before payment; cases 3–5 credited the faction balance after an unchecked debit.
