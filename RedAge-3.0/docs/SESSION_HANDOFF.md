@@ -11,7 +11,7 @@
 
 - Работать только в `redage/audit-continuation`; `main` напрямую не менять.
 - Рабочая ветка основана на `arena/fab5bf55-gastronomy`, PR #4 нацелен на `main`.
-- Сравнение refs подтвердило расхождение истории: в `main` есть отдельный commit, отсутствующий в рабочей ветке. Не менять PR base и не выполнять merge до отдельного ancestry/diff reconciliation.
+- Сравнение refs: `diverged`, рабочая ветка ahead by 838 / behind by 1 относительно `main`, merge base `aa07885aba2cc5a83f6cdcf35ff336b63c0fbc7a`; PR API сообщает `mergeable=false`. Не менять PR base и не выполнять merge до отдельного ancestry/diff reconciliation.
 - PR #4 остаётся Draft; не объявлять его готовым к merge.
 
 ## 2. Последние source changes
