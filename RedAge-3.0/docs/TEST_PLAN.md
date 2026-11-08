@@ -365,3 +365,13 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - [ ] Run concurrent bank transfer/withdrawal while tax runs; assert no lost update and no negative balance except the explicitly permitted tax intermediate state.
 - [ ] Inject DB failure/reconnect during save; assert latest revision remains dirty and eventually persists.
 - [ ] Audit remaining direct mutable bank data writes; no build/RAGE/DB tests have run yet.
+
+
+## Property purchase settlement ordering — MONEY-003 / MONEY-048
+
+- [ ] Inject `Wallet.Change=false` for house purchase; ownership, lock/interior side effects, success message, logs and quests must remain unchanged; property bank balance must be restored.
+- [ ] Inject `Wallet.Change=false` for business purchase; owner, products/orders, character BizIDs, success events/logs and save must remain unchanged; property bank balance must be restored.
+- [ ] Inject failure in bank initialization before debit; no player debit or ownership side effect.
+- [ ] Inject failure in compensation after rejected debit; ensure high-severity reconciliation log/alert and no false success.
+- [ ] Verify successful purchase exact player debit, property bank initial balance, owner and quest/log side effects.
+- [ ] Review auction award order similarly; DB transaction and restart recovery remain required.
