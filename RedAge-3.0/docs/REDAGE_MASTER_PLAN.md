@@ -444,3 +444,8 @@ Static review found unchecked second legs in regular ATM cash deposit/withdrawal
 ### MONEY-036 — wallet range contract follow-up (2026-11-08)
 
 The persisted cash column and generated model are signed INT while `CharacterData.Money` is long. `Wallet.Change` now uses long arithmetic and rejects values outside `0..Int32.MaxValue`; full `Character.SaveSql` validates the range before any save side effects or narrowing conversion. `Money.AddMoneyUpdate` already rejects invalid snapshots. This is a narrow compatibility patch, not a BIGINT migration. Keep MONEY-036 open for compiler, boundary, UI and DB round-trip tests. Also investigate stale absolute Money worker batches racing full character saves; that ordering issue belongs to MONEY-002 and is not solved by the range guard.
+
+
+## 2026-11-08 — MONEY-002 detached batch hand-off
+
+Added snapshot-time `ActiveMoneyWrites` markers under `QueueLock`. This closes the specific race where a small wallet mutation after worker detach but before SQL start advanced the version, was not enqueued, and caused the detached snapshot to be skipped without a replacement. The marker is now cleared by normal worker completion or failed-batch requeue. The existing per-UUID semaphore/revision coordinator with `ExecuteCharacterSave` remains partial. Direct DB cash writers outside the coordinator, process-crash loss, retry policy, C# build and MySQL concurrency/fault tests remain open.
