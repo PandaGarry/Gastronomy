@@ -302,6 +302,34 @@ namespace NeptuneEvo.MoneySystem
                 }
             }
         }
+        public static bool SetBalance(int bankId, long balance, bool allowNegative = false)
+        {
+            try
+            {
+                lock (AccountSync)
+                {
+                    if (!Accounts.TryGetValue(bankId, out var bank))
+                        return false;
+
+                    if (balance < 0 && (!allowNegative || bank.Type == 1))
+                        return false;
+
+                    if (balance < int.MinValue || balance > int.MaxValue)
+                        return false;
+
+                    bank.Balance = balance;
+                    bank.Revision++;
+                    bank.IsSave = true;
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Write($"SetBalance Exception: {e}");
+                return false;
+            }
+        }
+
         public static List<int> GetDirtyAccountIds()
         {
             lock (AccountSync)
