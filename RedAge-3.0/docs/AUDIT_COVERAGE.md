@@ -118,3 +118,10 @@ Static trace of ItemsUse → LoadOtherItemsData → GetLocationName/GetItemData/
 - Reviewed client colshape trigger in `src_client/vehicle/race_system.js` and server handler `Events/StreetRace.StreetRaceFinished`.
 - Added server-side active-race and 10m finish-position checks; tracked as MONEY-052. Added finite-coordinate, no-post-start-change and >50m minimum waypoint checks in `StreetRacePosition`.
 - Static source review only. Waypoint input validation, payout durability, abort payout, replay/concurrency and RAGE staging remain open.
+
+
+### Money persistence queue — 2026-11-08
+
+- Re-traced `Wallet.Change` → `AddMoneyUpdate` → `Money.Worker`; found the in-memory-first balance mutation and unsynchronized queue snapshot/clear with lost failed batches.
+- Patched MONEY-002 queue synchronization and in-process retry, preserving newer absolute values when an older batch fails.
+- Durable restart recovery remains absent; static patch only, no build/concurrency/DB fault-injection. See `ECONOMY_REVIEW.md`.
