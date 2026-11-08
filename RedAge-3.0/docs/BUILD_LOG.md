@@ -93,3 +93,10 @@
 - Re-fetched `FractionCommands.cs` from `redage/audit-continuation` and ran textual assertions for: (1) pending ticket assignment protected by `lock(targetSessionData)`; (2) second pending ticket rejected; (3) `ticketConfirm` detaches the intent under the same lock before settlement; (4) both wallet and bank debit failure branch returns before City Hall split payout.
 - All four assertions passed. Documentation assertions also passed for separate MONEY-033/MONEY-060 issue entries, current INDEX→DOCS_STATUS link, updated handoff, and explicit pending test status.
 - This is static text/source inspection only. No C# compilation, MariaDB transaction/fault-injection, RAGE staging, concurrency or restart test was run. No runtime exploit/reproduction claim is made.
+
+
+### 2026-11-08 — documentation consistency/link check
+
+- Re-read the current branch documentation index, status guide and roadmap; checked relative Markdown links in `INDEX.md`, `DOCS_STATUS.md` and `ROADMAP.md` against the current `docs/` directory listing (86 files).
+- Result: 0 missing relative links in the checked documents. Reconciled ticket intent replay (MONEY-033) and failed-debit payout (MONEY-060) into separate issue/review/test entries; shortened `SESSION_HANDOFF.md` and consolidated repeated money-persistence status in `ROADMAP.md`.
+- Documentation/static-source checks only; no C# build, DB or RAGE runtime test was performed.
