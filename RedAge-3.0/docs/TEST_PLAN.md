@@ -637,3 +637,11 @@ Static source review only. These tests require a disposable MariaDB database and
 - [ ] Повторить один source merge ID конкурентно и после restart: не должно появляться дублирующих character/bank/vehicle/asset rows или cashback.
 - [ ] Проверить recovery/reconciliation orphaned destination rows и сохранение slot mapping; убедиться, что ошибка не маскируется как успешный merge.
 - Статус: статический review; source/tests не менялись/не запускались.
+
+### MONEY-057 — offline table-task award replay and cache handoff
+
+- [ ] Повторно/конкурентно обработать один и тот же offline task award: один receipt и одна cash delta.
+- [ ] Войти UUID после построения offline list, но до SQL increment; затем выполнить full save/Money worker и проверить, что award не теряется.
+- [ ] Проверить NULL, `Int32.MaxValue`, overflow и MariaDB SQL modes (strict/non-strict); проверить affectedRows=0 и DB failure.
+- [ ] Инжектировать сбой между cash award и item awards, затем restart/retry; восстановить только отсутствующие legs без дублирования.
+- Статус: статический review; tests не запускались, source patch отсутствует.
