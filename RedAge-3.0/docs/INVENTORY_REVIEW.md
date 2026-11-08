@@ -80,3 +80,21 @@ Remote `server.note.create` принимает `type`, `ItemId`, имя и те�
 **Remediation (not implemented):** issue a short-lived vehicle-inventory intent bound to player, exact vehicle entity/plate, access class, holder/key or faction/org membership and rank, position/dimension, trunk state and expiry. Validate/consume this intent on every move/stack/use/drop endpoint; close/revoke on movement, dimension change, door close, vehicle deletion/replacement, membership/key revocation, timeout and disconnect. Keep the policy for physically open trunks explicit, but never let a stale `InventoryOtherLocationName` alone authorize a mutation.
 
 **Regression:** open own, key-shared, foreign, faction, organization and organization-garage trunks; test member/rank changes and open-trunk public policy. After opening, walk beyond 5m, change dimension, close trunk, despawn/replace vehicle, revoke key/leave faction or organization, and replay direct move/stack/use/drop events using `other`; all stale contexts must be rejected without cache/DB changes. Verify legitimate nearby authorized access and normal close/reopen. Requires disposable RAGE/MySQL staging.
+
+
+## Container entry-point map — static continuation (2026-11-08)
+
+The LoadOtherItemsData call-site search found these server container families. This is an entry-point inventory, not proof that every policy has been fully tested:
+
+- Vehicle: Core/Selecting.cs vehicleSelected branch 3; one-time access/trunk/range checks are not rebound to each item operation (INV-012); reservation cleanup gap is VEH-012.
+- Furniture safes: Core/Selecting.cs object selection passes a furniture_<houseId> location after the object/house interaction flow. Generic item remotes do not revalidate that same house/object context on every mutation; retain under INV-003 pending complete ACL/ownership trace.
+- Fraction stocks: Fractions/Fbi.cs, Sheriff.cs, Army.cs, Cityhall.cs, Police.cs and Fractions/Manager.cs. Entry flows check faction, duty/open-stock and/or rank; openWeaponStock rechecks some of these, but generic move/stack/use handlers do not repeat active fraction/stock authorization.
+- Organization stock: Organizations/Manager.cs checks organization status, stock-open state and InsideOrganizationID at open; generic item mutations do not repeat membership/rank/stock state.
+- Personal warehouse: Chars/Stock.cs opens warehouse_<character UUID> through the quest Perform flow. The storage key is player-specific; verify quest-intent and postal-stock location/session on staging rather than assuming NPC UI is a server authorization boundary.
+- Tents: Inventory/Tent/Repository.cs opens own or visitor tent. Visitor read-only server guards are tracked in INV-002; stale own/visitor context remains in INV-003 scope.
+- AirDrop: Events/AirDrop/Repository.cs has separate hack, lock-progress and loot-open remotes; missing exact drop/dimension/proximity binding is INV-013.
+- MatWar: Fractions/Manager.cs has separate start-hack, lock-progress and loot-open remotes; missing active-war/spatial/session binding and stale event inventory lifecycle are INV-014.
+- HeliCrash: Events/HeliCrash/Repository.cs opens through the HeliCrash colshape interaction; verify exact crash object/range/dimension and session freshness for every item operation under INV-003.
+- Weapon components / key ring: Chars/Repository.cs also uses LoadOtherItemsData for weapon_<itemSqlId> and CarKey_<itemSqlId>; these are item-owned subcontainers and require source-item ownership/existence checks on every mutation.
+
+Across these families, ItemsMove, ItemsMoveStack and ItemsUse remain shared mutation endpoints. Entry-time ACL checks are not a substitute for server-side validation of the current container intent, owner/object identity, player location/dimension, role/rank and allowed item/slot pairs. Keep INV-003 as the umbrella policy gap and concrete INV-012..014 findings as separate entry-point cases.
