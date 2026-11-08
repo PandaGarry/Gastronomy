@@ -380,3 +380,8 @@ Static review found unchecked second legs in regular ATM cash deposit/withdrawal
 - Applied a narrow `Chars/Repository.cs` patch: tent purchases reject negative quantity, normalize the existing zero-to-one convention before stock/slot validation, require positive unit price, calculate total in `long` and reject totals outside the `Wallet.Change` Int32 contract; seller null/character state is checked before use.
 - This closes the local negative-quantity/unchecked-multiplication input window only. Buyer debit and seller credit results remain unchecked; item grant/BattlePass/success are not durably coordinated. Player trade still moves items before two unchecked cash legs. Keep MONEY-048 open for durable idempotent settlement and full tests.
 - Static assertions only; no C# build, RAGE staging or MySQL fault injection.
+
+## 2026-11-08 — MONEY-037 bounded house-sale correction
+
+- `HouseManager.acceptHouseSell` now validates the seller reference and active session/character before proceeding, rejects nonpositive pending price, and obtains `sellerCharacterData` from the seller rather than the buyer. This corrects money-log attribution and avoids null seller dereferences in the pre-settlement path.
+- Buyer debit and seller credit results remain unchecked and house ownership still transfers regardless; no unsafe local compensation was added. MONEY-037 remains high/open pending durable idempotent settlement and build/RAGE/MySQL validation.
