@@ -35,7 +35,7 @@
 
 - MONEY-002: есть частичная in-process coordination между `Wallet.Change`, detached money worker и full `Character.SaveSql`; revision/lock/retry hand-off guards внесены.
 - Очередь остаётся process-memory и не переживает crash до flush.
-- Direct SQL cash writers ещё обходят coordinator: offline AddMoney/refund/referral/business repossession/admin/merger и другие domain-specific paths требуют повторной inventory и миграции.
+- Повторная inventory на активном commit подтвердила: Character.Save.Repository.AddMoney, auction offline refund, referral reward, business repossession, admin offline grant, offline table-task SQL increment и поздний absolute UPDATE в account merger обходят единый coordinator. Character.Load.Repository также не держит общий UUID gate от DB read до SetCharacterData publication. Детали и disposition — в ECONOMY_REVIEW.md.
 - Durable operation receipt/outbox, единый per-UUID transaction owner, login/cache publication gate, bounded retry/backoff/dead-letter и удаление legacy absolute writers ещё не реализованы.
 - MONEY-003: банковский transfer синхронизирован в памяти, но две DB записи не являются одной durable transaction; bank ledger — отдельная область от character cash.
 - DB API reconnaissance: `ServerBD` — linq2db `DataConnection` с `MySql.Data.MySqlClient`; linq2db 3.3.0 имеет sync `BeginTransaction(IsolationLevel)` и async `CommitAsync/RollbackAsync`. Legacy `MySQL` helper использует отдельный `MySqlConnector` path и не должен смешиваться с coordinator transaction.
@@ -55,11 +55,11 @@
 
 ## 5. Следующие шаги
 
-1. Повторно инвентаризировать все writers `characters.money` и все точки login/cache publication; составить полный список call sites с семантикой online/offline.
+1. На основе обновлённой inventory определить stable operation IDs и typed outcomes для каждого direct writer; не заменять SELECT/absolute UPDATE на голый SQL increment без login gate и receipt.
 2. Runtime-проверить фактический `ServerBD` provider и InnoDB DDL в disposable MariaDB; API reconnaissance уже выполнен: linq2db 3.3.0 использует `BeginTransaction(IsolationLevel)` + `CommitAsync/RollbackAsync`.
 3. Утвердить durable receipt schema, operation ID policy, conditional bounded delta, transaction ownership и typed outcomes.
 4. Реализовать coordinator вместе с login/cache gate; только затем по одному мигрировать direct writers и success side effects.
-5. Для каждого шага синхронно обновлять ISSUE, review, TEST_PLAN, checklist, master plan, roadmap, handoff и changelog.
+5. После реализации coordinator по одному мигрировать direct writers, затем удалить legacy cash write из full SaveSql/worker; синхронно обновлять ISSUE, review, TEST_PLAN, checklist, master plan, roadmap, handoff и changelog.
 6. Запустить build, DB failure/commit-ack tests, concurrency/replay/restart tests и RAGE staging, когда доступно соответствующее окружение.
 
 **Ограничение:** статическая проверка не является сборкой или runtime validation. Ни один тест не отмечать пройденным без фактического запуска и записи результата в BUILD_LOG/TEST_PLAN.
