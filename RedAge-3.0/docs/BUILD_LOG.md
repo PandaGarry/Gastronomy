@@ -79,3 +79,10 @@
 - Static source inspection confirms offline `Character.Save.Repository.AddMoney`, `Core.Admin.OffGiveMoney` and `Main.CheckMyPromoCode` referral reward now widen arithmetic to `long`, reject invalid/above-`Int32.MaxValue` totals and narrow only after validation.
 - These three writers still use independent DB read/modify/write paths and do not share the Money worker/full-save coordinator; no concurrency safety claim is made. Main business-tax repossession and Merger writers remain open.
 - No C# build or MySQL boundary/concurrency test performed.
+
+
+### 2026-11-08 — MONEY-002 failed retry hand-off static assertions
+
+- Re-fetched the working-branch Money.cs and verified that the worker sets writeCompleted only after successful UpdateAsync; ActiveMoneyWrites is removed only for successful or superseded snapshots after releasing the per-UUID semaphore; SQL failure leaves the marker for RequeueMoney.
+- Verified issue register, economy review, regression plan, master checklist, master plan, roadmap, changelog and session handoff reflect the new behavior and remaining direct SQL writers.
+- Assertions are static source checks only. No C# build, deterministic concurrency test, MySQL fault injection, process restart test or RAGE staging test was run. dotnet, msbuild, csc, mcs, mysql and mariadb remain unavailable in this environment.
