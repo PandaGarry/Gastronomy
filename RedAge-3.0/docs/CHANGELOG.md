@@ -599,3 +599,10 @@
 - Defined a documentation-only candidate for a globally unique character cash operation receipt and same-transaction bounded cash delta.
 - Specified duplicate payload conflict, uncertain commit acknowledgement retry with the same operation ID, typed outcomes and login/cache publication gate.
 - No executable migration or source implementation was added. Migration delivery/rollback, pinned-provider SQL semantics and disposable MariaDB verification remain prerequisites.
+
+
+## 2026-11-08 — MONEY-002 stable operation identity map
+
+- Mapped candidate stable IDs for lottery, auction refunds, referral reward, business repossession, admin offline grants, offline table-task awards, account merger and generic AddMoney/Wallet callers.
+- Recorded missing source event identities (notably mutable auction LastBetUUID/LastPrice and non-persisted lottery draw result) as prerequisites to exactly-once retries.
+- Design-only; no source patch, DDL or runtime test.
