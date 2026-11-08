@@ -415,3 +415,8 @@
 
 - `HouseManager.cs`: validate seller reference/session/character and positive pending price before settlement; correct `sellerCharacterData` to read from seller, fixing buyer UUID duplication in money logs.
 - Static assertions passed. Buyer debit/seller credit results remain unchecked and ownership transfer is still non-atomic. No C# build, RAGE or MySQL tests.
+
+## 2026-11-08 — MONEY-035 faction/organization cash stock guards
+
+- `Fractions/Manager.cs` and `Organizations/Manager.cs`: check `Wallet.Change` before cash stock mutation for both `put_stock` and `take_stock`; success logs follow the guard.
+- Static assertions passed for all four cash paths. Durable transaction/receipt, replay/concurrency/restart behavior and STOCK-001 item paths remain open. No C# build, RAGE or MySQL tests.
