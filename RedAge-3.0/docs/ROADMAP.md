@@ -43,7 +43,7 @@
 - [ ] Добавить smoke tests для входа, создания персонажа, сохранения/загрузки, инвентаря и базовых команд.
 
 - [ ] MONEY-032: исправить mayor treasury withdrawal — проверять результат bank credit до списания казначейства; транзакционная/идемпотентная модель и failure tests.
-- [ ] MONEY-033: исправить ticket settlement — consume-once ticket intent, подтверждённое списание до выплат, durable idempotency и replay/concurrency/failure tests.
+- [ ] MONEY-033: consume-once ticket intent source guard внесён; durable ticket receipt, atomic split payout, replay/concurrency/disconnect/restart tests остаются открытыми. См. MAIN_REMOTE_REVIEW.md.
 
 - [ ] MONEY-034: gang drug purchase integer overflow — bounded quantity, checked/long arithmetic, exact grant-before-debit and overflow regression tests.
 
@@ -189,3 +189,10 @@
 - Fixed the SQL-failure-to-retry window: detached money writes retain their in-flight marker after a failed UPDATE until the worker requeues the current version. This prevents a small wallet mutation from slipping between marker removal and retry registration.
 - Direct SQL cash writers remain outside the shared per-character protocol and need operation-by-operation migration after online/offline and pending-snapshot semantics are established. No blind wrapping.
 - Runtime concurrency, DB fault injection, build and durable restart tests remain pending.
+
+
+## 2026-11-08 — ticket settlement and docs sync
+
+- MONEY-033: session ticket intent is now consumed under a shared lock before settlement; durable receipt and payout atomicity remain open.
+- MONEY-060: both-debit-failed early return is patched; staging/failure tests remain pending.
+- Documentation status rules and ownership are centralized in `DOCS_STATUS.md`; do not treat historical notes as current status.
