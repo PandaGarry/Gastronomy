@@ -504,3 +504,9 @@
 - Fixed a race in `Database/Models/Money.MoneyUpdate`: on SQL failure, a detached row now retains its `ActiveMoneyWrites` marker until `Worker` registers the failed batch for retry. Successful and superseded rows still release the marker after the UUID semaphore is released.
 - This prevents a small wallet mutation in the failure-to-requeue interval from being omitted from the queue. Added deterministic interleaving and multi-row failure test cases.
 - Static source review only; no compiler, DB fault injection or concurrency stress test has run. Direct SQL money writers remain open.
+
+## 2026-11-08 — MONEY-002 offline admin grant acknowledgement
+
+- Core/Admin.OffGiveMoney now awaits the character cash UPDATE and requires exactly one affected row before writing money/admin logs or showing success.
+- Failed/zero-row persistence is logged and reported to the administrator without success side effects.
+- This does not remove the read-modify-write race, coordinate with the online money worker, or provide durable idempotency/restart recovery. Static patch only; no C# build or DB test.
