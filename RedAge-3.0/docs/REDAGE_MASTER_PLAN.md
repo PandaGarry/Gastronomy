@@ -401,3 +401,8 @@ Static review found unchecked second legs in regular ATM cash deposit/withdrawal
 
 - `Core/Businesses.cs`: `takeProd` now rejects nonpositive quantity and returns false when the requested product name is absent, rather than reporting a successful purchase with no stock match.
 - Remaining: stock is still decremented before owner-bank credit; no rollback on bank failure; callers ignore customer debit and item/weapon grant results; business dirty-save remains open under MONEY-022. This is a narrow guard, not a settlement fix. Static-only; no build/RAGE/MySQL tests.
+
+## 2026-11-08 — MONEY-042 bounded vehicle sale settlement guard
+
+- `Main.cs` BUY_CAR now validates seller reference and positive price, checks seller credit before changing vehicle holder, and attempts buyer refund if seller credit rejects; failed refund is critically logged.
+- This is interim in-memory compensation only. Durable sale receipt, buyer debit/credit/holder transaction, asynchronous SaveHolder recovery and restart reconciliation remain open. Static-only; no build/RAGE/MySQL tests.
