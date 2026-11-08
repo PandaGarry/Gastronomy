@@ -482,3 +482,10 @@ Implementation sequence: schema/deployed-engine verification → receipt DDL →
 - [ ] Импортировать snapshot в disposable MariaDB и подтвердить engine/DDL через серверные metadata.
 - [ ] Отдельно подтвердить фактическую schema/engine deployment environment; не выводить это из репозитория.
 - [ ] После этого зафиксировать coordinator schema/API, unique operation ID, cache/login handoff и migration/rollback sequence; затем писать implementation и fault-injection tests.
+
+
+### Bank ledger follow-up — MONEY-058/059 (2026-11-08)
+
+- [ ] Treat bank transfers as a separate durable ledger operation: stable transfer ID, unique receipt, conditional source debit + destination credit in one explicitly owned InnoDB transaction, commit-before-success and cache publication after commit.
+- [ ] Enforce the checked-in signed `INT` balance range before `Bank.Change`/`Bank.Transfer` mutate cache, or approve a coordinated BIGINT schema/ORM/consumer migration. Do not let `Bank.Save` become the first range validator after a successful gameplay mutation.
+- [ ] Add failure injection between both transfer legs, duplicate/retry, concurrent conservation, INT boundary and restart tests. `MONEY-058/059` remain open; no implementation or runtime tests in this pass.
