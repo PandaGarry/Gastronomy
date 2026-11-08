@@ -131,3 +131,5 @@
 - [ ] INV-016 — revoke Organization inventory intent on RemovePlayer/interior exit; bind every mutation to current organization membership, stock-open state and dimension; test stale remotes and concurrent exit. See ORGANIZATION_STOCK_SESSION_REVIEW.md.
 
 - [ ] INV-017 — revoke furniture safe context on house exit/object removal/ACL change; bind every item operation to exact house/object/access mode and current range/dimension. See FURNITURE_SAFE_SESSION_REVIEW.md.
+
+- [ ] Complete remaining container traces without premature issue registration: warehouse location/quest policy; HeliCrash box/key-clamp/range lifecycle; weapon and CarKey parent-item ownership binding. Record confirmed behavior and staging tests in INVENTORY_REVIEW.md.
