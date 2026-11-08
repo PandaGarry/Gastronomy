@@ -448,3 +448,12 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - Force buyer debit false and seller credit false/exception; current source still mutates BizIDs/owner before these unchecked wallet calls, so these remain blocking regression cases for the durable settlement redesign.
 - Inject failures in buyer BizIDs save, seller BizIDs save and business owner persistence; test duplicate/concurrent confirmation, offer replacement, seller/buyer disconnect and restart after each write.
 - Static assertions passed for offer/seller/price/business existence guards. No C# build, RAGE staging or MySQL fault injection was run.
+
+## 2026-11-08 — MONEY-043 government business purchase regression additions
+
+- Force `Bank.SetBalance` failure: no buyer debit, owner/BizIDs/stock/order mutation or success.
+- Force buyer `Wallet.Change` false after bank initialization: previous business bank balance must be restored; force compensation failure and verify critical log/reconciliation.
+- Verify ownership/stock/order/BizIDs mutations occur only after successful buyer debit.
+- Inject DB failure/crash after bank initialization, debit, owner mutation and BizIDs save; restart must reconcile one durable purchase receipt exactly once.
+- Test duplicate/concurrent purchase, stale government ownership, balance boundary and shutdown rejection.
+- Current branch static source assertions pass for checked bank initialization, checked buyer debit, compensation attempt and ownership effects after debit. No C# build, RAGE staging or MySQL fault injection was run.
