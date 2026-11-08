@@ -440,3 +440,8 @@
 
 - `Core/Businesses.cs`: validate pending offer, seller reference/character/session, positive price and current business ID before transfer logic.
 - Core settlement remains unsafe: owner/BizIDs mutate before unchecked buyer debit and seller credit. Durable transaction/receipt required. Static assertions only; no build/RAGE/MySQL tests.
+
+## 2026-11-08 — MONEY-043 current-branch audit correction
+
+- Revalidated `buyBusinessCommand`: checked bank initialization and buyer debit are already present; bank balance compensation is attempted on debit rejection; ownership effects follow successful debit.
+- Updated stale MONEY-043 documentation. Durable cross-entity receipt and restart recovery remain open. No C# build, RAGE or MySQL tests.
