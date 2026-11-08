@@ -166,33 +166,28 @@
 - [ ] MONEY-019 — house/business tax now uses synchronized bank adjustment and delays associated tax side effects until debit succeeds; validate DB/restart and remaining repossession owner persistence. See PROPERTY_TAX_REVIEW.md.
 
 
-## 2026-11-08 — money persistence follow-up
+## Актуальный статус денежной системы — 2026-11-08
 
-- `MONEY-036`: partial source patch now enforces the existing signed `INT` wallet range with checked `long` arithmetic in `Wallet.Change`, validates full character saves before narrowing, and protects the offline auction refund fallback from overflow. Boundary/DB/UI tests remain pending; no BIGINT migration was made.
-- `MONEY-002`: versioned in-process ordering now coordinates Wallet.Change, detached worker batches and full Character.SaveSql; stale snapshots are skipped and small changes during in-flight writes coalesce. Remaining: direct SQL cash writers, durable outbox/restart recovery, retry policy and runtime validation.
+- **MONEY-002 — character cash:** partial in-process coordination now orders `Wallet.Change`, detached worker snapshots and full `Character.SaveSql`; failed-SQL retry hand-off is guarded. Still not durable: queue is memory-only, direct SQL writers bypass it, and login/cache publication is not covered by one DB transaction/UUID gate.
+- **MONEY-003 — bank transfer:** in-memory two-account mutation, ATM consume-once and revision-aware save are partially hardened. Two account rows are still persisted separately; durable transfer receipt/transaction and crash recovery remain open.
+- **MONEY-033 — ticket intent:** session consume-once guard is patched. Durable ticket receipt and atomic split payout remain open.
+- **MONEY-060 — failed fine debit:** handler now exits when both wallet and bank debit reject; no split payout/success effects follow. Durable payout legs and runtime validation remain open.
+- **MONEY-036 — balance width:** character cash remains capped to the checked-in signed INT contract; no BIGINT migration was made. Boundary/round-trip tests remain pending.
+- **DB transaction API:** checked-in stack is linq2db 3.3.0 + generated `ServerBD` DataConnection using `MySql.Data.MySqlClient`; use its verified `BeginTransaction(IsolationLevel)` and async commit/rollback API. The legacy `MySqlConnector` helper is a separate connection path.
 
+### Следующий обязательный этап
 
-## 2026-11-08 — MONEY-002 persistence ordering
+1. Complete the direct `characters.money` writer and login/cache-publication inventory.
+2. Verify checked-in DDL and actual provider/engine on a disposable MariaDB instance.
+3. Implement durable receipt + conditional bounded cash delta in one transaction with stable operation IDs and typed duplicate/uncertain outcomes.
+4. Coordinate login publication and remove legacy absolute worker/full-save writes before migrating callers.
+5. Migrate direct writers one domain at a time; test DB failure, lost commit acknowledgement, duplicate/replay, concurrency, reconnect and restart.
+6. Run C# build and RAGE staging tests when the required toolchain/runtime is available.
 
-- Patched the detach→SQL hand-off gap by marking detached UUIDs active at queue snapshot time. Small wallet mutations in that interval now enqueue a newer revision rather than being skipped with no replacement.
-- Per-UUID semaphore/revision coordination between Money worker and full character save remains partial. Direct SQL cash writers outside the coordinator and volatile queue durability remain next; see `ISSUES.md`, `ECONOMY_REVIEW.md` and `TEST_PLAN.md`.
+No money finding is closed by these interim guards. Detailed history belongs in `CHANGELOG.md`; current finding status belongs in `ISSUES.md`; test evidence belongs in `TEST_PLAN.md` and `BUILD_LOG.md`.
 
+## Documentation synchronization — 2026-11-08
 
-## 2026-11-08 — MONEY-002 persistence ordering follow-up
-
-- Versioned in-process coordination now covers Wallet.Change, detached money worker batches and full Character.SaveSql; stale worker snapshots are skipped and small changes during pending/in-flight writes are coalesced.
-- Direct cash SQL writers outside the coordinator remain the next migration target. Durable outbox/restart recovery, retry policy, compiler, DB concurrency and RAGE tests remain open.
-
-
-## 2026-11-08 — MONEY-002 retry hand-off refinement
-
-- Fixed the SQL-failure-to-retry window: detached money writes retain their in-flight marker after a failed UPDATE until the worker requeues the current version. This prevents a small wallet mutation from slipping between marker removal and retry registration.
-- Direct SQL cash writers remain outside the shared per-character protocol and need operation-by-operation migration after online/offline and pending-snapshot semantics are established. No blind wrapping.
-- Runtime concurrency, DB fault injection, build and durable restart tests remain pending.
-
-
-## 2026-11-08 — ticket settlement and docs sync
-
-- MONEY-033: session ticket intent is now consumed under a shared lock before settlement; durable receipt and payout atomicity remain open.
-- MONEY-060: both-debit-failed early return is patched; staging/failure tests remain pending.
-- Documentation status rules and ownership are centralized in `DOCS_STATUS.md`; do not treat historical notes as current status.
+- `DOCS_STATUS.md` defines document ownership, status vocabulary and the required same-task update cycle.
+- `SESSION_HANDOFF.md` is now a concise current checkpoint, not a second historical changelog.
+- `MASTER_CHECKLIST.md` consolidates repeated MONEY-002/MONEY-003 validation items.
