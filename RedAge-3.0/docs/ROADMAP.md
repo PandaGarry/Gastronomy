@@ -118,4 +118,12 @@
 - [ ] MONEY-037: player-to-player house sale settlement — checked buyer debit/seller credit, atomic ownership handoff, offer idempotency and correct audit identities; see `HOUSE_SALE_REVIEW.md`.
 - [ ] MONEY-038: auction bid-fee overflow — positive/max bid validation, checked `long` fee arithmetic, debit-only invariant and boundary/failure regression; see `AUCTION_REVIEW.md`.
 - [ ] INV-011: Other-item auction lifecycle — either disable unsupported listing type or implement durable winner grant/no-bid return with offline/restart recovery; see `AUCTION_REVIEW.md`.
-\n- [ ] MONEY-043: make government business purchase debit and ownership/stock/order reset one durable idempotent operation; reject ownership commit on failed debit.\n- [ ] MONEY-044: make player-to-player business transfer settle buyer debit, seller credit, Owner and both BizIDs atomically/idempotently; support compensation/reconciliation and offline/restart recovery. See `BUSINESS_OWNERSHIP_REVIEW.md`.\n\n- [ ] MONEY-045: enforce government fleet fuel budget against checked monetary cost after quantity normalization; reject before any stock/funds/fuel mutation and reconcile fraction, City Hall and business ledgers. See BUSINESS_FUEL_REVIEW.md.\n\n- [ ] VEH-009: require a short-lived server-side refuelling intent bound to a nearby Type==1 station and vehicle; revalidate and consume on every petrol remote. See BUSINESS_FUEL_REVIEW.md.\n\n- [ ] JOB-005: make mechanic repair/fuel acceptance and mechanic fuel-reserve purchases exactly-once; confirm both wallet legs before repair/fuel mutation and add stale-offer/replay/restart tests. See MECHANIC_SERVICE_REVIEW.md.\n
+
+- [ ] MONEY-043: make government business purchase debit and ownership/stock/order reset one durable idempotent operation; reject ownership commit on failed debit.
+- [ ] MONEY-044: make player-to-player business transfer settle buyer debit, seller credit, Owner and both BizIDs atomically/idempotently; support compensation/reconciliation and offline/restart recovery. See `BUSINESS_OWNERSHIP_REVIEW.md`.
+
+- [ ] MONEY-045: enforce government fleet fuel budget against checked monetary cost after quantity normalization; reject before any stock/funds/fuel mutation and reconcile fraction, City Hall and business ledgers. See BUSINESS_FUEL_REVIEW.md.
+
+- [ ] VEH-009: require a short-lived server-side refuelling intent bound to a nearby Type==1 station and vehicle; revalidate and consume on every petrol remote. See BUSINESS_FUEL_REVIEW.md.
+
+- [ ] JOB-005: make mechanic repair/fuel acceptance and mechanic fuel-reserve purchases exactly-once; confirm both wallet legs before repair/fuel mutation and add stale-offer/replay/restart tests. See MECHANIC_SERVICE_REVIEW.md.
