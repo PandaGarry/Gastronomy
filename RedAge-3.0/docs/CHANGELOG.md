@@ -389,3 +389,5 @@
 - Static source checks only; no build, DB or RAGE runtime tests have run.
 
 - Follow-up: synchronized GetBalance, holder lookup, account cache insert/removal and holder rename with the shared account lock. Retained checked account-creation validation against current TINYINT/INT schema. Mutable Data returned by Bank.Get(int) remains an open caller-audit item.
+
+- Follow-up: every Bank.Change balance mutation now marks the account dirty; dirty account IDs are snapshotted under AccountSync. Bank persistence worker uses ConcurrentQueue for account deletions and requeues failed delete batches after DB errors. Crash durability and write-volume profiling remain pending.
