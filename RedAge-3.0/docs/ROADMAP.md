@@ -128,6 +128,8 @@
 
 - [ ] PET-001: require Type==14 pet-shop intent, location/dimension and allowlisted pet model; prevent stale TempBizID teleport and replay. See PETSHOP_REMOTE_REVIEW.md.
 
+- [ ] VEH-010: clear organization tuning context on exit and require an active Type==12 one-shot tuning intent for every personal purchase remote. See TUNING_REMOTE_REVIEW.md.
+
 - [ ] JOB-005: make mechanic repair/fuel acceptance and mechanic fuel-reserve purchases exactly-once; confirm both wallet legs before repair/fuel mutation and add stale-offer/replay/restart tests. See MECHANIC_SERVICE_REVIEW.md.
 
 - [ ] BUG-002/MONEY-047: make admin business deletion null-safe and idempotent across DB row, online/offline owner BizIDs/refund, runtime cache and world cleanup; test failures/restart. See BUSINESS_OWNERSHIP_REVIEW.md.
