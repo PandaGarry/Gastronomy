@@ -333,3 +333,12 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - [ ] Inject DB insert success followed by cache registration failure; confirm alert/reconciliation behavior and no false success to caller.
 - [ ] Run concurrent `GetBalance` reads with `Change` and `Transfer`; verify no exceptions and values correspond to serialized mutations.
 - [ ] Audit all direct `Accounts[id].Balance` and `Bank.Get(id).Balance` reads/writes; callers must not bypass `AccountSync`.
+
+
+### MONEY-003 account lifecycle and read synchronization
+
+- [ ] Run GetBalance concurrently with repeated transfers; reads must observe a balance value from a completed critical section.
+- [ ] Race account removal against transfer; transfer must either complete before removal or reject a missing account, never mutate a detached account silently.
+- [ ] Race holder rename against transfer notifications and save; final holder and balance must persist without lost dirty flags.
+- [ ] Create rejects empty holder, invalid TINYINT type, negative balance and balance above INT_MAX before DB insert; cache value equals persisted value.
+- [ ] Audit all Bank.Get(int) call sites for direct writes to mutable Data fields; no external mutation may bypass AccountSync.
