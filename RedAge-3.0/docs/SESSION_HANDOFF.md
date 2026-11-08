@@ -293,3 +293,11 @@
 
 - InHeliCrash installs KeyClampData before GetHealth checks ArmyLockpick. Generic KeyClamp.OnEnd accepts client value and invokes callback without requiring successful keyDown; HeliCrash End sets health from value and can roll unlock at 0 without verifying IsHack owner/lockpick. Failure leaves reusable KeyClampData. Added INV-018 / HELICRASH_KEYCLAMP_REVIEW.md.
 - Static-only; no source patch/build/RAGE/DB test. Continue remaining warehouse and parent-item subcontainer traces; avoid duplicates with INV-003, INV-012..018 and VEH-012.
+
+
+## 2026-11-08 continuation — INV-019 weapon/key-ring parent binding
+
+- Traced ItemsUse → LoadOtherItemsData for `weapon_<SqlId>` and `CarKey_<SqlId>`; LoadOtherItemsData stores only InventoryOtherLocationName. GetLocationName/GetItemData/SetItemData and generic move/stack/use remotes do not revalidate that the parent still exists and remains owned by the caller. SetItemData does not revoke the other pane when parent state changes.
+- Registered INV-019 with a conservative medium priority and explicit runtime boundary; created WEAPON_KEYRING_SUBCONTAINER_REVIEW.md and former/new-owner replay tests. No successful cross-owner extraction is claimed.
+- Reviewed adjacent delegated callbacks: hotel rent rejects negative price through CanIChange (so the apparent overflow path is not a confirmed free-credit issue); pet rename rechecks OwnerUUID; street-race zero stake remains a policy/abuse question, not a confirmed payout exploit in this pass. Warehouse remains personal-UUID storage with location-policy question; HeliCrash opening/range still needs staging confirmation.
+- Static-only; no source patch, C# build, RAGE runtime or MySQL fault injection. Next phase should prioritize source-backed critical money/inventory findings for patch design, while staging/build blockers remain explicit.
