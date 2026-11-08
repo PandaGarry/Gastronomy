@@ -385,3 +385,8 @@ Static review found unchecked second legs in regular ATM cash deposit/withdrawal
 
 - `HouseManager.acceptHouseSell` now validates the seller reference and active session/character before proceeding, rejects nonpositive pending price, and obtains `sellerCharacterData` from the seller rather than the buyer. This corrects money-log attribution and avoids null seller dereferences in the pre-settlement path.
 - Buyer debit and seller credit results remain unchecked and house ownership still transfers regardless; no unsafe local compensation was added. MONEY-037 remains high/open pending durable idempotent settlement and build/RAGE/MySQL validation.
+
+## 2026-11-08 — MONEY-035 cash stock result guards
+
+- Applied to both faction and organization `inputStocks`: cash deposits require successful wallet debit before increasing stock; cash withdrawals require successful wallet credit before decreasing stock. Success logs are now after the result guard.
+- This is an interim in-memory ordering/result patch only. It does not provide durable atomicity, replay protection, concurrency control or crash recovery. STOCK-001 item cargo transfer paths remain open. Static-only; no build/RAGE/MySQL tests.
