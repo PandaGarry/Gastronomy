@@ -111,3 +111,5 @@
 - `BUSINESS_OWNERSHIP_REVIEW.md` also covers admin deletion consistency (`BUG-002`) and owner refund settlement (`MONEY-047`).
 
 - [VEHICLE_TRUNK_ACCESS_REVIEW](VEHICLE_TRUNK_ACCESS_REVIEW.md) — vehicle trunk inventory session binding and per-operation authorization (`INV-012`), with explicit open-trunk policy boundary.
+
+- [VEHICLE_TRUNK_LIFECYCLE_REVIEW](VEHICLE_TRUNK_LIFECYCLE_REVIEW.md) — vehicle trunk reservation release on auxiliary-pane close/context replacement and stale-owner-safe cleanup (`VEH-012`).
