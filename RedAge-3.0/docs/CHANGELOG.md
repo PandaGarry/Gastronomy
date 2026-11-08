@@ -1,3 +1,10 @@
+## 2026-11-08 — Phone auction settlement hardening (source patch)
+
+- Patched `Players/Phone/Auction/Repository.cs`: reject nonpositive and expired/ended bids; use `long` fee arithmetic to prevent `int.MaxValue` wraparound from turning a debit into a credit.
+- Serialize `OnBet` and `End` per auction object; `End` rechecks the ended flag under the same lock.
+- Skip the no-bid UUID-zero refund sentinel; make `ReturnMoney` null-safe so the existing offline DB fallback can execute.
+- Updated MONEY-023/024/038 status, review, checklist and regression plan. These are source patches only: no .NET build, RAGE runtime, MySQL fault injection or concurrency test has been run. Offline payout idempotency and maximum-bid policy remain open.
+
 ## 2026-11-08 — INV-019 weapon/key-ring parent ownership
 
 - Traced weapon and CarKey subcontainer open paths, session location storage, generic inventory move/stack/use remotes and SetItemData cleanup.
