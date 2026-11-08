@@ -3042,9 +3042,11 @@ namespace NeptuneEvo.Core
                 characterData.BizIDs.Add(id);
                 
                 int tax = Convert.ToInt32(biz.SellPrice / 100f * biz.Tax);
-                var bizBalance = Bank.Accounts[biz.BankID];
-                bizBalance.Balance = tax * 2;
-                bizBalance.IsSave = true;
+                if (!Bank.SetBalance(biz.BankID, (long)tax * 2))
+                {
+                    Log.Write($"buyBusinessCommand: failed to initialize bank balance [business:{id}, bank:{biz.BankID}]");
+                    return;
+                }
                 
                 Character.Save.Repository.SaveBiz(player);
             }
