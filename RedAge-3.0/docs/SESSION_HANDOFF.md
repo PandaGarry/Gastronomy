@@ -374,3 +374,11 @@
 
 
 51. **MONEY-002 worker follow-up:** `Money.Start()` now starts at most one worker per process; worker uses `Task` + `Task.Delay` rather than a dedicated thread/`Thread.Sleep`; `AddMoneyUpdate` rejects invalid UUID/negative/out-of-range DB INT snapshots before queueing. Existing lock/retry/newer-value-wins behavior retained. Updated ECONOMY_REVIEW, ISSUES, REDAGE_MASTER_PLAN, MASTER_CHECKLIST, TEST_PLAN, BUILD_LOG and CHANGELOG. Static checks only; no C# build, concurrency/MySQL tests. Queue remains memory-only; durable outbox/restart recovery/backoff/dead-letter remain open.
+
+
+## 2026-11-08 continuation — MONEY-036 wallet range guard
+
+- Reconciled the actual type contract: `CharacterData.Money` is `long`; generated DB model `Characters.Money` and `characters.money` are signed INT. No supported BIGINT migration is present.
+- Patched `Wallet.Change` to use checked `long` arithmetic and reject balances outside `0..Int32.MaxValue` before mutation. Patched full character `SaveSql` to validate the same range before other save work and before narrowing conversion. `Money.AddMoneyUpdate` already rejects invalid snapshots.
+- Updated MONEY-036 issue, master checklist, master plan, changelog and regression tests.
+- Static checks only; no compiler/DB/RAGE validation. New important open question: stale absolute-value batch in `Database.Models.Money` may race full `Character.SaveSql` and overwrite a newer balance; design/verify per-character serialization before closing MONEY-002.
