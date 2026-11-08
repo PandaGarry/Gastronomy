@@ -26,8 +26,10 @@ namespace NeptuneEvo.MoneySystem
             {
                 var characterData = player.GetCharacterData();
                 if (characterData == null) return false;
-                int temp = (int)characterData.Money + amount;
-                if (temp < 0) return false;
+                // The persisted characters.money column is signed INT. Keep the in-memory
+                // long contract inside that range and never narrow before validating it.
+                long temp = characterData.Money + (long)amount;
+                if (temp < 0 || temp > int.MaxValue) return false;
                 if (amount < 0 && Admin.IsServerStoping) return false;
                 characterData.Money = temp;
                 balanceChanged = true;
