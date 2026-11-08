@@ -405,3 +405,8 @@
 - Re-fetched current branch AutoMechanic and StreetRace sources. Confirmed JOB-005's three unchecked settlement paths remain; intentionally made no unsafe partial patch pending a durable multi-entity settlement API.
 - Confirmed StreetRace normal finish and death/vehicle-exit abort ignore winner payout results; documented receipt/idempotency requirements and cleanup ordering.
 - Updated mechanic and street-race reviews, master plan, checklist, test plan and handoff. Static-only; no build or runtime tests.
+
+## 2026-11-08 — MONEY-048 tent input hardening
+
+- `Chars/Repository.cs`: reject negative tent purchase quantity; normalize zero to one before stock/slot validation; require positive unit price; calculate total using `long` and reject values outside the `Wallet.Change` Int32 range; validate seller reference before dereference.
+- Static assertions passed. This does not fix unchecked buyer/seller wallet results or the non-atomic item/cash settlement; `ConfirmTrade` remains unchanged. No C# build, RAGE or MySQL tests.
