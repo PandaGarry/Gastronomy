@@ -21,17 +21,30 @@
 
 **Исправление (не внедрено):** единая сервисная операция с DB transaction; проверка получателя и валидности до списания; атомарные conditional updates (`sender balance >= amount`, recipient increment); проверка affected rows; commit только если обе стороны успешны; затем синхронизировать кэши/уведомления. Идемпотентный transaction ID + аудит ledger. Нужны tests на offline receiver, insufficient funds, DB failure, concurrent duplicate request, rollback.
 
-## MONEY-002 — гонки и потеря отложенных денежный записей
+## MONEY-002 — гонки и потеря отложенных денежных записей
 
 **Уверенность: высокая; приоритет: высокий.** Файл `Database/Models/Money.cs`.
 
-- `DonateUpdateList` и `MoneyUpdateList` — обычные `Dictionary`, куда пишут игровые операции.
-- `Worker` на отдельном потоке делает `Values.ToList()` и затем `Clear()` без общей синхронизации с `AddDonateUpdate`/`AddMoneyUpdate`.
-- При add во время snapshot/clear возможны race/exception или потеря только что добавленной записи.
-- Worker очищает очередь до завершения БД-записи. Если `DonateUpdate`/`MoneyUpdate` ловит ошибку, snapshot не возвращается в очередь — повторной попытки нет.
-- При аварийной остановке между обновлением кэша и фоновой записью pending changes могут потеряться.
+Исходный дефект:
+- `DonateUpdateList` и `MoneyUpdateList` были обычными `Dictionary`; игровые producers и отдельный worker обращались к ним без общей синхронизации.
+- Worker делал snapshot и `Clear()` до завершения DB write. Исключения внутри `DonateUpdate`/`MoneyUpdate` только логировались; batch не возвращался на retry.
+- `Wallet.Change` меняет `CharacterData.Money` в памяти, а при изменении не менее 10 000 вызывает `AddMoneyUpdate`. Поэтому `Wallet.Change(true)` не означает DB commit.
 
-**Исправление (не внедрено):** thread-safe queue/immutable batch с атомарным swap; не терять failed batch (bounded retry + dead-letter/alert); транзакционные flush batches; тесты на concurrent producers, DB outage и restart/recovery. Не менять семантику «сохраняется последнее абсолютное значение» без проверки всех call sites.
+**Внесённый source patch (ещё не runtime-validated):**
+- Добавлен общий `QueueLock`; producers записывают последние абсолютные значения через indexer под lock.
+- Worker атомарно копирует и очищает обе очереди под тем же lock.
+- DB flush возвращает bool; при исключении worker возвращает неуспешный batch в очередь.
+- Requeue не перезаписывает более новое значение, добавленное producer во время DB flush.
+- Повторный flush использует абсолютный `SET balance = value`, поэтому повтор успешных строк из частично упавшего batch не повторяет денежное начисление/списание как delta.
+
+**Ограничения и остаточные риски:**
+- Очередь остаётся только в памяти: аварийный процессный crash до flush по-прежнему теряет pending update.
+- Нет durable outbox/ledger, DB transaction для batch, bounded retry/backoff или dead-letter/alert policy.
+- Ошибка на одной строке прерывает соответствующий batch; batch будет повторён целиком. Это безопасно только пока операция остаётся абсолютной записью баланса.
+- Не проверяется отсутствие строки по UUID/login; affected-row count намеренно не используется, поскольку unchanged absolute value может сообщать 0 changed rows в зависимости от MySQL режима.
+- `Wallet.Change` остаётся in-memory-first и его bool не подтверждает долговременную запись.
+
+**Обязательные проверки:** параллельные producers и snapshot/clear; добавление нового значения во время flush; failure первой/средней/последней строки; DB disconnect/reconnect; успешная часть batch + retry; process kill/restart до flush; длительный DB outage и очередь retry. C# build и MySQL fault injection не выполнялись.
 
 ## MONEY-003 — банковский transfer callback повторно применим к сохранённому session state
 
