@@ -163,3 +163,5 @@
 - [ ] **MONEY-053 — ATM cash/house deposit:** second-leg results checked and compensation attempted; validate regular deposit, withdrawal and house deposit under forced false/exception, compensation failure, replay/concurrency and DB restart. Keep open pending build/RAGE/MySQL tests. Business deposit is MONEY-039. See ATM_REVIEW.md.
 
 - [ ] VEH-006 / MONEY-013 — partial government vehicle sale patch: confirmation revalidates current holder, rejects nonpositive price and checks wallet credit before removal. Still implement vehicle SQL delete + payout receipt/outbox, async delete retry/restart recovery, one-shot owner-version intent and replay tests. See VEHICLE_SALE_REVIEW.md.
+
+- [ ] VEH-001 — partial self-repair patch: wallet debit is checked before repair; RepairCar reports success/failure and refund is attempted on repair failure. Still confirm gameplay policy and implement server-owned one-shot repair intent/location/mechanic checks; test direct callback, wallet/repair/refund failure. See VEHICLE_REPAIR_REVIEW.md.
