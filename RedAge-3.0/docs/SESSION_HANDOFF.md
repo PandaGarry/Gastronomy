@@ -282,3 +282,9 @@
 
 - objectSelected validates safe object, 5m range, InsideHouseID and owner/roommate/burglary access before LoadOtherItemsData. HouseManager.RemovePlayer clears InsideHouseID and exits without ItemsClose/OtherClose; generic item remotes do not revalidate the house/object ACL. Added INV-017 / FURNITURE_SAFE_SESSION_REVIEW.md.
 - Static-only; no source patch/build/RAGE/DB test. Continue warehouse and HeliCrash lifecycle, then remaining vehicle/garage storage; avoid duplicates with INV-003, INV-012..017 and VEH-012.
+
+## Remaining inventory container TODOs
+
+- Warehouse: own UUID storage; WarehouseExit does not close the other pane and Stock.Perform lacks IsInPostalStock, but qMain requires active npc_stock quest. Determine whether location persistence is intended; do not call it cross-player theft.
+- HeliCrash: server colshape/key-clamp open path; OpenHeliCrash and later item operations lack explicit current box/range binding. Confirm interaction framework and event lifecycle.
+- weapon_<SqlId> / CarKey_<SqlId>: LoadOtherItemsData stores location only, not a server-side parent-item intent. Trace parent transfer/drop/delete and revoke semantics before registering a finding.
