@@ -214,3 +214,20 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] Open a vehicle trunk and switch directly to another `LoadOtherItemsData` container; verify the old reservation is released before the new context is installed.
 - [ ] Verify full inventory close, disconnect, vehicle deletion and repeated close release exactly once without exceptions.
 - [ ] Race two players for one trunk; a stale close from the former reservation owner must not clear a newer owner's reservation. Static review: VEHICLE_TRUNK_LIFECYCLE_REVIEW.md; requires RAGE staging.
+
+
+## INV-013 — AirDrop hack and loot remote authorization (pending staging)
+
+- [ ] As a registered AirDrop team member with an ArmyLockpick but outside dimension 100 / away from the crate, direct-call server.fight.player.start.hack, AirdropChangeLockStatus and server.fight.open; reject without lock, inventory, cache or event mutation.
+- [ ] At the crate, test valid hack/open; then wrong DropId, second crate, stale/replayed completion, duplicate progress and opening from another dimension.
+- [ ] Send client health -1, 0, 1, 20, 100 and int.MaxValue; server progress must be authoritative and elapsed-time-bound.
+- [ ] Start hack on crate A and finish crate B; start MatWar and attempt AirDrop completion; reject all cross-object/cross-event intent reuse.
+- [ ] Move away, change dimension, disconnect, revoke team/event membership or end event mid-hack; revoke intent and hacker pointer. Verify exactly-once lockpick consumption and normal local flow. Static review: AIRDROP_REMOTE_REVIEW.md; requires disposable RAGE staging.
+
+## INV-014 — MatWar active-event, hack and loot authorization (pending staging)
+
+- [ ] With no active war, direct-call status/start/progress/open remotes; all must reject and matwar_100 must not be accessible.
+- [ ] During active war, direct-call start/progress/open from distant coordinates, wrong dimension and nonparticipant faction; reject.
+- [ ] At the active crate, test normal hack/open, wrong ShapeId, instant zero/negative/oversized health, replay and duplicate completion.
+- [ ] Start AirDrop hack then call MatWar completion, and vice versa; generic session flags must not authorize another event.
+- [ ] End war while crate locked, unlocked and while a player has an open inventory; verify event inventory/session is removed/revoked and direct calls between wars reject. Next startWar must create a fresh generation. Static review: MATWAR_REMOTE_REVIEW.md; requires disposable RAGE staging.
