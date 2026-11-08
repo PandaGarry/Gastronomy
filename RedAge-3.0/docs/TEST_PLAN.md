@@ -288,7 +288,7 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 18. **Player trade/tent market (MONEY-048):** на disposable RAGE accounts проверить cash-only, item-only и mixed trades в обоих направлениях; форсировать `Wallet.Change=false`/exception на debit и credit после preflight, server-stop race, full inventory, partial item insert, disconnect, duplicate/concurrent confirm и restart. Для tent purchase проверить `Item.Price * Value` boundaries/overflow, exact stock decrement, buyer debit, seller credit and BattlePass progress ordering. Assert no item transfer or success side effect without confirmed settlement; exact balances/items/logs after reconnect. Static detail: `PLAYER_TRADE_REVIEW.md`.
 
 
-## MONEY-002 — money queue concurrency and recovery (source patch pending validation)
+## MONEY-002 — money queue concurrency and recovery (source patch present; validation pending)
 
 - [ ] Concurrent `AddMoneyUpdate` / `AddDonateUpdate` while worker snapshots and clears; no collection exceptions or lost latest values.
 - [ ] Enqueue a newer absolute balance while an older batch is in DB flush; failed old batch requeue must not overwrite the newer value.
@@ -299,6 +299,16 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] Long DB outage: measure retry/log volume and memory growth; define bounded backoff/dead-letter before production closure.
 
 Static source patch only; no C# build or DB fault injection has run. See `ECONOMY_REVIEW.md`.
+### MONEY-002 — direct offline cash writers and durable-ledger design gate
+
+- [ ] Run two or more concurrent offline `Character.Save.Repository.AddMoney` operations for one UUID; verify no lost increment. Include positive and negative deltas, insufficient/negative result, `int.MaxValue` boundary, overflow and nullable/corrupt DB balance.
+- [ ] Race offline `AddMoney` against character login/full save; verify the DB update cannot be overwritten by a stale in-memory snapshot and the online cache cannot remain stale after a successful credit.
+- [ ] Repeat for the offline referral cash reward path; inject failure after referral success/RB/VIP writes and verify the reward is not silently lost or duplicated.
+- [ ] For the future ledger, submit the same operation ID concurrently and after restart; assert exactly one balance delta and one durable receipt. Fail before transaction, between insert/update, at commit acknowledgement and after commit/before caller acknowledgement.
+- [ ] Verify the schema engine is InnoDB for every participating balance/receipt table; prove rollback across receipt + balance update and verify unique operation-ID constraint under concurrent inserts.
+- [ ] Test mixed legacy/new writers during staged migration. No writer may bypass the coordinator; compare DB balance, in-memory cache, receipts and audit ledger after every injected failure.
+
+Do not treat an asynchronous outbox snapshot written after `Wallet.Change` as crash-durable: the process can die before the outbox insert. The transaction must begin at the original logical cash mutation boundary. Transitional atomic-increment tests do not replace exactly-once payout/receipt tests. See `ECONOMY_REVIEW.md`.
 
 
 ## Wallet.Change post-mutation result semantics
