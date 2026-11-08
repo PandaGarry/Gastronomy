@@ -84,3 +84,12 @@ A further source patch was applied in `MoneySystem/Bank.cs`:
 **Limits:** the schema remains `INT` for balance; balances above `Int32.MaxValue` require a coordinated schema migration, not a wider cache alone. The cache-registration failure path can leave a DB row requiring reconciliation; it is considered exceptional and needs explicit failure-injection coverage. The returned mutable `Data` object from `Get(int)` is still a legacy escape hatch and needs a broader caller audit before changing its contract.
 
 **Validation:** source patch only. No .NET build, MySQL integration test, concurrent read/write test, or RAGE staging run has been performed.
+
+
+## 2026-11-08 follow-up — account lifecycle synchronization
+
+The shared account lock is now also used for `GetBalance`, holder lookup by name, cache insertion after `Create`, removal from the account dictionary, and holder mutation. This prevents these dictionary lifecycle operations from interleaving with the locked transfer/change critical sections. `Create` validation and checked INT conversion, plus synchronized `GetBalance`, were already present in the current source and are retained.
+
+**Remaining escape hatch:** `Bank.Get(int)` still returns the mutable internal `Data` object. Its callers must be audited before changing the contract; direct writes to `Balance`, `IsSave`, `Holder` or `Revision` outside the lock would bypass synchronization. Account initialization is expected during startup; runtime reload semantics are not established.
+
+Additional tests: [ ] concurrent transfer vs account removal; [ ] transfer vs holder rename; [ ] Create with negative/overflow balance and invalid type/empty holder; [ ] concurrent GetBalance during transfer; [ ] audit every `Bank.Get(int)` caller for direct mutable property writes.
