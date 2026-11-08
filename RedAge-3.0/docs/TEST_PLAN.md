@@ -596,3 +596,12 @@ Source patch only; no compiler or disposable DB test has run.
 - [ ] Admin offline grant: verify the current awaited/affected-row acknowledgement patch, then race target login between presence check and DB write; ensure the shared coordinator prevents stale cache/full-save overwrite and retries use the same operation ID.
 
 Static source review only. These tests require a disposable MariaDB database and isolated RAGE staging; none ran in this audit slice.
+
+
+### MONEY-054 — referral reward partial settlement
+
+- Прогнать inviter cash balance на `Int32.MaxValue - reward`, ровно `Int32.MaxValue`, выше допустимого диапазона и некорректном/null DB value.
+- На disposable DB инжектировать exception/connection loss после `Refferals.Success`, после RB/VIP update и до/во время cash credit; проверить transaction rollback либо durable pending recovery.
+- Повторно и конкурентно обработать один referral/reward ID: каждая из RB, VIP и cash legs должна быть применена не более одного раза; ни одна leg не должна быть потеряна.
+- Проверить online/offline inviter, reconnect/restart и согласованность DB/cache.
+- Текущий статус: сценарии добавлены; тесты не запускались, source patch отсутствует.
