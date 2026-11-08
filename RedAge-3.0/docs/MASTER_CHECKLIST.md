@@ -80,6 +80,7 @@
 
 - [ ] Automated static checks and CI.
 - [ ] C# unit/integration and RAGE staging regression suite.
+- [ ] PERF-002 — run all three CEF production build scripts from clean shells; verify production mode, no source maps, hot reload disabled, output paths and RAGE:MP UI smoke tests. See `CEF_BUILD_REVIEW.md`.
 - [ ] Profile CPU, RAM, tick latency and DB queries before optimization.
 - [ ] Review CEF bridge, HTML/resource loading, accessibility and UX.
 - [ ] Release checklist, backup/restore, rollback and incident drills.
