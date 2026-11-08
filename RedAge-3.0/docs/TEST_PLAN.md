@@ -198,3 +198,11 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] Test no-session, stale/deleted/non-Type==12 business, moved-away, dimension change, vehicle swap, disconnect/reconnect and duplicate/concurrent buy callbacks.
 - [ ] Confirm all exit event types 0/1/2 consume and clear the tuning intent and TuningShop; verify Character.Repository position resolution never uses stale tuning state.
 - [ ] Verify organization tuning saves only organization customization and cannot route into personal business-stock purchase. Run STOCK-002 wallet/stock failure matrix for the tuning path. Static review: TUNING_REMOTE_REVIEW.md; requires disposable RAGE/MySQL staging.
+
+
+## INV-012 — vehicle trunk inventory session binding (pending staging)
+
+- [ ] Open trunk inventory for own, key-shared, foreign, faction, organization and organization-garage vehicles; confirm the intended open-trunk access policy and min-rank/role rules.
+- [ ] After opening, move beyond 5m, change dimension, close trunk, despawn/replace vehicle, revoke keys or leave faction/organization; direct `server.gamemenu.inventory.move`, `.move.stack` and `.use` with `other` must reject without item/cache/DB mutation.
+- [ ] Test `vehicleSelected` branch 3 with foreign plate/entity, open/closed trunk, dead vehicle, invalid vehicle class and simultaneous BagInUse; ensure no unauthorized session is issued.
+- [ ] Verify every close/revoke/timeout/disconnect path clears InventoryOtherLocationName and SelectedVeh/BagInUse; no stale container survives reconnect or vehicle replacement. Static review: VEHICLE_TRUNK_ACCESS_REVIEW.md; requires RAGE and disposable MySQL staging.
