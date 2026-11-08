@@ -26,7 +26,7 @@
 - [x] GitHub read access подтверждён.
 - [x] GitHub write access проверен реальной операцией создания ветки.
 - [x] Создана рабочая ветка `redage/audit-continuation` от `arena/fab5bf55-gastronomy`.
-- [ ] Сверить уникальные коммиты `main` и `arena/fab5bf55-gastronomy`; PR #4 сейчас diverged (1 behind, hundreds ahead) при `mergeable=true`; не объединять ветки без owner approval и ancestry/diff reconciliation.
+- [ ] Сверить уникальные коммиты `main` и `arena/fab5bf55-gastronomy`; PR #4 сейчас diverged (1 behind, hundreds ahead); mergeability динамическая и не заменяет owner approval/ancestry reconciliation.
 - [ ] Подтвердить лицензионные права на исходники, UI и игровые ассеты.
 - [ ] Проверить видимость репозитория и секреты; ротировать любые действовавшие credentials, если это требуется.
 - [ ] Согласовать базу и target для первого Draft PR.
