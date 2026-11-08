@@ -72,3 +72,10 @@
 
 - Asserted shared striped monitor for Wallet mutation and SaveSql snapshot; per-UUID revision advance; stale detached snapshot check before SQL; in-flight markers at snapshot time; newer small mutation queueing during worker/full-save writes; version-aware retry; semaphore hand-off ordering.
 - All source assertions passed. No C# compiler/runtime, multithreaded stress, MySQL or RAGE staging test available. Direct cash SQL writers outside this coordinator remain explicitly uncovered.
+
+
+### 2026-11-08 — MONEY-036 direct writer range guards
+
+- Static source inspection confirms offline `Character.Save.Repository.AddMoney`, `Core.Admin.OffGiveMoney` and `Main.CheckMyPromoCode` referral reward now widen arithmetic to `long`, reject invalid/above-`Int32.MaxValue` totals and narrow only after validation.
+- These three writers still use independent DB read/modify/write paths and do not share the Money worker/full-save coordinator; no concurrency safety claim is made. Main business-tax repossession and Merger writers remain open.
+- No C# build or MySQL boundary/concurrency test performed.
