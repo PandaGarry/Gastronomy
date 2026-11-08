@@ -55,3 +55,13 @@
 ## Updated scope boundary
 
 These admin deletion observations are separate from MONEY-043/044 purchase/transfer settlement, MONEY-026 government sale, STOCK-002 retail stock and MONEY-040/041 tax/repossession. No gameplay source was modified.
+
+## 2026-11-08 — bounded MONEY-044 acceptance preflight
+
+A narrow patch was applied to `acceptBuyBusiness` in `Core/Businesses.cs`:
+
+- Reject a missing pending offer, null seller reference or seller without active character data before dereferencing the seller.
+- Require seller session and character data.
+- Reject a nonpositive pending price and a business ID that is no longer present in `BizList`; clear both pending offer objects for these invalid states.
+
+The core transfer is intentionally unchanged: buyer/seller BizIDs and `biz.Owner` are still mutated before two unchecked `Wallet.Change` calls. No naive reorder or compensating patch was applied because the subsequent ownership/BizIDs persistence APIs do not provide a durable transaction/commit result. MONEY-044 remains high/open.
