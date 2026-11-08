@@ -134,3 +134,5 @@ Static trace of ItemsUse → LoadOtherItemsData → GetLocationName/GetItemData/
 - Patched `ATM.AcceptTransfer` to consume the confirmation tuple before execution and revalidate the source account against the active character.
 - Patched `Bank.Save` to preserve dirty state on DB errors/concurrent mutations and reject out-of-range DB INT balances.
 - Static only. No .NET build, MySQL fault injection, concurrency or RAGE staging test. Durable DB transaction/idempotency and crash recovery remain open. See `BANK_TRANSFER_REVIEW.md`.
+
+- Follow-up: synchronized bank balance reads, account holder lookup, cache registration/removal and holder rename with the transfer lock; Create's checked DB INT/TINYINT input validation remains in place. `Bank.Get(int)` mutable Data escape remains under caller audit.
