@@ -308,3 +308,9 @@
 - Traced OpenWeaponStock → LoadOtherItemsData → RemovePlayer. Exit clears InsideOrganizationID and moves the player outside but does not close/revoke the other inventory context; generic item remotes do not recheck organization interior state.
 - Registered INV-016 and created ORGANIZATION_STOCK_SESSION_REVIEW.md; expanded inventory container map and staging matrix.
 - Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
+
+## 2026-11-08 — INV-017 furniture safe stale context
+
+- Traced objectSelected furniture-safe access and HouseManager.RemovePlayer. The exit path clears InsideHouseID and moves the player outside without closing/revoking the opened furniture inventory; generic item remotes do not revalidate the house/object/access context.
+- Registered INV-017 and created FURNITURE_SAFE_SESSION_REVIEW.md; added regression matrix and inventory map reference.
+- Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
