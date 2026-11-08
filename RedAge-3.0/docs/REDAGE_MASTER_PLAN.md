@@ -406,3 +406,8 @@ Static review found unchecked second legs in regular ATM cash deposit/withdrawal
 
 - `Main.cs` BUY_CAR now validates seller reference and positive price, checks seller credit before changing vehicle holder, and attempts buyer refund if seller credit rejects; failed refund is critically logged.
 - This is interim in-memory compensation only. Durable sale receipt, buyer debit/credit/holder transaction, asynchronous SaveHolder recovery and restart reconciliation remain open. Static-only; no build/RAGE/MySQL tests.
+
+## 2026-11-08 — MONEY-044 bounded acceptance preflight
+
+- `acceptBuyBusiness` now rejects missing pending offer/seller, inactive seller character/session, nonpositive price and missing business ID before proceeding.
+- Buyer/seller BizIDs and business Owner still mutate before unchecked buyer debit/seller credit. No unsafe local reorder/compensation was applied because owner/BizIDs persistence has no durable commit result. MONEY-044 remains high/open. Static-only.
