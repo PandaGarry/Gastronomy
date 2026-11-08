@@ -354,3 +354,14 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - [ ] Measure DB write rate and worker duration after marking every balance mutation dirty; verify 30-second polling does not create unacceptable write amplification or latency.
 
 - [ ] Verify Bank.Get(int)/Get(string) snapshots are stable and cannot mutate live account state; audit direct public Accounts dictionary consumers for lock bypass.
+
+
+## Bank balance mutation encapsulation — MONEY-003
+
+- [ ] Verify `Bank.SetBalance` rejects negative and out-of-DB-INT values and marks valid changes dirty with a new revision.
+- [ ] Verify `Bank.ApplyBalanceAdjustment` performs checked arithmetic, supports the intended temporary-negative tax case within DB INT bounds, and marks the account dirty.
+- [ ] Run business/house purchase and auction award paths; assert exact initialized balances.
+- [ ] Run hourly business/house tax with positive and insufficient balances; verify one tax debit, city credit, repossession and zero reset.
+- [ ] Run concurrent bank transfer/withdrawal while tax runs; assert no lost update and no negative balance except the explicitly permitted tax intermediate state.
+- [ ] Inject DB failure/reconnect during save; assert latest revision remains dirty and eventually persists.
+- [ ] Audit remaining direct mutable bank data writes; no build/RAGE/DB tests have run yet.
