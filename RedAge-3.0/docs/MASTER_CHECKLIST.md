@@ -100,3 +100,4 @@
 - MONEY-030/031 and Sapper issues are statically confirmed; no live exploitation or runtime test is claimed.
 - `main` and `arena/fab5bf55-gastronomy` diverge by one unique commit on each side. Preserve both histories until the diff is reconciled.
 - GitHub repository API currently reports visibility as public; verify and change in GitHub settings only if that is not intended.
+\n- [ ] MONEY-043 — government business purchase: verify successful buyer debit before stock/order reset and owner/BizIDs mutation; durable receipt, rollback and restart tests. See `BUSINESS_OWNERSHIP_REVIEW.md`.\n- [ ] MONEY-044 — player-to-player business transfer: atomic buyer debit + seller credit + owner/BizIDs commit; one-shot offer, idempotency, partial-write compensation and replay/concurrency tests. See `BUSINESS_OWNERSHIP_REVIEW.md`.\n
