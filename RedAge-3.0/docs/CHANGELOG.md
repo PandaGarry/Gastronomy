@@ -425,3 +425,8 @@
 
 - Expanded stock audit to `Organizations.Manager.inputStocks` and traced `AddNewItem`/`Remove` contracts. AddNewItem can return a slot after partial insertion; Remove returns void and catches failures internally. Existing item/cargo callers cannot verify exact quantity transfer.
 - No source patch applied to item/cargo paths pending exact-count API and rollback/reconciliation design. MONEY-035 cash branch guards remain separate. No C# build or runtime tests.
+
+## 2026-11-08 — STOCK-002 takeProd validation patch
+
+- `Core/Businesses.cs`: reject `amount <= 0`, use bounded stock comparison after positive validation, and return false when no matching product is found.
+- Owner-bank failure rollback, unchecked customer wallet debit, exact item/weapon grant, dirty-save and durable idempotent settlement remain open. Static assertions only; no C# build, RAGE or MySQL tests.
