@@ -4346,10 +4346,19 @@ namespace NeptuneEvo
 
                                     if (character != null)
                                     {
-                                        await db.Characters
-                                            .Where(c => c.Uuid == character.Uuid)
-                                            .Set(c => c.Money, character.Money + refferalData.Money)
-                                            .UpdateAsync();
+                                        long currentMoney = Convert.ToInt32(character.Money);
+                                        long updatedMoney = currentMoney + Convert.ToInt64(refferalData.Money);
+                                        if (currentMoney < 0 || updatedMoney < 0 || updatedMoney > int.MaxValue)
+                                        {
+                                            Log.Write($"Referral cash reward rejected at signed INT boundary (UUID: {character.Uuid}, current: {currentMoney}, reward: {refferalData.Money}).");
+                                        }
+                                        else
+                                        {
+                                            await db.Characters
+                                                .Where(c => c.Uuid == character.Uuid)
+                                                .Set(c => c.Money, (int)updatedMoney)
+                                                .UpdateAsync();
+                                        }
                                     }
                                 }
                             }
