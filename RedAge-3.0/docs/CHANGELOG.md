@@ -555,3 +555,5 @@
 - 2026-11-08 — MONEY-002 schema reconnaissance: checked-in MariaDB 10.10.2 dump declares character cash, bank accounts, accounts, referrals and lottery tables InnoDB; character cash is nullable signed INT. This is snapshot evidence only; disposable import and live schema verification remain pending.
 
 - 2026-11-08 — Добавлен MONEY-055: auction `ReturnMoney` logs before confirmed credit; offline cash refund uses read-modify-absolute UPDATE without coordinator/receipt/affected-row check and can race login/cache publication. Source unchanged; tests pending.
+
+- 2026-11-08 — Добавлен MONEY-056: account merger aggregates money in signed INT without checked overflow and lacks durable merge checkpoint/idempotency across bank/character/assets/cashback steps. Source unchanged; tests pending.
