@@ -289,6 +289,11 @@
 - Registered VEH-011 separately from MONEY-012/PROG-007; expanded TAXI_MILEAGE_REVIEW, issue register, checklist, regression plan, coverage, index, roadmap and handoff. No source code changed; no runtime/build/DB test.
 
 
+## 2026-11-08 — MONEY-050 Driving school license settlement
+
+- `Core.DrivingSchool.startDrivingCourse` previously granted each active license before the debit and ignored `Wallet.Change` results. Case 1 advanced quest state before payment; cases 3–5 credited the faction balance after an unchecked debit.
+- Patched all six active license cases to abort when the wallet debit fails and defer license/quest/faction/log/success effects until after successful payment. Added `MONEY-050`, review and regression matrix. Static patch only; C# build and RAGE/MySQL failure tests pending.
+
 ## 2026-11-08 — MONEY-049 Metro ticket settlement
 
 - `Events.Metro.OnBuyTicket` previously multiplied the client-supplied `Increase` by ticket price in `int`, then ignored `Wallet.Change` and proceeded to log success and move the player into the metro dimension.
