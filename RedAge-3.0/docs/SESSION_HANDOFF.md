@@ -265,3 +265,10 @@
 - AirDrop: IsPlayerToEvents is a TeamsInfo membership check, not proximity/dimension; StartedHack sets a generic session Boolean without binding the player to a DropId; AirdropChangeLockStatus trusts client health; OpenInventory opens unlocked loot without proximity/dimension checks. Added INV-013 / AIRDROP_REMOTE_REVIEW.md.
 - MatWar: start-hack lacks active-war/proximity/faction checks; completion trusts client health and shares IsAirDropHacking; open checks only character + ShapeId; endWar leaves matwar_100 and lock state until next startWar. Added INV-014 / MATWAR_REMOTE_REVIEW.md.
 - Static-only; no source patches, build, RAGE exploit reproduction or DB tests. Next: continue remaining container entry points (furniture, warehouse, faction/org stocks, HeliCrash) and close lifecycle/ACL traces; then vehicle control/garage/storage. Avoid duplicates with INV-003, INV-012..014 and VEH-012.
+
+
+## 2026-11-08 continuation — INV-015 faction stock stale session
+
+- Faction interaction handlers set OnFracStock but no reset was found. openWeaponStock remote only checks current fraction ID and IsFractionAccess rank; no duty, IsOpenGunStock, proximity, dimension or expiring intent. A member with retained rank can attempt remote reopen after prior legitimate access.
+- Registered INV-015; created FRACTION_STOCK_SESSION_REVIEW.md and expanded INVENTORY_REVIEW / TEST_PLAN / checklist / coverage / index / roadmap / changelog.
+- Static-only; no source patch/build/RAGE/DB tests. Continue with furniture, warehouse, organization and HeliCrash container ACL/lifecycle; avoid duplicates with INV-003 and INV-012..015.
