@@ -29,3 +29,9 @@
 ## Scope and confidence
 
 Source ordering and worker dirty-save contract are statically visible. No runtime reproduction or production data inspection is claimed. Tax policy and repossession compensation semantics should be confirmed by the project owner before changing gameplay behavior.
+
+## 2026-11-08 source reconciliation — MONEY-040 (partial)
+
+The ordinary hourly business tax path has since been changed: `Main.payDayTrigger` now calls `Bank.ApplyBalanceAdjustment(biz.BankID, -tax, ...)` instead of directly mutating `Bank.Accounts[biz.BankID].Balance`. The helper performs checked arithmetic under `AccountSync`, increments the account revision and marks it dirty. The earlier missing-dirty-flag path described above is no longer present in the reviewed current branch. This source correction is static-only; DB save/restart tests remain pending.
+
+**MONEY-041 remains open:** the online compensation result is ignored; offline compensation is asynchronous and unconfirmed before business ownership release/bank reset. In addition, the bank debit, City Hall/faction credits, owner compensation and ownership change are not one durable idempotent settlement. Do not mark business repossession fixed based only on the bank dirty-flag change.
