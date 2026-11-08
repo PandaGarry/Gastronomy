@@ -500,3 +500,14 @@
 - Обновлены `ISSUES.md`, `MASTER_CHECKLIST.md`, `REDAGE_MASTER_PLAN.md`, `CHANGELOG.md`; failure/replay сценарии уже есть в `TEST_PLAN.md`.
 - Статус: частичный mitigation, не закрытие MONEY-060. Durable one-shot fine receipt, replay/concurrency, DB/cache consistency, C# build и RAGE staging tests остаются открытыми.
 - Продолжать только в `redage/audit-continuation`, только внутри `RedAge-3.0/`; `main` не менять, PR #4 не сливать. Следующий практический шаг — выбрать следующий высокорисковый finding из актуального `ISSUES.md` и сначала повторно проверить полный source flow.
+
+
+## Актуальная контрольная точка — 2026-11-08 (после синхронизации документов)
+
+- MONEY-033: pending ticket intent now uses the shared `lock(targetSessionData)`; a second pending fine is rejected, and `ticketConfirm` detaches the pending intent before any settlement side effects. This is only an in-memory consume-once guard.
+- MONEY-060: when both `Wallet.Change` and fallback `Bank.Change` reject, the handler returns before City Hall/officer credits, success notifications/events and paid GameLog.
+- Обновлены: `ISSUES.md`, `MAIN_REMOTE_REVIEW.md`, `ECONOMY_REVIEW.md`, `TEST_PLAN.md`, `MASTER_CHECKLIST.md`, `REDAGE_MASTER_PLAN.md`, `ROADMAP.md`, `AUDIT_COVERAGE.md`, `INDEX.md`, `CHANGELOG.md`; добавлен `DOCS_STATUS.md`.
+- Старые записи в этом handoff о том, что MONEY-033/060 не исправлялись, являются историческими и superseded этой контрольной точкой.
+- MONEY-002 остаётся частичной in-process координацией. Durable coordinator/receipt/outbox, login publication gate, миграция direct cash writers и retry/recovery ещё не реализованы.
+- C# build, MariaDB fault-injection, RAGE staging, concurrency/restart tests не выполнялись. PR #4 остаётся Draft; рабочая ветка — `redage/audit-continuation`; `main` не изменять и не сливать до отдельного ancestry/diff reconciliation.
+- Следующий этап: повторно инвентаризировать прямые writers `characters.money`, утвердить coordinator/receipt schema и transaction ownership, затем реализовывать по одному доменному caller с тестами и синхронным обновлением документов. См. `DOCS_STATUS.md` и `ECONOMY_REVIEW.md`.
