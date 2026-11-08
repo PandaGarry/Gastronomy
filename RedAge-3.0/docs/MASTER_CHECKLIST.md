@@ -55,7 +55,7 @@
 - [ ] MONEY-033 — Ticket settlement: successful debit required, server-side one-shot intent and durable idempotent payout.
 - [ ] MONEY-034 — Gang drug purchase: quantity cap, checked/long cost+capacity math, exact item-grant result before faction debit.
 - [ ] MONEY-035 — Faction/organization money withdrawal: check wallet credit result; atomic stock/player balance transfer.
-- [ ] MONEY-037 — Player-to-player house sale: buyer debit and seller credit must both succeed before ownership transfer; correct seller UUID in money log; idempotent offer settlement and crash/replay tests; see `HOUSE_SALE_REVIEW.md`.
+- [ ] MONEY-037 — partial source patch: validate pending seller reference/session/character, positive price and correct seller UUID in money log. Still implement durable idempotent buyer debit + seller credit + ownership settlement; wallet results remain unchecked and ownership can still transfer on failure. Test replay/concurrency/disconnect/restart. See `HOUSE_SALE_REVIEW.md`.
 - [ ] MONEY-038 — source patch on branch: reject nonpositive bids and widen fee arithmetic to `long`; pending C# build, RAGE boundary/failure tests and owner decision on maximum bid; see `AUCTION_REVIEW.md`.
 - [ ] MONEY-036 — resolve wallet width contract: `CharacterData.Money` is long but DB `characters.money` is int(11); choose explicit Int32 cap or end-to-end BIGINT migration, then test checked arithmetic and persistence round-trip.
 - [ ] Review organization stock implementation against the same money/item settlement invariants.
