@@ -163,3 +163,16 @@ A bounded source patch was applied in `MoneySystem/Wallet.cs`: the method now re
 - `Database.Models.Money.AddMoneyUpdate` уже валидирует UUID и signed INT range до помещения в retry queue. Однако сама очередь остаётся volatile.
 - **Незакрытый риск:** Money worker пишет абсолютное значение `characters.money` отдельным SQL UPDATE, параллельно с полным `SaveSql`; offline auction fallback также имел прямой UPDATE (теперь добавлена range validation). Без общего per-character serialization/version token старый batch, задержавшийся в DB, теоретически может перезаписать более новое значение полного save. Это требует отдельного решения; не объявлять MONEY-002 закрытым.
 - Проверки: статические source assertions only. Нет C# build, DB round-trip, worker concurrency или RAGE UI test.
+
+
+## MONEY-002 — detached worker hand-off race (2026-11-08, partial patch)
+
+The worker/full-save ordering now has a process-local coordination layer:
+
+- `Money` keeps a fixed striped `SemaphoreSlim` set and per-UUID revision tokens; unrelated UUIDs may share a stripe.
+- `Character.Save.Repository.SaveSql` writes the main character row through `ExecuteCharacterSave`. It acquires the UUID stripe, snapshots the latest in-memory balance under `GetCharacterMoneySyncLock`, advances the revision and invalidates older queued snapshots before SQL. On save failure it restores the captured absolute balance only if no newer wallet mutation was queued.
+- `Wallet.Change` uses the same per-UUID monitor while mutating the balance and advancing the revision. Small changes are queued when a save or worker write is active; large changes retain eager queueing.
+- **New hand-off fix:** the worker marks each UUID `ActiveMoneyWrites` while detaching `MoneyUpdateList`, under `QueueLock`, before DB context creation. Previously the marker appeared only after the worker acquired the semaphore. A small wallet mutation in the detach→SQL window could advance the version, not enqueue (no active marker yet), and cause the detached snapshot to be skipped with no replacement. Snapshot-time marking closes that gap. Failed context/batch requeue removes the marker and only restores a still-current revision.
+- Worker and full-save writes are still not crash-durable; the queue and revisions are in-memory. No durable outbox, retry backoff or dead-letter policy exists.
+- **Other direct DB cash writers remain outside this coordinator:** `Character.Save.Repository.AddMoney`, `Players.Phone.Auction.Repository` offline refund, `Main.cs` referral reward and business-tax repossession, `Core.Admin.OffGiveMoney`, and `Accounts.Merger.Repository.MergerToOrganization`. These require a coordinated follow-up; do not mark MONEY-002 closed.
+- Static inspection only. Required tests include detach/SQL hand-off, full-save ordering, wallet mutation during save, save failure requeue, DB context failure, partial batch retry, reconnect and process restart. No C# build or MySQL fault injection has run.
