@@ -492,3 +492,11 @@
 - No source code changed in this pass; no C# build, DB fault injection or RAGE staging performed.
 
 - **MONEY-060 (2026-11-08):** `FractionCommands.ticketConfirm` continues after both cash and bank debit fail; city 60% and officer 40% payout/success events still execute. Initial funds check happens at prompt time and is not a reservation, so target may spend before confirm. Add early return and durable one-shot fine settlement; source unchanged, tests pending.
+
+
+## Контрольная точка 2026-11-08 — MONEY-060 ticket settlement guard
+
+- В `Fractions/FractionCommands.cs` (`ticketConfirm`) внесён узкий source guard: если `Wallet.Change` и fallback `Bank.Change` оба возвращают `false`, обработчик отправляет уведомления и немедленно выходит до city/officer credits, success events и `GameLog.Ticket`.
+- Обновлены `ISSUES.md`, `MASTER_CHECKLIST.md`, `REDAGE_MASTER_PLAN.md`, `CHANGELOG.md`; failure/replay сценарии уже есть в `TEST_PLAN.md`.
+- Статус: частичный mitigation, не закрытие MONEY-060. Durable one-shot fine receipt, replay/concurrency, DB/cache consistency, C# build и RAGE staging tests остаются открытыми.
+- Продолжать только в `redage/audit-continuation`, только внутри `RedAge-3.0/`; `main` не менять, PR #4 не сливать. Следующий практический шаг — выбрать следующий высокорисковый finding из актуального `ISSUES.md` и сначала повторно проверить полный source flow.
