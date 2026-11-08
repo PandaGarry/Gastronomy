@@ -555,3 +555,12 @@ Source assertions only; no C# build or DB fault-injection has run. See `ECONOMY_
 - [ ] Run two concurrent offline grants and race an offline grant against login/full save/worker flush; current read-then-absolute-write behavior is expected to remain an open lost-update test until migrated to the shared durable coordinator.
 
 Source patch only; no compiler or disposable DB test has run.
+
+
+### MONEY-002 — direct AddMoney / online-offline handoff regression cases
+
+- Run two or more concurrent `Character.Save.Repository.AddMoney` calls for the same UUID with positive and negative deltas; assert the final balance equals the serial sum and no update is lost.
+- Race offline payout against login and against `Wallet.Change` plus `SaveSql`; assert one authoritative balance in DB and cache, with no stale absolute overwrite.
+- Race AddMoney against disconnect/full save and worker flush in both orderings; inject delay between its SELECT and UPDATE to force interleavings.
+- Inject DB failure after SELECT and after UPDATE acknowledgement loss; retry the same logical payout and verify no duplicate credit. This requires an operation ID/receipt before exactly-once can be claimed.
+- Verify the actual storage engine for `characters` and every participating ledger/receipt table from the deployed DDL/runtime metadata; do not infer InnoDB from unrelated tables.
