@@ -142,3 +142,5 @@
 - [ ] INV-014: require active MatWar generation and exact nearby crate for status/hack/open; server-time lock progress; remove/revoke stale matwar_100 loot on endWar. See MATWAR_REMOTE_REVIEW.md.
 
 - [ ] INV-015: bind faction weapon-stock access to a short-lived player/fraction/stock intent; recheck duty, rank, stock-open state, position and dimension on open and every mutation; clear stale OnFracStock. See FRACTION_STOCK_SESSION_REVIEW.md.
+
+- [ ] INV-016: revoke Organization inventory session on interior exit and revalidate current organization/dimension/stock state on every mutation; test stale and concurrent remotes. See ORGANIZATION_STOCK_SESSION_REVIEW.md.
