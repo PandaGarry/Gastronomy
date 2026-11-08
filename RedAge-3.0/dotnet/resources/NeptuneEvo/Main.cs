@@ -4628,13 +4628,6 @@ namespace NeptuneEvo
                         }*/
                         if (!ServerSettings.IsBusinessTax) break;
                         if (!biz.IsOwner()) continue;
-                        if (biz.Mafia != -1)
-                        {
-                            var mafiaFractionData = Fractions.Manager.GetFractionData(biz.Mafia);
-                            if (mafiaFractionData != null)
-                                mafiaFractionData.Money += MafiaForBiz;
-                        }
-
                         int tax = Convert.ToInt32(biz.SellPrice / 100f * biz.Tax);
                         if (tax < 0)
                         {
@@ -4647,6 +4640,13 @@ namespace NeptuneEvo
                             continue;
                         }
                         biz.Zatratq += tax;
+
+                        if (biz.Mafia != -1)
+                        {
+                            var mafiaFractionData = Fractions.Manager.GetFractionData(biz.Mafia);
+                            if (mafiaFractionData != null)
+                                mafiaFractionData.Money += MafiaForBiz;
+                        }
 
                         var fractionData = Fractions.Manager.GetFractionData((int) Fractions.Models.Fractions.CITY);
                         if (fractionData != null)
