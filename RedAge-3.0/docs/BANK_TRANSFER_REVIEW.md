@@ -90,7 +90,7 @@ A further source patch was applied in `MoneySystem/Bank.cs`:
 
 The shared account lock is now also used for `GetBalance`, holder lookup by name, cache insertion after `Create`, removal from the account dictionary, and holder mutation. This prevents these dictionary lifecycle operations from interleaving with the locked transfer/change critical sections. `Create` validation and checked INT conversion, plus synchronized `GetBalance`, were already present in the current source and are retained.
 
-**Remaining escape hatch:** `Bank.Get(int)` still returns the mutable internal `Data` object. Its callers must be audited before changing the contract; direct writes to `Balance`, `IsSave`, `Holder` or `Revision` outside the lock would bypass synchronization. Account initialization is expected during startup; runtime reload semantics are not established.
+**Remaining escape hatch:** `Bank.Get(int)` and `Bank.Get(string)` now return snapshots copied under `AccountSync`, so callers cannot mutate the live `Data` through these lookup methods. The public `Bank.Accounts` dictionary still exposes mutable `Data` values; all direct external reads/writes to its properties require caller audit. Account initialization is expected during startup; runtime reload semantics are not established.
 
 Additional tests: [ ] concurrent transfer vs account removal; [ ] transfer vs holder rename; [ ] Create with negative/overflow balance and invalid type/empty holder; [ ] concurrent GetBalance during transfer; [ ] audit every `Bank.Get(int)` caller for direct mutable property writes.
 
@@ -104,3 +104,10 @@ A further persistence gap was fixed in source:
 - The account deletion queue is now a `ConcurrentQueue<int>`. The worker drains a batch and requeues failed deletes; if DB setup/batch processing fails, pending IDs are requeued. Repeating a DELETE for an already-deleted row is safe.
 
 **Remaining:** the worker still has a fixed 30-second polling interval; this is not a durable delete outbox, so queued deletes can still be lost on process crash. Account balance saves are still separate UPDATEs, not one transaction for both transfer legs. The mutable `Bank.Get(int)` data escape remains open. Validate DB reconnect, partial delete batch, crash/restart and write-volume/performance before closure.
+
+
+### Snapshot API regression
+
+- [ ] `Bank.Get(int)` and `Bank.Get(string)` return consistent snapshots while concurrent transfer/holder mutation occurs.
+- [ ] Mutating a returned snapshot does not mutate the live account or bypass dirty/revision tracking.
+- [ ] Audit direct `Bank.Accounts[id]` consumers for writes to Balance/Holder/IsSave/Revision outside AccountSync.
