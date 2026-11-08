@@ -476,3 +476,11 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - Retain required DB cases: successful payout followed by VehicleManager.Remove DB delete failure/delay, restart and replay; verify vehicle cannot be sold twice and wallet/vehicle row/cache/garage reconcile exactly once.
 - Test duplicate/concurrent confirmation, ticket added after offer, stale plate reuse and disconnect.
 - Static assertions passed for holder revalidation, positive-price guard and checked payout before removal. No C# build, RAGE staging or MySQL fault injection was run.
+
+## 2026-11-08 — VEH-001 self-repair regression additions
+
+- Force wallet debit false: vehicle must not be repaired and no success log/notification may occur.
+- Force RepairCar false (null vehicle, missing local data or injected repair exception): refund must be attempted; if refund fails, critical log must identify player UUID.
+- Verify success log and notification occur only after successful debit and repair.
+- Direct `dialogCallback("RepairMyVeh", true)` without a server-owned pending intent and from road/interior remains a required policy/security test; current patch does not close this authorization gap.
+- Verify all other RepairCar callers compile with the new bool return ignored; C# build and RAGE staging were not run.
