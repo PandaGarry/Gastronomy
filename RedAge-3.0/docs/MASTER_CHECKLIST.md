@@ -159,3 +159,5 @@
 
 - [ ] MONEY-017 — house purchase: validate bank, debit buyer before bank initialization/ownership, refund on bank-init failure; test shutdown, duplicate buyer, compensation failure and restart. See PROPERTY_PURCHASE_REVIEW.md.
 - [ ] MONEY-019 — hourly house/business tax: synchronized checked bank adjustment and side effects only after debit; test DB retry/restart, faction/city-hall credit consistency and repossession owner persistence (PROP-003). See PROPERTY_TAX_REVIEW.md.
+
+- [ ] **MONEY-053 — ATM cash/house deposit:** second-leg results checked and compensation attempted; validate regular deposit, withdrawal and house deposit under forced false/exception, compensation failure, replay/concurrency and DB restart. Keep open pending build/RAGE/MySQL tests. Business deposit is MONEY-039. See ATM_REVIEW.md.
