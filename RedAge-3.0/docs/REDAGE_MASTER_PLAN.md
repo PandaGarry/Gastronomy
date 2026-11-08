@@ -489,3 +489,10 @@ Implementation sequence: schema/deployed-engine verification → receipt DDL →
 - [ ] Treat bank transfers as a separate durable ledger operation: stable transfer ID, unique receipt, conditional source debit + destination credit in one explicitly owned InnoDB transaction, commit-before-success and cache publication after commit.
 - [ ] Enforce the checked-in signed `INT` balance range before `Bank.Change`/`Bank.Transfer` mutate cache, or approve a coordinated BIGINT schema/ORM/consumer migration. Do not let `Bank.Save` become the first range validator after a successful gameplay mutation.
 - [ ] Add failure injection between both transfer legs, duplicate/retry, concurrent conservation, INT boundary and restart tests. `MONEY-058/059` remain open; no implementation or runtime tests in this pass.
+
+
+### Fine/ticket settlement — MONEY-060 (2026-11-08)
+
+- [ ] Make fine confirmation fail closed: if wallet debit and bank fallback both fail, no city/officer payout, success event or paid log may run.
+- [ ] Replace prompt-time-only funds check with one-shot confirmation intent and durable idempotent fine settlement; test target spending between prompt and confirmation, both-debit failure, fallback success, replay and shutdown.
+- [ ] Keep this in the money-writer migration inventory; source fix is not yet applied and no runtime test has run.
