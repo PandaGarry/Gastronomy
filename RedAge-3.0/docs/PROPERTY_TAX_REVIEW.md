@@ -36,3 +36,5 @@ This is not a full bank/ATM or business-tax review. Owner-only ATM access and th
 The hourly house and business tax paths in `Main.cs` now call `Bank.ApplyBalanceAdjustment` rather than mutating `Bank.Accounts[id].Balance` directly. The helper serializes the arithmetic under `AccountSync`, checks overflow/current DB INT range, allows the legacy temporary-negative balance policy for tax/repossession, increments revision and marks the account dirty. Tax/faction/city-hall side effects occur only after the bank adjustment succeeds. This addresses the lost-dirty-flag bank-balance portion of MONEY-019.
 
 **Still open:** bank and faction/city-hall credits are not a single DB transaction/ledger; house repossession owner persistence remains separately tracked as PROP-003; DB failure/restart behavior is not tested. Static patch only.
+
+- Business tax follow-up: the Mafia faction credit is now applied only after `ApplyBalanceAdjustment` successfully debits the business bank. This prevents a failed bank debit from granting the associated Mafia tax share. City-hall/faction credits and bank debit still lack one durable cross-ledger transaction.
