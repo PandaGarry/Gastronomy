@@ -401,3 +401,11 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - Verify null/offline tent seller state is rejected before wallet effects.
 - Existing required but unexecuted MONEY-048 tests remain: buyer debit false/exception, seller credit false/exception, server-stop race, partial inventory transfer, duplicate/concurrent confirmation, disconnect/restart, and exact conservation of both balances and item counts.
 - Static source assertions passed for the new preflight guards only. No C# build, RAGE staging or MySQL fault-injection test was run.
+
+## 2026-11-08 — MONEY-037 house sale regression additions
+
+- Reject null/offline seller reference, missing seller session/character data and nonpositive pending price before any money or ownership mutation.
+- Verify the money log records distinct buyer and seller UUIDs (seller UUID must come from the seller character).
+- Force buyer debit false/exception and seller credit false/exception; current source still lacks result guards, so these remain required failures for the future durable settlement implementation.
+- Assert ownership is never transferred on failed settlement; verify duplicate/concurrent accept, seller disconnect, buyer disconnect, stale owner/offer and process restart recovery.
+- Static assertions passed for seller validation, positive-price guard and corrected seller UUID source. No C# build, RAGE staging or MySQL fault injection was run.
