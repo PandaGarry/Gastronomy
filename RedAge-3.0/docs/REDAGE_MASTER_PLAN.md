@@ -374,3 +374,9 @@ Static review found unchecked second legs in regular ATM cash deposit/withdrawal
 - **JOB-005:** revalidated all three AutoMechanic settlement paths. No source patch was applied because a local bool guard or call reorder cannot safely coordinate two wallets, business stock/revenue and vehicle repair/fuel state. Require durable one-shot service intent/receipt and restart reconciliation before applying gameplay effects. See MECHANIC_SERVICE_REVIEW.md.
 - **StreetRace:** revalidated that both StreetRaceFinished and ClearData ignore winner Wallet.Change results; ClearData removes the only in-memory race context even if payout rejects. Do not add a naive return/retry. Implement one durable race settlement receipt shared by finish/abort, idempotent payout and cleanup only after terminal receipt. See STREET_RACE_REVIEW.md.
 - New regression scenarios are in TEST_PLAN.md. These are static source findings; no C# build, RAGE runtime or MySQL failure injection was run.
+
+## 2026-11-08 — MONEY-048 bounded input hardening
+
+- Applied a narrow `Chars/Repository.cs` patch: tent purchases reject negative quantity, normalize the existing zero-to-one convention before stock/slot validation, require positive unit price, calculate total in `long` and reject totals outside the `Wallet.Change` Int32 contract; seller null/character state is checked before use.
+- This closes the local negative-quantity/unchecked-multiplication input window only. Buyer debit and seller credit results remain unchecked; item grant/BattlePass/success are not durably coordinated. Player trade still moves items before two unchecked cash legs. Keep MONEY-048 open for durable idempotent settlement and full tests.
+- Static assertions only; no C# build, RAGE staging or MySQL fault injection.
