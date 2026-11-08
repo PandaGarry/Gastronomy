@@ -100,3 +100,5 @@ The LoadOtherItemsData call-site search found these server container families. T
 Across these families, ItemsMove, ItemsMoveStack and ItemsUse remain shared mutation endpoints. Entry-time ACL checks are not a substitute for server-side validation of the current container intent, owner/object identity, player location/dimension, role/rank and allowed item/slot pairs. Keep INV-003 as the umbrella policy gap and concrete INV-012..014 findings as separate entry-point cases.
 
 - Organization stock: Organizations/Manager.cs checks organization status, stock-open state and InsideOrganizationID at open; RemovePlayer clears InsideOrganizationID without closing/revoking the container, while generic item mutations do not repeat membership/rank/stock state. Post-exit stale context is tracked as INV-016.
+
+- Furniture safes: Core/Selecting.cs objectSelected checks the object, range, InsideHouseID and owner/roommate/burglary access at open. HouseManager.RemovePlayer clears InsideHouseID on exit without closing the container; generic item mutations do not repeat those checks. Post-exit stale context is tracked as INV-017.
