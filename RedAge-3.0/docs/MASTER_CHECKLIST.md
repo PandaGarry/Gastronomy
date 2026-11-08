@@ -54,7 +54,7 @@
 - [ ] MONEY-035 — Faction/organization money withdrawal: check wallet credit result; atomic stock/player balance transfer.
 - [ ] MONEY-037 — Player-to-player house sale: buyer debit and seller credit must both succeed before ownership transfer; correct seller UUID in money log; idempotent offer settlement and crash/replay tests; see `HOUSE_SALE_REVIEW.md`.
 - [ ] MONEY-038 — Phone auction bid: reject nonpositive/out-of-policy bids; use checked `long` fee arithmetic so client `int` overflow can never turn a debit into a credit; test numeric boundaries, bank failures and replay/concurrency; see `AUCTION_REVIEW.md`.
-- [ ] MONEY-036 — Shared Wallet.Change: preserve long balance; remove int truncation and test every caller at numeric boundaries.
+- [ ] MONEY-036 — resolve wallet width contract: `CharacterData.Money` is long but DB `characters.money` is int(11); choose explicit Int32 cap or end-to-end BIGINT migration, then test checked arithmetic and persistence round-trip.
 - [ ] Review organization stock implementation against the same money/item settlement invariants.
 - [ ] MONEY-022/025/026 — business order dirty-save, unchecked cancel-refund result, quantity overflow, government-sale unchecked payout/ownership release and stale-BizID replay; include `JOB-004` Trucker payout settlement.
 - [ ] MONEY-003/004 — bank transfer replay и ATM policy/location.
