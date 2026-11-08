@@ -482,3 +482,5 @@
 - **Новый finding MONEY-055 (2026-11-08):** `Auction.Repository.ReturnMoney` не подтверждает online credit перед success effects; offline cash refund — SELECT/absolute UPDATE без receipt, coordinator и affected-row check, с login/cache race. Finding записан в economy review, issues, test plan и changelog. Source не менялся.
 
 - **Новый finding MONEY-056 (2026-11-08):** account merger sums cash/property valuations in signed INT without checked overflow and creates destination bank/character/assets before durable merge checkpoint/account-slot completion. Failure/replay may orphan or duplicate imported records and cashback. Added to economy review, issues, test plan and changelog; no source changes.
+
+- **Новый finding MONEY-057 (2026-11-08):** offline table-task cash award is a SQL-side increment, but no stable reward receipt/affected-row/range handling or login publication gate exists. Replay can duplicate award; login/full-save can overwrite it; exception can leave partial cash/item award set. Added docs/tests; source unchanged.
