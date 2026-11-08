@@ -449,3 +449,10 @@ The persisted cash column and generated model are signed INT while `CharacterDat
 ## 2026-11-08 — MONEY-002 detached batch hand-off
 
 Added snapshot-time `ActiveMoneyWrites` markers under `QueueLock`. This closes the specific race where a small wallet mutation after worker detach but before SQL start advanced the version, was not enqueued, and caused the detached snapshot to be skipped without a replacement. The marker is now cleared by normal worker completion or failed-batch requeue. The existing per-UUID semaphore/revision coordinator with `ExecuteCharacterSave` remains partial. Direct DB cash writers outside the coordinator, process-crash loss, retry policy, C# build and MySQL concurrency/fault tests remain open.
+
+
+## 2026-11-08 — MONEY-002 versioned wallet/save/worker coordination
+
+Expanded the previous detached-batch fix: Wallet.Change now mutates balance and advances revision under a shared striped monitor; Character.Save.Repository.SaveSql captures its money snapshot under that same monitor and serializes its SQL write through a per-stripe semaphore. Worker snapshots carry revisions, are marked in-flight at detach time, and are skipped/retried only while their version remains current. Small wallet changes during pending/detached worker or full-save writes are coalesced as the latest snapshot without making every small mutation an unconditional DB write.
+
+Still open: direct cash SQL writers outside this coordinator (including offline rewards/auction refund/admin/merger paths), durable outbox and process-crash recovery, retry backoff/dead-letter, C# build, multithreaded and MySQL fault-injection tests. See ECONOMY_REVIEW.md and TEST_PLAN.md.
