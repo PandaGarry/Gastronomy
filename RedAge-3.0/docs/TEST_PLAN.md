@@ -253,3 +253,9 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] Open each furniture safe type as owner, authorized roommate and through legitimate burglary; exit house and direct-call inventory.move, move.stack and use with other. All must reject without item/cache/DB mutation.
 - [ ] While the pane is open, revoke roommate furniture permission, transfer house ownership or remove/replace the furniture object; stale operations must reject.
 - [ ] Verify HouseManager.RemovePlayer revokes the other-container session before InsideHouseID is cleared; test CEF-only close, repeated exit, disconnect/reconnect and normal valid in-house use. Static review: FURNITURE_SAFE_SESSION_REVIEW.md; requires disposable RAGE/MySQL staging.
+
+## Remaining container audit tests — pending behavior confirmation
+
+- [ ] Warehouse: open the caller's own warehouse, exit to dimension 0, and verify whether personal storage access is intended to persist; if not, direct move/stack/use with other must reject outside postal storage and after quest expiry.
+- [ ] HeliCrash: verify current box index, key-clamp completion, active event generation and range on open and every item operation; leave range/replace/end event while pane is open and direct-call move/stack/use.
+- [ ] Weapon attachments and CarKey subcontainers: open from parent item, then move/drop/trade/delete/replace the parent; verify old context is revoked and cannot mutate weapon_<SqlId> or CarKey_<SqlId> after ownership changes.
