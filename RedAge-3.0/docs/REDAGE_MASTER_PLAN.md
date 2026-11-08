@@ -390,3 +390,9 @@ Static review found unchecked second legs in regular ATM cash deposit/withdrawal
 
 - Applied to both faction and organization `inputStocks`: cash deposits require successful wallet debit before increasing stock; cash withdrawals require successful wallet credit before decreasing stock. Success logs are now after the result guard.
 - This is an interim in-memory ordering/result patch only. It does not provide durable atomicity, replay protection, concurrency control or crash recovery. STOCK-001 item cargo transfer paths remain open. Static-only; no build/RAGE/MySQL tests.
+
+## 2026-11-08 — STOCK-001 exact quantity contract
+
+- Revalidated organization stock withdrawals alongside faction and vehicle cargo. Item grants still ignore AddNewItem result.
+- Confirmed AddNewItem may return a successful slot even when requested quantity was only partially inserted; `-1` is not the only failure signal. `Remove` returns void and suppresses exceptions, so the current callers cannot establish exact consumption.
+- No unsafe item/cargo patch was applied. Require exact-count inventory APIs or durable intent/receipt with quantity-delta verification and compensation. MONEY-035 cash branches are separately guarded. STOCK-001 remains open; static-only.
