@@ -511,3 +511,13 @@ Implementation sequence: schema/deployed-engine verification → receipt DDL →
 - The inspected v3.3.0 API uses synchronous `BeginTransaction(IsolationLevel)` and asynchronous `DataConnectionTransaction.CommitAsync/RollbackAsync`; do not assume a newer `BeginTransactionAsync` API exists.
 - The durable coordinator must use one `ServerBD` context/transaction for receipt + cash delta. Provider/connection mixing is prohibited. Runtime provider verification and rollback/duplicate/commit-ack fault tests remain required.
 - Details: `ECONOMY_REVIEW.md`. This is API reconnaissance, not a coordinator implementation.
+
+
+### MONEY-002 — first receipt schema and transaction protocol candidate (design only, 2026-11-08)
+
+- Candidate receipt table: character_cash_operations with globally unique ASCII operation_id (<=96), character_uuid, operation_type, signed BIGINT delta, signed-INT balance_after and created_at; InnoDB, no FK so replay receipts survive character deletion/merge. Exact DDL is documented in ECONOMY_REVIEW.md and is not yet a migration.
+- Transaction owner: one ServerBD/DataConnection and one explicit linq2db transaction. Insert unique receipt, conditional bounded cash delta, read resulting balance, fill receipt result and commit. Receipt and cash mutation must commit/rollback together.
+- Retry: same operation ID + same payload returns stored result; same ID + different payload is IdempotencyConflict. Lost commit acknowledgement is OutcomeUnknown and must retry/reconcile with the same ID, never mint a new one.
+- Cache: shared per-UUID async gate spans transaction and online cache publication; login holds it from authoritative DB read through SetCharacterData. DB commit is authoritative if cache refresh fails.
+- Typed outcomes are required; bool is not sufficient. Character creation INSERT is initialization. Generic SaveSql and detached Money worker must stop writing cash after migration.
+- Migration runner/deployment path and exact provider affected-row semantics are not yet verified. No DDL/source implementation or DB test in this stage. Do not deploy the candidate table until migration, backup and rollback procedures are approved.
