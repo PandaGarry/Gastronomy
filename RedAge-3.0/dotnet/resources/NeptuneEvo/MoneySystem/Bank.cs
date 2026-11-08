@@ -394,10 +394,13 @@ namespace NeptuneEvo.MoneySystem
                 data.Type = type;
                 data.Holder = holder;
                 data.Balance = databaseBalance;
-                if (!Accounts.TryAdd(moneyId, data))
+                lock (AccountSync)
                 {
-                    Log.Write($"Create failed to register inserted account in cache [bank:{moneyId}]", nLog.Type.Error);
-                    return 0;
+                    if (!Accounts.TryAdd(moneyId, data))
+                    {
+                        Log.Write($"Create failed to register inserted account in cache [bank:{moneyId}]", nLog.Type.Error);
+                        return 0;
+                    }
                 }
 
                 Log.Write($"Created new Bank Account! ID:{moneyId}", nLog.Type.Success);
@@ -413,22 +416,24 @@ namespace NeptuneEvo.MoneySystem
         {
             try
             {
-                if (!Accounts.ContainsKey(bankId))
-                    return;
-                Accounts.TryRemove(bankId, out _);
-                
+                lock (AccountSync)
+                {
+                    if (!Accounts.TryRemove(bankId, out _))
+                        return;
+                }
+
                 Database.Models.Bank.OnDell(bankId);
-                
                 Log.Write("Bank account deleted! ID:" + bankId, nLog.Type.Warn);
             }
             catch (Exception e)
             {
-                Log.Write($"Remove Exception: {e.ToString()}");
+                Log.Write($"Remove Exception: {e}");
             }
         }
         public static Data Get(string holder)
         {
-            return Accounts.FirstOrDefault(A => A.Value.Holder == holder).Value;
+            lock (AccountSync)
+                return Accounts.FirstOrDefault(A => A.Value.Holder == holder).Value;
         }
 
         public static Data Get(int bankId)
@@ -450,14 +455,14 @@ namespace NeptuneEvo.MoneySystem
 
                 foreach (int id in toChange)
                 {
-                    if (Accounts.ContainsKey(id))
+                    lock (AccountSync)
                     {
-                        lock (AccountSync)
+                        if (Accounts.TryGetValue(id, out var account) && account.Holder == oldName)
                         {
-                            Accounts[id].Holder = newName;
-                            Accounts[id].IsSaveHolder = true;
-                            Accounts[id].IsSave = true;
-                            Accounts[id].Revision++;
+                            account.Holder = newName;
+                            account.IsSaveHolder = true;
+                            account.IsSave = true;
+                            account.Revision++;
                         }
                     }
                 }
