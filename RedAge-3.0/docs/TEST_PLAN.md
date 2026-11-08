@@ -682,3 +682,14 @@ Static source review only. These tests require a disposable MariaDB database and
 - [ ] Commit once, simulate lost acknowledgement, retry the same operation ID; assert one receipt and one cash delta.
 - [ ] Confirm every command uses the same `ServerBD` connection/transaction; a separate `MySqlConnector` connection must not participate in this transaction.
 - Статус: design/API reconnaissance only; no MariaDB instance or transaction test was run.
+
+
+### MONEY-002 — direct cash writer map revalidation (2026-11-08)
+
+- [ ] Verify Character.Save.Repository.AddMoney with concurrent same-UUID calls, NULL cash, missing UUID, lower/upper INT bounds, DB exception and lost commit acknowledgement. The current SELECT/absolute UPDATE must not be treated as atomic.
+- [ ] Force login between every offline writer's initial online-presence check and DB mutation; pause between character SELECT and SetCharacterData; verify DB and published cache converge.
+- [ ] Cover the separate writers: auction offline refund; referral online/offline cash leg; business repossession online/offline payout; admin offline grant; offline table-task SQL increment. Re-run the same stable logical operation after restart and after ambiguous commit acknowledgement; assert one cash delta.
+- [ ] Merger import: inject failure after destination character INSERT and during later organization conversion cash UPDATE; retry the same merge identity and assert no duplicate destination cash/assets or overwrite of unrelated balance changes. Check aggregate arithmetic before narrowing.
+- [ ] Verify generic SaveSql and detached worker cannot overwrite a committed coordinator delta during rollout; after cutover assert neither path writes characters.money.
+- [ ] Verify character creation's initial cash INSERT is treated as initialization, while character load's DB-read-to-SetCharacterData publication interval is protected by the same per-UUID gate.
+- Status: static source revalidation only. No C# build, MariaDB transaction, concurrency, restart or RAGE staging test was run.
