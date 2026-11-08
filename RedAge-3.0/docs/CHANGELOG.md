@@ -435,3 +435,8 @@
 
 - `Main.cs`: validate seller/price; check seller wallet credit before vehicle holder mutation; attempt buyer refund on seller-credit rejection and critically log failed compensation.
 - Static assertions passed. Durable idempotent receipt, async holder DB retry/reconciliation and all RAGE/MySQL tests remain pending.
+
+## 2026-11-08 — MONEY-044 acceptance preflight guard
+
+- `Core/Businesses.cs`: validate pending offer, seller reference/character/session, positive price and current business ID before transfer logic.
+- Core settlement remains unsafe: owner/BizIDs mutate before unchecked buyer debit and seller credit. Durable transaction/receipt required. Static assertions only; no build/RAGE/MySQL tests.
