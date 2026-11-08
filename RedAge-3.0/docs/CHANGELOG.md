@@ -280,3 +280,10 @@
 - Traced vehicleSelected branch 3 → LoadOtherItemsData → generic inventory move/stack/use remotes. Initial 5m/trunk-open gate is not revalidated on each item mutation; the generic item methods rely on InventoryOtherLocationName and do not bind it to current vehicle/access/range/dimension/door state.
 - Registered INV-012 with an explicit policy caveat: whether any nearby player may loot a physically open trunk requires gameplay-owner confirmation; stale session and missing per-operation range/context checks remain the concern. Created VEHICLE_TRUNK_ACCESS_REVIEW.md and updated inventory/issue/test/checklist/coverage/index/roadmap/handoff docs.
 - Static-only; no source patch, C# build, RAGE runtime or DB fault injection.
+
+
+## 2026-11-08 — VEH-012 vehicle trunk reservation cleanup
+
+- Traced CEF closeOther → client bridge → inventory.otherclose → Repository.OtherClose. The server clears InventoryOtherLocationName but leaves SelectedVeh and BagInUse; only full ItemsClose and disconnect currently release the reservation.
+- Registered VEH-012 and created VEHICLE_TRUNK_LIFECYCLE_REVIEW.md; linked it to INV-012 while keeping authorization and cleanup findings separate.
+- Static-only; no source changes, C# build, RAGE runtime or DB tests.
