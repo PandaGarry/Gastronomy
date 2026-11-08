@@ -1441,20 +1441,33 @@ namespace NeptuneEvo.Houses
                             Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, $"Недвижимость, которую Вы покупаете, имеет {maxcars} машиномест, продайте лишние машины", 3000);
                             return;
                         }*/
-                        long previousHouseBalance = MoneySystem.Bank.GetBalance(house.BankID);
-                        long initialHouseBalance = (long)Convert.ToInt32(house.Price / 100f * HouseManager.HouseTax) * 2;
-                        if (!MoneySystem.Bank.SetBalance(house.BankID, initialHouseBalance))
+                        if (house.Price <= 0)
                         {
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.CanNotTransact), 3000);
+                            return;
+                        }
+
+                        var propertyBank = MoneySystem.Bank.Get(house.BankID);
+                        if (propertyBank == null || propertyBank.Type == 1)
+                        {
+                            MoneySystem.Bank.Log.Write($"House purchase rejected: invalid property bank [house:{house.ID}, bank:{house.BankID}]");
                             Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось создать банковский баланс объекта. Покупка отменена.", 3000);
                             return;
                         }
 
-                        // Debit before changing ownership or emitting purchase side effects.
+                        long initialHouseBalance = checked((long)Convert.ToInt32(house.Price / 100f * HouseManager.HouseTax) * 2L);
+                        // Debit first; do not overwrite an existing property balance just to preflight the account.
                         if (!MoneySystem.Wallet.Change(player, -house.Price))
                         {
-                            if (!MoneySystem.Bank.SetBalance(house.BankID, previousHouseBalance))
-                                MoneySystem.Bank.Log.Write($"House purchase rollback failed [house:{house.ID}, bank:{house.BankID}]");
                             Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось списать оплату. Покупка отменена.", 3000);
+                            return;
+                        }
+
+                        if (!MoneySystem.Bank.SetBalance(house.BankID, initialHouseBalance))
+                        {
+                            if (!MoneySystem.Wallet.Change(player, house.Price))
+                                MoneySystem.Bank.Log.Write($"CRITICAL: house purchase refund failed [player:{characterData.UUID}, house:{house.ID}, price:{house.Price}]");
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось создать банковский баланс объекта. Покупка отменена.", 3000);
                             return;
                         }
 
