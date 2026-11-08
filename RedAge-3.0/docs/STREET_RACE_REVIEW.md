@@ -56,7 +56,7 @@ No C# build, RAGE runtime, MySQL fault injection or live exploit test has been r
 - This is a minimal authorization hardening patch. It does not prove a race was driven legitimately, and it does not make payout durable/idempotent.
 
 ### Residual risks
-- `StreetRacePosition` still receives client-supplied waypoint coordinates. Validate finite/plausible coordinates and minimum distance server-side; client-side waypoint checks are not sufficient.
+- `StreetRacePosition` still receives client-supplied waypoint coordinates. It now rejects NaN/Infinity, refuses waypoint changes after race activation, and enforces the same >50m minimum distance that the client UI intended. A world/map bounds policy is not defined; staging must verify out-of-map coordinates are handled safely.
 - Winner `Wallet.Change` result remains unchecked. Wallet's bool contract is not a durable settlement receipt; do not add naive retries without resolving possible mutation-before-false behavior.
 - `ClearData` also pays the winner on death/vehicle-exit/abort paths and ignores the wallet result.
 - No per-race durable settlement record, crash recovery, or exactly-once payout exists.
@@ -68,5 +68,5 @@ No C# build, RAGE runtime, MySQL fault injection or live exploit test has been r
 3. Enter server-side finish radius while active: normal finish path remains available.
 4. Invoke finish from the non-winning participant at finish: confirm gameplay policy; if either participant can claim, race design needs authoritative winner validation.
 5. Replay and concurrent finish callbacks: no duplicate payout or duplicate progression.
-6. Send NaN/Infinity/implausible waypoint coordinates to `server.streetrace.position`; server must reject.
+6. Send NaN/Infinity waypoint coordinates and a waypoint <=50m from the creator to `server.streetrace.position`; server must reject. Verify valid waypoint and out-of-map boundary behavior.
 7. Inject Wallet false/exception, disconnect, shutdown and restart around winner payout and `ClearData`; verify exact balances and recoverability.
