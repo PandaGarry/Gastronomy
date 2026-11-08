@@ -70,3 +70,15 @@ No C# build, RAGE runtime, MySQL fault injection or live exploit test has been r
 5. Replay and concurrent finish callbacks: no duplicate payout or duplicate progression.
 6. Send NaN/Infinity waypoint coordinates and a waypoint <=50m from the creator to `server.streetrace.position`; server must reject. Verify valid waypoint and out-of-map boundary behavior.
 7. Inject Wallet false/exception, disconnect, shutdown and restart around winner payout and `ClearData`; verify exact balances and recoverability.
+
+ 
+## 2026-11-08 follow-up — winner payout failure path revalidated
+
+Current branch source still has two unchecked payout paths:
+
+- `StreetRaceFinished`: after checking active race and the server-side 10m finish radius, it calls `Wallet.Change(player, cost)` but ignores the bool result. It then marks the race inactive, notifies both participants, calls `ClearData` for the loser and advances BattlePass rewards. If the winner credit is rejected, the race can be consumed without confirmed payout.
+- `ClearData`: when `Status` is true, it calls `Wallet.Change(WinPlayer, rate * 1.8)` and ignores the result; regardless, it removes both player mappings and the race record. Death/vehicle-exit abort can therefore discard the only in-memory context needed to retry a rejected payout.
+
+These are statically confirmed current-branch result/order defects; no failure was injected. Do not patch by simply returning on `false`: `ClearData` is called from multiple lifecycle paths, and a retained active race may be stale or repeatedly settle; conversely clearing it loses the payout. Required fix is a durable, uniquely keyed winner/abort receipt with an explicit terminal state and idempotent payout worker, then remove race state only after receipt persistence. Finish and abort must share the same settlement key/lock so they cannot both pay.
+
+Regression additions: force winner `Wallet.Change=false` on normal finish and on death/vehicle exit; verify the receipt remains pending, no duplicate payout on repeated finish/abort/reconnect/restart, and both mappings/state are cleaned only after durable terminal settlement. Test concurrent finish vs `ClearData`, offline winner and DB failure between receipt creation and wallet projection.
