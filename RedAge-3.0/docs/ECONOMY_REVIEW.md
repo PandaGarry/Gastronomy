@@ -423,3 +423,31 @@ This is useful evidence that a transaction-backed coordinator is compatible with
 **Исправление (не внедрено):** идентифицировать reward как `table-task:{season/task-cycle}:{uuid}:{awardId}`; в одной транзакции записывать unique receipt и conditional balance increment с явной NULL/range policy. Встроить login publication gate/общий coordinator. Для mixed item/cash awards использовать durable per-award journal и resume только незавершённых legs.
 
 **Тесты:** повтор/конкурентная обработка одного offline reward; player login between list construction and UPDATE; NULL, INT_MAX и overflow при разных SQL modes; affectedRows=0; failure посреди cash/item award list и restart; проверка exactly-once per reward ID. Static review only; source/build/DB/RAGE tests not run.
+
+
+## MONEY-058 — bank transfer is atomic only in cache, not in durable storage
+
+**Приоритет: высокий; статически подтверждён разрыв между in-memory mutation и persistence, crash outcome не воспроизведён.**
+
+Файлы: `MoneySystem/Bank.cs` (`Transfer`, `Save`), `Database/Models/Bank.cs` (`Worker`).
+
+- `Bank.Transfer` валидирует обе записи и меняет source/destination balances внутри одного `AccountSync` lock; обе записи получают `Revision++` и `IsSave=true`. Это защищает от конкурентного изменения cache в пределах процесса, но не создаёт DB transaction.
+- Фоновый `Database.Models.Bank.Worker` получает список dirty IDs и вызывает `Bank.Save(db, bankId)` для каждого счёта отдельно. `Save` выполняет отдельный `UPDATE money ... WHERE id=...`; между двумя update нет общей transaction или transfer receipt.
+- Поэтому отказ/аварийное завершение после durable update одной стороны, но до второй, оставляет split transfer в БД. После restart одна сторона может сохранить списание/зачисление без парной операции. Порядок зависит от перечисления dirty IDs и worker timing; это условный crash window, не runtime reproduction.
+- Успешный `Bank.Transfer` означает только cache mutation + enqueue через dirty flags; он не означает, что обе стороны durable committed.
+
+**Исправление:** один transfer operation ID; одна InnoDB transaction, conditional source debit и destination credit, unique receipt и commit до success notification; кэш обновлять после commit либо иметь явный pending/recovery protocol. Не пытаться считать две независимые `Bank.Save` записи одной транзакцией только потому, что они используют один `ServerBD` context.
+
+**Regression:** injected failure/crash после source update и до destination update; restart и ledger reconciliation; duplicate/replayed transfer ID; concurrent transfers involving shared accounts; assert total conservation and exactly-once result. Static-only; no build/DB/RAGE tests.
+
+## MONEY-059 — cached bank balance can exceed the SQL signed INT range
+
+**Приоритет: средний; статически подтверждён mismatch между mutation validation и persistence validation.**
+
+- `Bank.Change` и `Bank.Transfer` use checked `long` arithmetic and reject negative/long overflow, but do not reject a resulting balance above `Int32.MaxValue`.
+- The checked-in schema snapshot declares `money.balance` as signed `INT`. `Bank.Save` later converts the snapshot to `Int32`; on overflow it logs and returns without clearing `IsSave`. The account remains dirty and cannot be persisted through this path.
+- Consequently a credit/transfer can return `true` and mutate the live cache beyond the DB-supported range; subsequent operations may observe the inflated value, while restart reloads the older persisted balance. This is a reachable boundary in source arithmetic, not proof of a naturally occurring live balance.
+
+**Исправление:** enforce the actual DB range before mutating cache and before notifications/logging, or perform a coordinated schema migration to BIGINT across ORM models, SQL dump, migrations, API consumers, serialization and UI. Define whether `Int32.MaxValue` is a hard economy cap.
+
+**Regression:** credit to exactly `Int32.MaxValue`, one unit above, transfer destination overflow, rejected operation leaves both balances unchanged, dirty flags unchanged, and restart matches DB. Static-only; no build/DB/RAGE tests.
