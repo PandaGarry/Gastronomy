@@ -470,3 +470,9 @@
 - Следующий шаг: закончить inventory всех cash writers (включая admin, business-sale/tax, account import и прямые `characters.money` writes), затем утвердить coordinator API + transaction ownership + login publication gate + legacy worker removal. Не внедрять частичный SQL increment и не закрывать MONEY-002.
 
 - **Новый finding MONEY-054 (2026-11-08):** `Main.CheckMyPromoCode` сохраняет `Refferals.Success=true` и RB/VIP до cash leg. При выходе cash reward за signed INT range код только логирует отказ; DB failure между независимыми writes также оставляет частичную выдачу. Добавлены записи в `ECONOMY_REVIEW.md`, `ISSUES.md`, `TEST_PLAN.md`, `CHANGELOG.md`. Source не менялся; нужен durable referral settlement с уникальным reward ID и recovery.
+
+
+## Дополнение — property repossession cash writer
+
+- В `Main.payDayTrigger` найден ещё один прямой bypass: business tax repossession. Online wallet payout result ignored; offline branch asynchronously SELECTs cash/Biz and absolute-writes both, while business bank reset and owner clear proceed without awaiting payout. Это окно потери/повтора выплаты и login/cache race. House repossession delegates offline cash to `Character.Save.Repository.AddMoney` и наследует её ограничения.
+- Включены regression cases для business/house repossession, DB failure, login race, restart ordering и повторной обработки tax-period identity. Source code не менялся; build/DB/RAGE tests не запускались.
