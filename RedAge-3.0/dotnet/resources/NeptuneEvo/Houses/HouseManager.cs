@@ -2997,14 +2997,25 @@ namespace NeptuneEvo.Houses
                 var characterData = player.GetCharacterData();
                 if (characterData == null) return;
                 ExtPlayer seller = sessionData.SellItemData.Seller;
-                var sellerSessionData = seller.GetSessionData();
-                if (sellerSessionData == null) return;
-                int price = sessionData.SellItemData.Price; 
-                var sellerCharacterData = player.GetCharacterData();
-                if (sellerCharacterData == null)
+                if (seller == null || !seller.IsCharacterData())
                 {
                     sessionData.SellItemData = new SellItemData();
                     Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.SellerNotOnline), 3000);
+                    return;
+                }
+                var sellerSessionData = seller.GetSessionData();
+                var sellerCharacterData = seller.GetCharacterData();
+                if (sellerSessionData == null || sellerCharacterData == null)
+                {
+                    sessionData.SellItemData = new SellItemData();
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.SellerNotOnline), 3000);
+                    return;
+                }
+                int price = sessionData.SellItemData.Price;
+                if (price <= 0)
+                {
+                    sellerSessionData.SellItemData = new SellItemData();
+                    sessionData.SellItemData = new SellItemData();
                     return;
                 }
                 if (GetHouse(player, true) != null)
