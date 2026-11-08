@@ -206,3 +206,11 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] After opening, move beyond 5m, change dimension, close trunk, despawn/replace vehicle, revoke keys or leave faction/organization; direct `server.gamemenu.inventory.move`, `.move.stack` and `.use` with `other` must reject without item/cache/DB mutation.
 - [ ] Test `vehicleSelected` branch 3 with foreign plate/entity, open/closed trunk, dead vehicle, invalid vehicle class and simultaneous BagInUse; ensure no unauthorized session is issued.
 - [ ] Verify every close/revoke/timeout/disconnect path clears InventoryOtherLocationName and SelectedVeh/BagInUse; no stale container survives reconnect or vehicle replacement. Static review: VEHICLE_TRUNK_ACCESS_REVIEW.md; requires RAGE and disposable MySQL staging.
+
+
+## VEH-012 — vehicle trunk reservation cleanup (pending staging)
+
+- [ ] Open a vehicle trunk, close only the auxiliary/other pane while leaving the main inventory open; assert the old vehicle's `BagInUse` is released and `SelectedVeh` cleared, then verify a second player can open the trunk.
+- [ ] Open a vehicle trunk and switch directly to another `LoadOtherItemsData` container; verify the old reservation is released before the new context is installed.
+- [ ] Verify full inventory close, disconnect, vehicle deletion and repeated close release exactly once without exceptions.
+- [ ] Race two players for one trunk; a stale close from the former reservation owner must not clear a newer owner's reservation. Static review: VEHICLE_TRUNK_LIFECYCLE_REVIEW.md; requires RAGE staging.
