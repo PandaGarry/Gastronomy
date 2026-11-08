@@ -219,3 +219,11 @@
 
 - Audited deleteBusinessCommand: DB row is deleted before a null-unsafe owner lookup; offline/government owner can throw before BizList/world cleanup and intended offline BizIDs branch. Registered BUG-002. Online owner branch ignores Wallet.Change refund result before business removal; registered MONEY-047.
 - Extended BUSINESS_OWNERSHIP_REVIEW.md and updated issue register, checklist, test plan, coverage, index, roadmap, changelog and handoff. Static-only; RAGE/admin/DB failure tests not performed.
+
+
+## 2026-11-08 continuation — PET-001 pet-shop remote
+
+- Found petshopBuy accepts any existing TempBizID without requiring a Type==14 business, nearby active session or one-shot intent; it teleports before checking house eligibility, does not clear TempBizID after success and persists unvalidated petName. Registered PET-001 and created PETSHOP_REMOTE_REVIEW.md.
+- Expanded MONEY-045: tfuel and price are computed before the government quota clamp; stock reservation receives clamped liters while the vehicle receives stale pre-clamp fuel amount. Added regression assertions.
+- Updated ISSUES, MASTER_CHECKLIST, TEST_PLAN, AUDIT_COVERAGE, INDEX, ROADMAP, CHANGELOG and SESSION_HANDOFF. Static-only; no source patch/build/RAGE/CEF/DB tests.
+- Next: continue business stock/service callers and inventory/remote authorization; avoid duplicating STOCK-002, MONEY-045, VEH-009 and PET-001.
