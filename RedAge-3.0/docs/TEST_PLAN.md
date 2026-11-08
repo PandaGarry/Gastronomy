@@ -190,3 +190,11 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] No house, unsupported house type and no PetPosition must reject before teleport/payment.
 - [ ] Missing food product, zero/negative price, stock shortage, owner-bank failure and customer Wallet.Change=false/exception must leave house, character, stock and balances unchanged.
 - [ ] Duplicate/concurrent confirmation and replay after success must result in at most one charge and one pet-state mutation; restart after each settlement boundary must reconcile exactly once. Static review: PETSHOP_REMOTE_REVIEW.md; requires disposable RAGE/CEF/MySQL staging.
+
+
+## VEH-010 — LS Customs tuning session authorization (pending staging)
+
+- [ ] Enter organization tuning (eventType 1), exit, then directly call server.custom.buy in an accessible personal vehicle away from LS Customs; reject without stock, bank, wallet, customization or position changes.
+- [ ] Test no-session, stale/deleted/non-Type==12 business, moved-away, dimension change, vehicle swap, disconnect/reconnect and duplicate/concurrent buy callbacks.
+- [ ] Confirm all exit event types 0/1/2 consume and clear the tuning intent and TuningShop; verify Character.Repository position resolution never uses stale tuning state.
+- [ ] Verify organization tuning saves only organization customization and cannot route into personal business-stock purchase. Run STOCK-002 wallet/stock failure matrix for the tuning path. Static review: TUNING_REMOTE_REVIEW.md; requires disposable RAGE/MySQL staging.
