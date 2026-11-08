@@ -1193,9 +1193,15 @@ namespace NeptuneEvo.Core
                             return;
                         }
                         
-                        var money = Convert.ToInt32(character.Money) + amount;
-                        if (money < 0) 
-                            money = 0;
+                        long updatedMoney = Convert.ToInt32(character.Money) + (long)amount;
+                        if (updatedMoney < 0)
+                            updatedMoney = 0;
+                        if (updatedMoney > int.MaxValue)
+                        {
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Баланс превысит допустимый предел", 3000);
+                            return;
+                        }
+                        int money = (int)updatedMoney;
                         
                         GameLog.Money($"player({characterData.UUID})", $"player({character.Uuid})", amount, "admin");
                         GameLog.Admin($"{sessionData.Name}", $"offGiveMoney({amount})", $"{name}");
