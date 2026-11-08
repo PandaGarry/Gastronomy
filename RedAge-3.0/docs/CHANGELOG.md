@@ -490,3 +490,10 @@
 - Wallet.Change advances revision on every mutation. Small changes are coalesced into the queue only when a batch/save is pending or in-flight, preserving the existing eager-write threshold otherwise.
 - Detached batches are marked in-flight at snapshot time to close the gap before worker SQL setup.
 - Remaining direct DB cash writers and durable outbox/restart recovery are not yet covered. Static checks only; no compiler, concurrency or DB tests.
+
+
+## 2026-11-08 — MONEY-002 failed-write retry hand-off
+
+- Fixed a race in `Database/Models/Money.MoneyUpdate`: on SQL failure, a detached row now retains its `ActiveMoneyWrites` marker until `Worker` registers the failed batch for retry. Successful and superseded rows still release the marker after the UUID semaphore is released.
+- This prevents a small wallet mutation in the failure-to-requeue interval from being omitted from the queue. Added deterministic interleaving and multi-row failure test cases.
+- Static source review only; no compiler, DB fault injection or concurrency stress test has run. Direct SQL money writers remain open.
