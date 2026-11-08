@@ -148,8 +148,7 @@
 - [ ] MONEY-050 — driving school: require successful wallet debit before granting any of six licenses or applying quest/faction/log/success side effects; validate all six failure paths and shutdown race. See `DRIVING_SCHOOL_REVIEW.md`.
 - [ ] MONEY-049 — Metro ticket: checked `long` price calculation and require successful wallet debit before logging/success/dimension transition; test negative/zero/overflow inputs and wallet rejection. See `METRO_REVIEW.md`.
 - [ ] MONEY-048 — partial source patch: tent `ItemBuy` rejects negative quantity and invalid/overflow price before side effects; seller reference is checked. Still implement durable one-shot settlement/receipt, check buyer debit and seller credit before item movement/BattlePass/success, and fix `ConfirmTrade` item-before-cash ordering. Test quantity/overflow, shutdown/failure/replay/concurrency/restart. See `PLAYER_TRADE_REVIEW.md`.
-\n\n- [ ] MONEY-003 — bank transfer: one-shot ATM confirmation; source ownership revalidation; synchronized two-account mutation; positive amount and checked arithmetic; revision-aware retryable persistence. Keep open until build, DB fault-injection, concurrency and RAGE replay tests pass. See BANK_TRANSFER_REVIEW.md.
-- [ ] MONEY-002 — проверить частичный patch очереди денег: C# build; concurrent producers/snapshot; partial DB failure/retry; newer-value-wins; disconnect/reconnect; crash/restart loss. После этого спроектировать durable outbox, retry backoff и dead-letter. См. `ECONOMY_REVIEW.md`.\n
+\n\n
 - [ ] BANK-SAVE — verify revision-aware save retry under DB outage, concurrent mutations and INT range boundaries; durable ledger/outbox still required for crash consistency. See BANK_TRANSFER_REVIEW.md.
 
 
