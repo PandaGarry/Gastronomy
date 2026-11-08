@@ -476,3 +476,5 @@
 
 - В `Main.payDayTrigger` найден ещё один прямой bypass: business tax repossession. Online wallet payout result ignored; offline branch asynchronously SELECTs cash/Biz and absolute-writes both, while business bank reset and owner clear proceed without awaiting payout. Это окно потери/повтора выплаты и login/cache race. House repossession delegates offline cash to `Character.Save.Repository.AddMoney` и наследует её ограничения.
 - Включены regression cases для business/house repossession, DB failure, login race, restart ordering и повторной обработки tax-period identity. Source code не менялся; build/DB/RAGE tests не запускались.
+
+- **MONEY-002 schema check (2026-11-08):** retrieved the full checked-in SQL dump (MariaDB 10.10.2 header). `characters`, `money`, `accounts`, `refferals` and `lottery` are declared InnoDB; `characters.money` is nullable signed INT and `money.balance` non-null signed INT. This supports the design direction but is not proof of deployed schema. Disposable import + `SHOW CREATE TABLE` + actual environment verification still required. No DB was started or modified.
