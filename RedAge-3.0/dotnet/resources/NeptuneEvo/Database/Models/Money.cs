@@ -135,10 +135,6 @@ namespace NeptuneEvo.Database.Models
                         foreach (var saveData in moneyBatch)
                             ActiveMoneyWrites.Add(Convert.ToInt32(saveData[0]));
                         MoneyUpdateList.Clear();
-                        // Detached snapshots remain in-flight until processed or requeued.
-                        // A small wallet change during this window must replace the old snapshot.
-                        foreach (var saveData in moneyBatch)
-                            ActiveMoneyWrites.Add(Convert.ToInt32(saveData[0]));
                     }
 
                     if (donateBatch.Count > 0 || moneyBatch.Count > 0)
@@ -255,7 +251,6 @@ namespace NeptuneEvo.Database.Models
                     if (GetMoneyVersion(uuid) == version && !MoneyUpdateList.ContainsKey(uuid))
                         MoneyUpdateList[uuid] = saveData;
                     // A failed context/batch must not leave a phantom in-flight marker.
-                    ActiveMoneyWrites.Remove(uuid);
                     ActiveMoneyWrites.Remove(uuid);
                 }
             }
