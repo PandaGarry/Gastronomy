@@ -559,3 +559,7 @@
 - 2026-11-08 — Добавлен MONEY-056: account merger aggregates money in signed INT without checked overflow and lacks durable merge checkpoint/idempotency across bank/character/assets/cashback steps. Source unchanged; tests pending.
 
 - 2026-11-08 — Добавлен MONEY-057: offline table-task reward uses SQL-side increment (avoids application-side lost update) but has no stable receipt, affected-row/range handling or login cache gate; replay and partial-award recovery remain unsafe. Source unchanged; tests pending.
+
+- 2026-11-08 — MONEY-058: documented that Bank.Transfer's two-account cache mutation is not a durable DB transaction; background worker saves each account separately, leaving a conditional one-sided crash window. No runtime crash reproduction.
+- 2026-11-08 — MONEY-059: documented signed INT mismatch: Bank.Change/Transfer permit long balances beyond schema range, while Bank.Save rejects conversion and leaves the account dirty. Boundary tests pending.
+- 2026-11-08 — Reconciled MONEY-019/MONEY-040 status: reviewed house/business hourly tax paths now use ApplyBalanceAdjustment and dirty the bank account; durable cross-ledger tax settlement and repossession owner/payout issues remain open.
