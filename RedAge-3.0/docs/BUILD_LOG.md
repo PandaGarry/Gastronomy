@@ -100,3 +100,12 @@
 - Re-read the current branch documentation index, status guide and roadmap; checked relative Markdown links in `INDEX.md`, `DOCS_STATUS.md` and `ROADMAP.md` against the current `docs/` directory listing (86 files).
 - Result: 0 missing relative links in the checked documents. Reconciled ticket intent replay (MONEY-033) and failed-debit payout (MONEY-060) into separate issue/review/test entries; shortened `SESSION_HANDOFF.md` and consolidated repeated money-persistence status in `ROADMAP.md`.
 - Documentation/static-source checks only; no C# build, DB or RAGE runtime test was performed.
+
+
+### 2026-11-08 — MONEY-002 direct cash writer inventory revalidation
+
+- Re-fetched active-branch Wallet.cs, Database/Models/Money.cs, Character/Save/Repository.cs, Character/Load/Repository.cs, Character/Create/Repository.cs, Accounts/Merger/Repository.cs and traced named callers.
+- Confirmed the direct-writer set: offline AddMoney read/modify/absolute UPDATE; auction offline refund; referral cash; business repossession; admin offline grant; offline table-task SQL increment; and the account-merger follow-up absolute cash UPDATE. Confirmed SaveSql and worker are legacy absolute writers protected against each other only by the interim revision/semaphore protocol.
+- Confirmed login reads cash before later SetCharacterData without the common per-UUID gate. Character creation initializes cash in its INSERT and is not a post-creation delta.
+- Documentation updated: ECONOMY_REVIEW.md, ISSUES.md, TEST_PLAN.md, MASTER_CHECKLIST.md, SESSION_HANDOFF.md, CHANGELOG.md.
+- Static inspection only. No source code changed; no C# compiler, MariaDB, concurrency harness, process-restart test or RAGE runtime was available/run. MONEY-002 remains open.
