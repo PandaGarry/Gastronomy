@@ -45,11 +45,13 @@ namespace NeptuneEvo.Events
             }
             var characterData = player.GetCharacterData();
             if (characterData == null) return;
-            int totalprice = PriceTicket * Increase;
-            if (totalprice < 1) return;
-            else if (UpdateData.CanIChange(player, totalprice, true) != 255) return;
+            long calculatedPrice = (long)PriceTicket * Increase;
+            if (calculatedPrice < 1 || calculatedPrice > int.MaxValue) return;
 
-            Wallet.Change(player, -totalprice);
+            int totalprice = (int)calculatedPrice;
+            if (UpdateData.CanIChange(player, totalprice, true) != 255) return;
+            if (!Wallet.Change(player, -totalprice)) return;
+
             GameLog.Money($"player({characterData.UUID})", $"server", totalprice, $"metro({station})");
             Trigger.ClientEvent(player, "metro.server.buyTicketSuccess", station);
             Trigger.Dimension(player, (uint)(player.Value + 10000));
