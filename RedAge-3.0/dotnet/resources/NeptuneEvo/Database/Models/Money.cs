@@ -63,43 +63,48 @@ namespace NeptuneEvo.Database.Models
 
             var moneyLock = GetMoneyLock(uuid);
             await moneyLock.WaitAsync();
-            long amount;
-            long saveVersion;
-            lock (GetCharacterMoneySyncLock(uuid))
-            {
-                amount = getAmount();
-                if (amount < 0 || amount > int.MaxValue)
-                {
-                    moneyLock.Release();
-                    throw new ArgumentOutOfRangeException(nameof(getAmount), "Character money is outside the signed INT range.");
-                }
-
-                lock (QueueLock)
-                {
-                    saveVersion = NextMoneyVersion(uuid);
-                    MoneyUpdateList.Remove(uuid);
-                    ActiveCharacterSaves.Add(uuid);
-                }
-            }
-
+            long amount = 0;
+            long saveVersion = 0;
+            bool saveRegistered = false;
             try
             {
+                lock (GetCharacterMoneySyncLock(uuid))
+                {
+                    amount = getAmount();
+                    if (amount < 0 || amount > int.MaxValue)
+                        throw new ArgumentOutOfRangeException(nameof(getAmount), "Character money is outside the signed INT range.");
+
+                    lock (QueueLock)
+                    {
+                        saveVersion = NextMoneyVersion(uuid);
+                        MoneyUpdateList.Remove(uuid);
+                        ActiveCharacterSaves.Add(uuid);
+                        saveRegistered = true;
+                    }
+                }
+
                 await saveAction(amount);
             }
             catch
             {
                 // If a newer Wallet change was queued during this save, preserve it.
-                lock (QueueLock)
+                if (saveRegistered)
                 {
-                    if (GetMoneyVersion(uuid) == saveVersion && !MoneyUpdateList.ContainsKey(uuid))
-                        MoneyUpdateList[uuid] = new object[] { uuid, amount, saveVersion };
+                    lock (QueueLock)
+                    {
+                        if (GetMoneyVersion(uuid) == saveVersion && !MoneyUpdateList.ContainsKey(uuid))
+                            MoneyUpdateList[uuid] = new object[] { uuid, amount, saveVersion };
+                    }
                 }
                 throw;
             }
             finally
             {
-                lock (QueueLock)
-                    ActiveCharacterSaves.Remove(uuid);
+                if (saveRegistered)
+                {
+                    lock (QueueLock)
+                        ActiveCharacterSaves.Remove(uuid);
+                }
                 moneyLock.Release();
             }
         }
