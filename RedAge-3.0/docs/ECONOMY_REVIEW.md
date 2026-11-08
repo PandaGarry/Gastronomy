@@ -547,3 +547,22 @@ Design notes:
 **Typed outcomes required:** Applied, AlreadyApplied, RejectedInsufficientFunds, RejectedOutOfRange, RejectedInvalidStoredBalance, CharacterNotFound, IdempotencyConflict, and OutcomeUnknown/RetrySameOperationId. A bool return is insufficient for caller migration.
 
 **Open design gates:** exact SQL/LinqToDB expression and affected-row semantics on the pinned provider; transaction isolation/locking; behavior for legacy NULL cash; receipt retention/archival; operation-ID derivation for each caller; cache update behavior when the player disconnects after commit; deployment migration and rollback. No DDL was run, no source implementation was added, and no MariaDB transaction test was performed.
+
+
+### MONEY-002 — stable operation identity by caller (design follow-up, 2026-11-08)
+
+A coordinator cannot invent a fresh ID on each retry. The source event identity must be stable before any cash side effect:
+
+| Caller | Candidate operation identity | Source gap / requirement |
+|---|---|---|
+| Lottery winner payout | lottery round ID + winning ticket number + winner UUID + cash leg | Lottery.ID and ticket number are available, but draw result is not durably recorded before payout/reset. Persist the draw result first so restart retry cannot select a different winner. |
+| Auction refund | auction ID + immutable bid-event ID + refund leg | Current LastBetUUID/LastPrice are mutable and insufficient when the same bidder raises a bid. Add/persist a server-generated bid-event identity; never key only by bidder UUID or price. |
+| Referral owner cash reward | referred-character UUID + referrer UUID + cash reward leg | Generated Refferals mapping exposes Uuid/Uuidref but no mapped primary key. Verify deployed uniqueness/DDL; add a durable referral reward identity/unique constraint before using this pair as the idempotency key. |
+| Business repossession payout | durable repossession event ID + owner UUID + payout leg | Business ID alone can be reused after a later ownership cycle. Persist an event/generation identity before payout and bind it to the owner/version being repossessed. |
+| Admin offline grant | persisted admin-grant request ID + target UUID | Generate once when the command is accepted and persist the request before asynchronous execution. A new GUID on each retry is not idempotency. |
+| Offline table-task cash award | task completion/reward generation ID + player UUID + cash award slot | A task ID alone may be repeatable across seasons/completions. Persist a completion generation or reward receipt and include it in the operation ID. |
+| Account merger import | source server ID + source character UUID + destination account/merge request ID | Persist a merge checkpoint/mapping before creating destination bank/character/assets; retry must resume the same merge rather than create a new target. |
+| Generic Character.Save.Repository.AddMoney | caller-supplied stable operation ID + UUID + operation type | The current API accepts only UUID/delta. Replace it; do not generate the ID inside the retrying method. |
+| Online Wallet.Change callers | domain event ID + character UUID + cash leg | A raw amount is not an operation identity. Each settlement caller must pass its event identity and await a typed durable outcome. |
+
+**Cutover rule:** no caller migrates until it can supply a stable event identity and define what happens after a lost commit acknowledgement. For workflows with multiple legs (referral RB/VIP/cash, repossession cash/ownership/bank, merger cash/assets), a character-cash receipt alone does not make the whole workflow atomic; use a domain settlement record/outbox or one transaction covering all compatible InnoDB rows.
