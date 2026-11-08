@@ -335,6 +335,7 @@ No new C# changes were made. The checked-in DDL evidence and referral ordering r
 3. Затем обновляется account: `Redbucks`, `Viplvl`, `Vipdate`.
 4. Только после этого читается `characters.money` пригласившего. Если balance отрицательный/некорректный или `currentMoney + refferalData.Money` выходит за signed INT range, код только пишет лог и пропускает cash UPDATE.
 5. Ошибки внешнего DB task ловятся общим catch; нет транзакции, durable pending state или retry receipt.
+6. Cash leg напрямую читает и обновляет строку `characters` по UUID; online character cache не ищется и не синхронизируется. Если пригласивший в этот момент онлайн, его `CharacterData.Money` может остаться старым, а последующий full save/Money worker — перезаписать DB credit устаревшим абсолютным snapshot.
 
 **Следствие:** referral может стать окончательно отмеченным успешным, RB/VIP могут быть выданы, а денежная часть reward — потеряна. DB exception после записи Success/RB/VIP, но до cash credit, создаёт тот же частичный результат. Это не утверждение о создании денег: конкретный подтверждённый риск — неполная выдача согласованного referral reward и невозможность безопасного автоматического повтора.
 
