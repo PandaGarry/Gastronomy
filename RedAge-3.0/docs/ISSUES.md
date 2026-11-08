@@ -196,3 +196,6 @@
 ### MONEY-002 follow-up — worker lifecycle/range guard (2026-11-08)
 
 `Money.Start()` now guards against duplicate worker startup; the async worker no longer blocks a thread-pool thread between polling cycles. `AddMoneyUpdate` rejects invalid UUID/negative/out-of-DB-INT-range snapshots before enqueue, avoiding a permanently failing conversion/retry batch. Existing process-local queue retry remains. **Status stays partial patch; not closed:** memory-only queue/crash loss, no durable outbox, retry backoff/dead-letter, C# build, concurrency tests and MySQL fault injection remain open. See `ECONOMY_REVIEW.md`.
+
+
+> **MONEY-002 supplemental evidence (2026-11-08):** `Character.Save.Repository.AddMoney` performs an application-side SELECT/read-modify-absolute-UPDATE without transaction, row lock or per-UUID coordinator lock; concurrent calls can lose increments. It does not enforce offline-only status or synchronize the online character cache/full-save path. No source fix is applied until the online/offline handoff and idempotent retry contract are defined. See `ECONOMY_REVIEW.md` and `TEST_PLAN.md`.
