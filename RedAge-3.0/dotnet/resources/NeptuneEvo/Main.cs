@@ -4637,8 +4637,8 @@ namespace NeptuneEvo
 
                         int tax = Convert.ToInt32(biz.SellPrice / 100f * biz.Tax);
                         biz.Zatratq += tax;
-                        var bizBalance = MoneySystem.Bank.Accounts[biz.BankID];
-                        bizBalance.Balance -= tax;
+                        if (!MoneySystem.Bank.ApplyBalanceAdjustment(biz.BankID, -tax, out long bizBalanceAfterTax))
+                            continue;
                         
                         var fractionData = Fractions.Manager.GetFractionData((int) Fractions.Models.Fractions.CITY);
                         if (fractionData != null)
@@ -4648,7 +4648,7 @@ namespace NeptuneEvo
 
                         GameLog.Money($"biz({biz.ID})", "frac(6)", tax, "bizTaxHour");
 
-                        if (bizBalance.Balance >= 0) continue;
+                        if (bizBalanceAfterTax >= 0) continue;
 
                         string owner = biz.Owner;
                         if (PlayerNames.Values.Contains(owner) && PlayerUUIDs.ContainsKey(owner))
@@ -4700,8 +4700,8 @@ namespace NeptuneEvo
                             GameLog.Money($"server", $"player({PlayerUUIDs[biz.Owner]})", Convert.ToInt32(biz.SellPrice * 0.8), $"bizTax({biz.ID})");
                         }
 
-                        bizBalance.Balance = 0;
-                        bizBalance.IsSave = true;
+                        if (!MoneySystem.Bank.SetBalance(biz.BankID, 0))
+                            Log.Write($"Failed to reset repossessed business bank balance [business:{biz.ID}, bank:{biz.BankID}]");
                         
                         biz.ClearOwner();
                         
@@ -4722,9 +4722,8 @@ namespace NeptuneEvo
                         if (house.Owner == string.Empty) continue;
 
                         int tax = Convert.ToInt32(house.Price / 100f * HouseManager.HouseTax);
-                        if (!MoneySystem.Bank.Accounts.TryGetValue(house.BankID, out var houseBalance))
+                        if (!MoneySystem.Bank.ApplyBalanceAdjustment(house.BankID, -tax, out long houseBalanceAfterTax))
                             continue;
-                        houseBalance.Balance -= tax;
                         
                         var fractionData = Fractions.Manager.GetFractionData((int) Fractions.Models.Fractions.CITY);
                         if (fractionData != null)
@@ -4734,7 +4733,7 @@ namespace NeptuneEvo
                         if (house.Type != 7) GameLog.Money($"house({house.ID})", "frac(6)", tax, "houseTaxHour");
                         else GameLog.Money($"park({house.ID})", "frac(6)", tax, "parkTaxHour");
 
-                        if (houseBalance.Balance >= 0) continue;
+                        if (houseBalanceAfterTax >= 0) continue;
 
                         string owner = house.Owner;
                         var player = (ExtPlayer) NAPI.Player.GetPlayerFromName(owner);
@@ -4780,8 +4779,8 @@ namespace NeptuneEvo
                                 Character.Save.Repository.AddMoney(targetUuid, price);
                             }
                         }
-                        houseBalance.Balance = 0;
-                        houseBalance.IsSave = true;
+                        if (!MoneySystem.Bank.SetBalance(house.BankID, 0))
+                            Log.Write($"Failed to reset repossessed house bank balance [house:{house.ID}, bank:{house.BankID}]");
                         
                         house.ClearOwner(isSave: false);
 
