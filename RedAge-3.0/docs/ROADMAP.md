@@ -49,7 +49,7 @@
 
 - [ ] MONEY-035: make faction/organization cash withdrawals atomic; verify wallet credit before stock commit.
 - [ ] MONEY-036: correct shared Wallet.Change arithmetic to preserve 64-bit balances; audit all call sites.
-- [ ] STOCK-001: make faction/vehicle stock item grants exact and atomic; handle partial/full-slot failures.\n- [ ] STOCK-002: replace business takeProd/customer debit/item grant sequence with idempotent atomic retail settlement; test owner-bank, wallet, item grant, missing-product and restart failures. See BUSINESS_RETAIL_REVIEW.md.\n- [ ] MONEY-039: make ATM business-account deposit an atomic/idempotent player-debit/business-credit transfer with checked result, refund/retry and stale BizID/index protection. See BUSINESS_BANK_REVIEW.md.
+- [ ] STOCK-001: make faction/vehicle stock item grants exact and atomic; handle partial/full-slot failures.\n- [ ] STOCK-002: replace business takeProd/customer debit/item grant sequence with idempotent atomic retail settlement; test owner-bank, wallet, item grant, missing-product and restart failures. See BUSINESS_RETAIL_REVIEW.md.\n- [ ] MONEY-039: make ATM business-account deposit an atomic/idempotent player-debit/business-credit transfer with checked result, refund/retry and stale BizID/index protection. See BUSINESS_BANK_REVIEW.md.\n- [ ] MONEY-040/041: persist hourly business tax debits and make online/offline repossession compensation durable/idempotent before ownership release. See BUSINESS_TAX_REVIEW.md.
 
 ## Этап 3 — Аудит безопасности и надёжности (`В работе`)
 
