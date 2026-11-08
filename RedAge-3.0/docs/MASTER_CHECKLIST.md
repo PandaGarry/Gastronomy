@@ -129,3 +129,5 @@
 - [ ] INV-015 — replace stale OnFracStock with a short-lived faction-stock intent; revalidate rank, duty, IsOpenGunStock, location/dimension on open and every mutation; revoke on close/context change/disconnect. See FRACTION_STOCK_SESSION_REVIEW.md.
 
 - [ ] INV-016 — revoke Organization inventory intent on RemovePlayer/interior exit; bind every mutation to current organization membership, stock-open state and dimension; test stale remotes and concurrent exit. See ORGANIZATION_STOCK_SESSION_REVIEW.md.
+
+- [ ] INV-017 — revoke furniture safe context on house exit/object removal/ACL change; bind every item operation to exact house/object/access mode and current range/dimension. See FURNITURE_SAFE_SESSION_REVIEW.md.
