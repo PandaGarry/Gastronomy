@@ -573,3 +573,13 @@ Source patch only; no compiler or disposable DB test has run.
 - Admin offline grant: force login immediately after the online-presence check but before the async DB UPDATE; verify login cache and persisted balance cannot overwrite each other. Verify no success message on failed/ambiguous write.
 - Merger/import: interrupt between destination character creation, cash/property conversion, account-slot update and completion; retry must not duplicate the imported cash or assets.
 - Confirm the actual characters storage engine from deployed schema/runtime metadata; generated C# mapping and MariaDB version do not prove InnoDB.
+
+
+### MONEY-002 — checked-in DDL and referral settlement ordering
+
+- [ ] Parse the checked-in `main.sql` schema and assert `characters`, `money`, `accounts`, `refferals` are InnoDB; compare each against deployed/staging `SHOW CREATE TABLE` and server version before enabling transactional receipts.
+- [ ] Verify `characters.money` nullable signed INT behavior for NULL, negative/corrupt legacy values, zero, and `Int32.MaxValue`; define explicit policy before migration.
+- [ ] Referral online path: fail each reward leg (VIP, coin, wallet cash, RedBucks, item) and the success-marker update; ensure caller-visible completion cannot hide partial settlement and retries cannot duplicate already committed legs.
+- [ ] Referral offline path: fail after success marker, after account RB/VIP update, during cash SELECT/UPDATE, and after commit acknowledgement loss; verify durable pending/retry/reconciliation and exactly one reward per referral identity.
+- [ ] Login publication gate: pause after character SELECT and before `SetCharacterData`; concurrently attempt offline credit; assert the resulting cache and DB balance converge to one authoritative value.
+- [ ] Verify the ledger/receipt unique key and balance mutation roll back together on InnoDB; retry same operation ID concurrently and after process restart and assert one delta.
