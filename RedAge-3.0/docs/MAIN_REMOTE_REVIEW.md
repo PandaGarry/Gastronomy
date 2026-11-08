@@ -153,3 +153,7 @@ The corresponding `Organizations.Manager.inputStocks` implementation repeats bot
 ## 2026-11-08 — faction/organization cash stock follow-up
 
 The `put_stock` and `take_stock` cash branches were re-fetched and patched in both `Fractions/Manager.cs` and `Organizations/Manager.cs`: each branch now checks the corresponding `Wallet.Change` result before changing faction/organization cash stock or writing success logs. This closes the specific false-result ordering window for cash stock mutations. It does not make the transfer atomic, idempotent, crash-safe or concurrency-safe; item cargo exact-count transfer remains open as STOCK-001. Static-only; no build/RAGE/MySQL tests.
+
+## 2026-11-08 — faction/organization cash stock follow-up
+
+The `put_stock` and `take_stock` cash branches were re-fetched and patched in both `Fractions/Manager.cs` and `Organizations/Manager.cs`: each branch now checks the corresponding `Wallet.Change` result before changing faction/organization cash stock or writing success logs. This closes the specific false-result ordering window for cash stock mutations. It does not make the transfer atomic, idempotent, crash-safe or concurrency-safe; item cargo exact-count transfer remains open as STOCK-001. Static-only; no build/RAGE/MySQL tests.
