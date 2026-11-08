@@ -291,3 +291,19 @@ The referral owner-reward path was traced further in `Main.CheckMyPromoCode`:
 - The offline cash SELECT/absolute UPDATE remains exposed to concurrent credits and login/cache publication races.
 
 The repository DDL makes an InnoDB receipt+balance transaction technically plausible for these tables, but implementation still requires a single transaction owner/context, unique stable operation IDs, and migration of every cash writer. Do not mark production durability proven from the checked-in dump alone. No C# source was changed and no build/runtime/DB test was run in this pass.
+
+
+### MONEY-002 — proposed coordinator contract (design gate, not implemented)
+
+The next implementation must use one API boundary for every character-cash mutation. Proposed contract:
+
+- `ApplyAsync(MoneyOperation operation)` returns a typed result (`Applied`, `Duplicate`, `Rejected`, `RetryableFailure`, `UnknownCommitOutcome`) with the committed balance/revision when known. A caller must never infer durable success from an in-memory `bool`.
+- `MoneyOperation` is immutable and carries a stable globally unique `OperationId`, character UUID, signed delta, domain/source, reason/reference and creation time. IDs are minted at the logical business-event boundary and reused unchanged on retry. Referral, lottery, auction refund and admin grant each need domain-stable identities.
+- One coordinator-owned, per-operation `ServerBD` context owns exactly one explicit transaction. Insert a unique operation receipt and apply the bounded cash delta to `characters` in the same InnoDB transaction. A duplicate ID returns the prior committed receipt/result without reapplying the delta. If the conditional balance update affects anything other than exactly one row, roll back the receipt and return a typed rejection/failure.
+- The balance update must enforce `money IS NOT NULL` and `0 <= money + delta <= Int32.MaxValue` in SQL; no application-side SELECT → absolute UPDATE. The transaction owner must not rely on nested `BeginTransactionAsync` behavior or share a context with unrelated work.
+- The per-character async gate spans DB commit and in-process cache handoff. After commit, update the online `CharacterData.Money` cache while still holding the gate; on restart, DB is authoritative. Login must take the same gate for its final authoritative balance read and `SetCharacterData` publication. Offline credit must take the same gate, so it cannot race the login SELECT/publication interval.
+- Remove legacy absolute cash writers from the path: `MoneyUpdate` worker snapshots and `SaveSql` must no longer be able to overwrite coordinator-managed cash. Full character save should persist non-cash fields without setting `characters.money`; the cash ledger owns that column. Transitional compatibility must be explicit and time-bounded, never mixed unsafely with new writes.
+- `Wallet.Change` is currently synchronous and mutates RAM before background persistence. A durable coordinator is asynchronous; migrate critical call sites to await the typed result before granting items, marking referrals/lottery rounds complete, logging success or notifying success. Do not preserve the old signature as a misleading durable facade.
+- Keep bank-account `money.balance` as a separate ledger/domain. Cross-cash/bank operations require an explicit multi-ledger transaction/compensation design; they are not implicitly covered by this character-cash coordinator.
+
+Migration order: (1) create/verify receipt DDL and deployed InnoDB; (2) implement coordinator + duplicate/retry semantics; (3) coordinate login and cache publication; (4) remove/disable legacy worker and money field in full save; (5) migrate AddMoney, auction refund, referral, lottery and admin offline grant; (6) migrate all online Wallet.Change callers that require durable success; (7) run concurrency, crash-point and mixed-version tests before rollout. No source implementation has been started.
