@@ -417,3 +417,12 @@
 - Updated issue register, economy review, master plan, changelog and regression plan.
 - Remaining direct cash SQL writers: `Character.Save.Repository.AddMoney`, auction offline refund, Main referral/business repossession, Admin OffGiveMoney, Accounts.Merger. Do not migrate blindly; establish online/offline state and pending snapshot semantics first.
 - Static source assertions only. No C# build, DB fault injection, interleaving test or RAGE runtime test has run.
+
+
+## Контрольная точка 2026-11-08 — direct cash writer audit
+
+- Повторно прочитаны актуальные `Money.cs`, `Wallet.cs`, `Character/Save/Repository.cs`, `Main.cs` и PR #4 на `redage/audit-continuation`.
+- Подтверждён дополнительный MONEY-002 риск: `Character.Save.Repository.AddMoney` выполняет SELECT → вычисление delta в приложении → абсолютный UPDATE без транзакции/row lock/per-UUID lock. Параллельные начисления могут терять друг друга; метод не проверяет offline-only состояние и не синхронизирует online cache/full save. Это статический вывод, timing reproduction не выполнен.
+- Не внесён source patch: простой atomic SQL increment не решает гонку с online wallet/full save и не даёт idempotent retry. Следующий шаг — продолжить inventory всех cash writers и определить единый coordinator/handoff contract.
+- Поиск DDL пока не подтвердил engine таблицы `characters`: найденные InnoDB определения относятся к `mainlogs.sql`, а не к денежной таблице. Не считать InnoDB доказанным.
+- Этот шаг обновляет только аудитные документы; C# build, MariaDB/MySQL fault injection и RAGE staging не запускались.
