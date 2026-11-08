@@ -1,3 +1,10 @@
+## 2026-11-08 — MONEY-002 durability boundary and offline-writer test plan
+
+- Reconciled `MONEY-002` against the current source and issue register: queue synchronization/retry, revision-aware worker/full-save coordination and hand-off interleaving fixes are already present; build, concurrency and MySQL fault-injection validation remain pending.
+- Documented why a background outbox written after the in-memory `Wallet.Change` cannot guarantee crash durability; the transaction boundary must move to the original logical cash mutation and all legacy writers must be migrated together.
+- Expanded `TEST_PLAN.md` with offline direct-writer races, login/full-save overlap, receipt idempotency, InnoDB/rollback checks and mixed-version migration tests.
+- No source code changed in this step; no build or runtime result is claimed. See `ECONOMY_REVIEW.md` and `TEST_PLAN.md`.
+
 ## 2026-11-08 — Phone auction settlement hardening (source patch)
 
 - Patched `Players/Phone/Auction/Repository.cs`: reject nonpositive and expired/ended bids; use `long` fee arithmetic to prevent `int.MaxValue` wraparound from turning a debit into a credit.
