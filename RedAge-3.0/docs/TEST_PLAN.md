@@ -432,3 +432,12 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - Verify missing/unknown product returns false and every caller stops without customer debit, item/weapon grant, quest/BattlePass progress or success notification.
 - Retain required but unexecuted cases: owner bank missing/Bank.Change false after stock validation, customer Wallet.Change false/exception, AddNewItem failure/partial result, weapon grant failure, missing product, dirty-save/restart, duplicate/concurrent purchase and DB outage.
 - Static assertions passed for positive-quantity guard, matching-product tracking and false return when no product is found. No C# build, RAGE staging or MySQL fault injection was run.
+
+## 2026-11-08 — MONEY-042 BUY_CAR settlement regression additions
+
+- Force buyer debit false: no seller credit, holder mutation, garage movement or success.
+- Force seller credit false after successful buyer debit: buyer refund must be attempted exactly once; holder, garage and success effects remain unchanged.
+- Force buyer refund false/exception: verify critical log includes both UUIDs, vehicle and amount; reconcile the outstanding buyer claim without transferring ownership.
+- Test seller null/disconnect/missing character and nonpositive pending price before money effects.
+- Retain required unexecuted DB cases: SaveHolder failure/delay, restart after each wallet/holder boundary, duplicate/concurrent BUY_CAR callbacks, stale holder and garage capacity.
+- Static assertions passed for seller validation, price guard, checked seller credit, refund attempt, critical log and holder mutation after seller credit. No C# build, RAGE staging or MySQL fault injection was run.
