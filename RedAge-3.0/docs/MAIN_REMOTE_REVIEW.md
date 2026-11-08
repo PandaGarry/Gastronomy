@@ -71,7 +71,7 @@ Enumerated all 38 `case` occurrences (32 unique callback names) in `ClientEvent_
 - `player_medkit` → `FractionCommands.sellMedKitToTarget`: helper rechecks `RankToAccess.Medkit`, on-duty state, item availability, price range, proximity, target money and trade state. No additional standalone bypass asserted in this pass; purchase confirmation/settlement path remains part of the broader trade audit.
 - `player_heal` → `FractionCommands.healTarget`: helper rechecks `RankToAccess.Heal`, on-duty state, price range, proximity and trade state, with vehicle/EMS checks in the vehicle branch. No additional standalone bypass asserted in this pass; downstream PAY_HEAL settlement still requires end-to-end confirmation.
 - `mayor_put`: checks City Hall leader and bank debit result before increasing fraction treasury. This is materially safer than the inverse `mayor_take` flow recorded as MONEY-032.
-- `player_ticketsum` / `player_ticketreason`: the originating selection path and `ticketToTarget` recheck ticket rank, on-duty status, amount ceiling and court-zone policy for City Hall. Confirmation settlement remains vulnerable as MONEY-033.
+- `player_ticketsum` / `player_ticketreason`: the originating selection path and `ticketToTarget` recheck ticket rank, on-duty status, amount ceiling and court-zone policy for City Hall. Confirmation uses the MONEY-033 consume-once intent guard; failed-debit payout is tracked separately as MONEY-060. Durable settlement remains open.
 
 ### Paths explicitly left open
 
