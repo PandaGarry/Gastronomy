@@ -470,3 +470,16 @@ This is useful evidence that a transaction-backed coordinator is compatible with
 **Regression:** spend-after-prompt; Wallet=false + Bank=false; shutdown rejection; wallet success; wallet failure + bank success; failed debit must not mutate City Hall/officer balances or emit success/GameLog; duplicate/concurrent confirmation; failure after each payout leg; restart and DB commit-acknowledgement loss.
 
 **Статус тестов:** только повторная статическая проверка изменённого source block. C# build, RAGE staging, MariaDB fault-injection и concurrency/restart tests не выполнялись.
+
+
+## MONEY-002 implementation reconnaissance — transaction API/provider boundary (2026-11-08)
+
+Before implementing the durable coordinator, the actual checked-in DB stack was re-read:
+
+- `NeptuneEvo.csproj` pins `linq2db.MySql 3.3.0`, `MySql.Data 8.0.28` and separately `MySqlConnector 1.1.0`.
+- Generated `Database.ServerBD` inherits `LinqToDB.Data.DataConnection`; `DatabaseSettings` and `ConnectionInfo` select provider name `MySql.Data.MySqlClient`. Therefore the coordinator should own one `ServerBD` context and one linq2db transaction for every receipt + cash mutation. Do not create a second `MySqlConnector` connection and assume it shares the same transaction.
+- The exact linq2db v3.3.0 source exposes synchronous `DataConnection.BeginTransaction(IsolationLevel)` returning `DataConnectionTransaction`, plus async `CommitAsync` / `RollbackAsync`. The inspected v3.3.0 API does **not** expose `BeginTransactionAsync`. Implementation should use the verified version-specific API and not copy examples from newer linq2db releases.
+- Existing `ServerBD` is configured for the generated `MySql.Data.MySqlClient` provider. `NeptuneEvoSDK.MySQL` uses a separate `MySqlConnector` path for legacy raw SQL; that helper catches exceptions and returns no durable typed outcome, so it is not a suitable coordinator boundary.
+- The generated model currently has no receipt table mapping. A raw parameterized SQL path through the same `ServerBD` connection or a regenerated mapping must be chosen deliberately; do not edit generated files without updating their T4 source/generation workflow.
+
+**Implementation gate:** verify the exact `ServerBD` connection configuration and provider at runtime on a disposable MariaDB instance; prove receipt insert + conditional cash delta share one transaction; test rollback, duplicate unique operation ID and commit acknowledgement loss. No DB instance or transaction test was run during this reconnaissance.
