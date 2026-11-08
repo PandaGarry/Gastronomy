@@ -130,6 +130,8 @@ namespace NeptuneEvo.MoneySystem
         {
             Data bank;
             long newBalance;
+            int bankType;
+            string holderSnapshot;
             try
             {
                 lock (AccountSync)
@@ -157,15 +159,17 @@ namespace NeptuneEvo.MoneySystem
                     bank.Revision++;
                     // Every balance mutation must be persisted, including small personal-account changes.
                     bank.IsSave = true;
+                    bankType = bank.Type;
+                    holderSnapshot = bank.Holder;
                 }
 
                 // Notifications are deliberately outside the mutation boundary. A UI failure
                 // must not report an already-applied balance change as rejected.
-                if (bank.Type == 1)
+                if (bankType == 1)
                 {
                     try
                     {
-                        var target = (ExtPlayer) NAPI.Player.GetPlayerFromName(bank.Holder);
+                        var target = (ExtPlayer) NAPI.Player.GetPlayerFromName(holderSnapshot);
                         if (target != null)
                         {
                             if (notify)
@@ -201,6 +205,10 @@ namespace NeptuneEvo.MoneySystem
             Data lastAcc;
             long firstBalance;
             long lastBalance;
+            int firstType;
+            int lastType;
+            string firstHolder;
+            string lastHolder;
             try
             {
                 if (firstAccID <= 0 || lastAccID <= 0 || firstAccID == lastAccID || amount <= 0)
@@ -241,24 +249,28 @@ namespace NeptuneEvo.MoneySystem
                     // Persist both sides; small personal-account transfers must not remain cache-only.
                     firstAcc.IsSave = true;
                     lastAcc.IsSave = true;
+                    firstType = firstAcc.Type;
+                    lastType = lastAcc.Type;
+                    firstHolder = firstAcc.Holder;
+                    lastHolder = lastAcc.Holder;
                 }
 
                 // Notifications/logging are post-mutation side effects and cannot turn a completed
                 // in-memory transfer into a reported rejection.
                 try
                 {
-                    if (firstAcc.Type == 1)
+                    if (firstType == 1)
                     {
-                        var sourcePlayer = (ExtPlayer) NAPI.Player.GetPlayerFromName(firstAcc.Holder);
+                        var sourcePlayer = (ExtPlayer) NAPI.Player.GetPlayerFromName(firstHolder);
                         if (sourcePlayer != null)
                         {
                             BankNotify(sourcePlayer, BankNotifyType.PayOut, (-amount).ToString());
                             Trigger.ClientEvent(sourcePlayer, "client.charStore.BankMoney", firstBalance);
                         }
                     }
-                    if (lastAcc.Type == 1)
+                    if (lastType == 1)
                     {
-                        var destinationPlayer = (ExtPlayer) NAPI.Player.GetPlayerFromName(lastAcc.Holder);
+                        var destinationPlayer = (ExtPlayer) NAPI.Player.GetPlayerFromName(lastHolder);
                         if (destinationPlayer != null)
                         {
                             BankNotify(destinationPlayer, BankNotifyType.PayIn, amount.ToString());
