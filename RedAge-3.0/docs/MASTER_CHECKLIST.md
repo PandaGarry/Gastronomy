@@ -174,3 +174,6 @@
 
 
 - [ ] **MONEY-002 referral + schema gate:** verify checked-in InnoDB DDL against deployed `SHOW CREATE TABLE`; implement per-referral durable settlement so online/offline VIP, coin, cash, RB and success marker cannot partially commit or duplicate; gate login cache publication with the same per-UUID coordinator. See ECONOMY_REVIEW.md.
+
+
+- [ ] **MONEY-002 coordinator design gate:** implement and review immutable operation IDs, unique receipt + bounded delta in one InnoDB transaction, typed duplicate/uncertain results, shared async UUID gate through login/cache publication, and removal of legacy absolute writes before migrating payout/referral/admin callers. See ECONOMY_REVIEW.md and REDAGE_MASTER_PLAN.md.
