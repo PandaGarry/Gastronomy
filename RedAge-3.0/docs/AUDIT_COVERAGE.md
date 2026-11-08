@@ -86,3 +86,7 @@ AirDrop trace: team registration is not spatial participation; StartedHack has n
 ### Fraction stock session authorization — 2026-11-08
 
 The faction interaction paths set OnFracStock, but no reset was found. The openWeaponStock remote rechecks only current fraction ID and rank; it does not recheck duty, stock-open state, location, dimension or a short-lived interaction. A previously authorized faction member can therefore attempt to reopen the stock remotely while still holding the rank. Added INV-015 and FRACTION_STOCK_SESSION_REVIEW.md. Static-only; staging required.
+
+### Organization stock exit lifecycle — 2026-11-08
+
+OpenWeaponStock validates InsideOrganizationID only at container open. RemovePlayer clears that marker and exits the interior without closing/revoking the inventory context; generic item mutation handlers do not repeat the check. Added INV-016 and ORGANIZATION_STOCK_SESSION_REVIEW.md. Static-only; RAGE staging required.
