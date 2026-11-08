@@ -52,7 +52,7 @@
 - [ ] MONEY-030 — EventCoins: точное списание из разрешённого контейнера до начисления RB.
 - [ ] MONEY-031 — Fuel Control: server-side role/fraction authorization и input bounds.
 - [ ] MONEY-032 — Mayor treasury withdrawal: confirm bank credit before treasury debit; transactional/restart-safe settlement.
-- [ ] MONEY-033 — Ticket settlement: successful debit required, server-side one-shot intent and durable idempotent payout.
+- [ ] MONEY-033 — Ticket intent: consume-once session guard patched under a shared lock; still implement durable ticket receipt/atomic split payout and run duplicate/concurrency/disconnect/restart tests.
 - [ ] MONEY-034 — Gang drug purchase: quantity cap, checked/long cost+capacity math, exact item-grant result before faction debit.
 - [ ] MONEY-035 — partial patch: faction and organization cash `put_stock`/`take_stock` now check Wallet.Change before changing cash stock. Still implement durable atomic/idempotent transfer, concurrency/replay protection and restart recovery; test false/exception, shutdown and DB failure. See MAIN_REMOTE_REVIEW.md and FRACTION_STOCK_REVIEW.md.
 - [ ] MONEY-037 — partial source patch: validate pending seller reference/session/character, positive price and correct seller UUID in money log. Still implement durable idempotent buyer debit + seller credit + ownership settlement; wallet results remain unchecked and ownership can still transfer on failure. Test replay/concurrency/disconnect/restart. See `HOUSE_SALE_REVIEW.md`.
@@ -152,10 +152,8 @@
 - [ ] MONEY-002 — проверить частичный patch очереди денег: C# build; concurrent producers/snapshot; partial DB failure/retry; newer-value-wins; disconnect/reconnect; crash/restart loss. После этого спроектировать durable outbox, retry backoff и dead-letter. См. `ECONOMY_REVIEW.md`.\n
 - [ ] BANK-SAVE — verify revision-aware save retry under DB outage, concurrent mutations and INT range boundaries; durable ledger/outbox still required for crash consistency. See BANK_TRANSFER_REVIEW.md.
 
-- [ ] MONEY-003 follow-up — test atomic in-memory bank transfer, one-shot ATM confirmation, synchronized balance reads, checked account creation bounds, DB save retry/revision behavior, and restart recovery limitation. Audit mutable `Bank.Data` references. See `BANK_TRANSFER_REVIEW.md`.
 
 
-- [ ] MONEY-003 follow-up — audit and remove every direct mutable bank balance write; property acquisition/tax/auction settlement must use synchronized bank APIs. Validate buyer debit/ownership ordering and DB failure compensation. See `BANK_TRANSFER_REVIEW.md`.
 
 - [ ] MONEY-017 — house purchase: validate bank, debit buyer before bank initialization/ownership, refund on bank-init failure; test shutdown, duplicate buyer, compensation failure and restart. See PROPERTY_PURCHASE_REVIEW.md.
 - [ ] MONEY-019 — hourly house/business tax: synchronized checked bank adjustment and side effects only after debit; test DB retry/restart, faction/city-hall credit consistency and repossession owner persistence (PROP-003). See PROPERTY_TAX_REVIEW.md.
@@ -167,16 +165,18 @@
 - [ ] VEH-001 — partial self-repair patch: wallet debit is checked before repair; RepairCar reports success/failure and refund is attempted on repair failure. Still confirm gameplay policy and implement server-owned one-shot repair intent/location/mechanic checks; test direct callback, wallet/repair/refund failure. See VEHICLE_REPAIR_REVIEW.md.
 
 
-- [ ] **MONEY-002 follow-up:** verify repeated/concurrent `Money.Start()` calls create one worker; test valid/invalid UUID and balance boundaries (`0`, negative, `Int32.MaxValue`, above max, `long` extremes); prove DB outage retry and newer-value-wins. Still design durable outbox/restart recovery, bounded retry/backoff/dead-letter and run C# build/MySQL fault tests.
 
 
-- [ ] **MONEY-002 hand-off races:** snapshot-time `ActiveMoneyWrites` markers and the SQL-failure-to-requeue marker window are now patched. Test small wallet changes after detach/before SQL and after failed SQL/before retry registration; full-save-vs-worker order both ways; wallet mutation during full save; failed save requeue; partial batch marker cleanup. Remaining direct SQL writers outside coordinator must be reconciled; durable outbox/backoff and C#/MySQL tests remain open.
 
 
-- [ ] **MONEY-002 referral + schema gate:** verify checked-in InnoDB DDL against deployed `SHOW CREATE TABLE`; implement per-referral durable settlement so online/offline VIP, coin, cash, RB and success marker cannot partially commit or duplicate; gate login cache publication with the same per-UUID coordinator. See ECONOMY_REVIEW.md.
 
 
-- [ ] **MONEY-002 coordinator design gate:** implement and review immutable operation IDs, unique receipt + bounded delta in one InnoDB transaction, typed duplicate/uncertain results, shared async UUID gate through login/cache publication, and removal of legacy absolute writes before migrating payout/referral/admin callers. See ECONOMY_REVIEW.md and REDAGE_MASTER_PLAN.md.
 
 
-- [ ] **MONEY-060 — ticket fine:** partial guard added: return immediately when both Wallet.Change and Bank.Change reject, before city/officer credits or success effects. Validate wallet success, bank fallback success, both-fail after spend-after-prompt, duplicate/concurrent confirmation, shutdown and persistence. Durable one-shot fine receipt remains open; see ECONOMY_REVIEW.md and TEST_PLAN.md.
+## Consolidated money-system gates
+
+- [ ] **MONEY-002 — character-cash durability:** test worker lifecycle, valid/invalid UUID and signed-INT boundaries; snapshot/detach and failed-SQL→requeue interleavings; worker/full-save ordering; DB outage retry; disconnect/reconnect and process crash. Inventory and migrate every direct cash SQL writer only after the per-UUID transaction + login/cache publication gate is defined. Durable receipt/outbox, bounded retry/backoff/dead-letter and removal of legacy absolute writes remain unimplemented. See `ECONOMY_REVIEW.md`.
+- [ ] **MONEY-003 — bank transfer:** test one-shot ATM confirmation, source ownership, two-account cache lock, checked arithmetic, DB save retry/revision behavior, concurrent transfers, mutable `Bank.Data` escape and restart. Durable DB transaction + unique transfer receipt and crash recovery remain open. See `BANK_TRANSFER_REVIEW.md`.
+- [ ] **MONEY-058/059 — bank durability/range:** inject failure between account saves; test replay, conservation, INT_MAX and rejected destination overflow. See `BANK_TRANSFER_REVIEW.md`.
+
+- [ ] **MONEY-060 — ticket debit guard:** early return is patched when both Wallet.Change and Bank.Change reject; validate wallet success, bank fallback, both-fail after spend-after-prompt, no split credits/success effects on failure, shutdown and persistence. Durable atomic split settlement remains open; intent replay is tracked separately in MONEY-033.
