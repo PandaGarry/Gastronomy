@@ -416,3 +416,8 @@ Static review found unchecked second legs in regular ATM cash deposit/withdrawal
 
 - Current branch already contains an interim government business purchase guard: checked Bank.SetBalance, checked buyer Wallet.Change, attempted bank-balance restoration on debit rejection, and owner/stock/orders/BizIDs mutation only after debit success.
 - Corrected stale review/issue wording. Durable receipt across bank/wallet/ownership writes and restart reconciliation remain open. Static-only; no build/RAGE/MySQL tests.
+
+## 2026-11-08 — MONEY-045 quota source correction
+
+- `Core/Businesses.cs` `fillCar`: calculate final monetary cost with `long` after quantity normalization, reject out-of-range cost, remove incorrect comparison of liters against monetary FuelLeft, and reject price above allowance before stock/City Hall/vehicle mutations.
+- Durable cross-entity settlement and VEH-009 active fuel-station intent remain open. Static-only; no build/RAGE/MySQL tests.
