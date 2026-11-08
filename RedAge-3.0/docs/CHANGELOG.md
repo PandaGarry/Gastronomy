@@ -391,3 +391,6 @@
 - Follow-up: synchronized GetBalance, holder lookup, account cache insert/removal and holder rename with the shared account lock. Retained checked account-creation validation against current TINYINT/INT schema. Bank.Get(int)/Get(string) now return snapshots under the account lock; direct public Bank.Accounts consumers still need audit.
 
 - Follow-up: every Bank.Change balance mutation now marks the account dirty; dirty account IDs are snapshotted under AccountSync. Bank persistence worker uses ConcurrentQueue for account deletions and requeues failed delete batches after DB errors. Crash durability and write-volume profiling remain pending.
+
+
+- MONEY-003: added synchronized `Bank.SetBalance` and `Bank.ApplyBalanceAdjustment`; routed business/house purchase initialization, auction property balance initialization, and hourly business/house tax/repossess balance changes through the shared account lock and dirty revision tracking. Static-only; build and runtime/fault-injection tests pending.
