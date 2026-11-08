@@ -157,3 +157,6 @@ Static trace of ItemsUse → LoadOtherItemsData → GetLocationName/GetItemData/
 - `Bank.Change`/`Transfer` accept checked `long` results beyond signed SQL `INT`; `Bank.Save` rejects non-convertible snapshots and leaves them dirty. Added MONEY-059 for unpersistable cached balances/restart rollback.
 - Reconciled tax findings: `Main.payDayTrigger` now routes hourly house/business tax through `ApplyBalanceAdjustment`; MONEY-019/MONEY-040's missing-dirty-flag subfinding is partially remediated. Durable tax ledger and repossession settlement/owner persistence remain open.
 - Static source review only. No C# build, disposable MariaDB fault injection, restart test or RAGE staging was run.
+
+
+- Fraction ticket confirmation (`FractionCommands.ticketConfirm`) was traced from prompt-time balance check to confirmation debit and payout. Added MONEY-060: after both Wallet.Change and Bank.Change fail, handler notifies but does not return, then credits city/officer and emits success. Static-only; direct remote/replay/failure tests pending.
