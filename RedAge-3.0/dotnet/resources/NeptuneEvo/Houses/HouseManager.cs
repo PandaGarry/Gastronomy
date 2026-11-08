@@ -1441,9 +1441,24 @@ namespace NeptuneEvo.Houses
                             Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, $"Недвижимость, которую Вы покупаете, имеет {maxcars} машиномест, продайте лишние машины", 3000);
                             return;
                         }*/
+                        long previousHouseBalance = MoneySystem.Bank.GetBalance(house.BankID);
+                        long initialHouseBalance = (long)Convert.ToInt32(house.Price / 100f * HouseManager.HouseTax) * 2;
+                        if (!MoneySystem.Bank.SetBalance(house.BankID, initialHouseBalance))
+                        {
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось создать банковский баланс объекта. Покупка отменена.", 3000);
+                            return;
+                        }
+
+                        // Debit before changing ownership or emitting purchase side effects.
+                        if (!MoneySystem.Wallet.Change(player, -house.Price))
+                        {
+                            if (!MoneySystem.Bank.SetBalance(house.BankID, previousHouseBalance))
+                                MoneySystem.Bank.Log.Write($"House purchase rollback failed [house:{house.ID}, bank:{house.BankID}]");
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось списать оплату. Покупка отменена.", 3000);
+                            return;
+                        }
+
                         Players.Phone.Messages.Repository.AddSystemMessage(player, (int)DefaultNumber.Bank, LangFunc.GetText(LangType.Ru, DataName.BuyHouse, house.Price), DateTime.Now);
-                        //Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, $"Вы купили эту недвижимость, не забудьте внести налог за неё в банкомате", 3000);
-                       // Notify.Send(player, NotifyType.Success, NotifyPosition.Center, $"НЕ ЗАБУДЬТЕ ВНЕСТИ НАЛОГИ В БЛИЖАЙШЕМ БАНКОМАТЕ!", 8000);
                         CheckAndKick(player);
                         if (house.Type != 7)
                         {
@@ -1454,15 +1469,6 @@ namespace NeptuneEvo.Houses
                         }
                         house.SetOwner(player.Name);
                         Trigger.ClientEvent(player, "client.rieltagency.delBlip", 374, house.ID);
-                        
-                        long initialHouseBalance = (long)Convert.ToInt32(house.Price / 100f * HouseManager.HouseTax) * 2;
-                        if (!MoneySystem.Bank.SetBalance(house.BankID, initialHouseBalance))
-                        {
-                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось создать банковский баланс объекта. Покупка отменена.", 3000);
-                            return;
-                        }
-                        
-                        MoneySystem.Wallet.Change(player, -house.Price);
                         //Chars.Repository.PlayerStats(player);
                         if (house.Type == 7) GameLog.Money($"player({characterData.UUID})", $"server", house.Price, $"parkBuy({house.ID})");
                         else GameLog.Money($"player({characterData.UUID})", $"server", house.Price, $"houseBuy({house.ID})");
