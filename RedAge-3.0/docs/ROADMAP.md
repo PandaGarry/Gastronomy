@@ -140,3 +140,5 @@
 
 - [ ] INV-013: make AirDrop hacking and loot access server-authoritative and bind every remote to exact drop, active event, player, dimension and proximity; test client progress tampering, replay and cross-event calls. See AIRDROP_REMOTE_REVIEW.md.
 - [ ] INV-014: require active MatWar generation and exact nearby crate for status/hack/open; server-time lock progress; remove/revoke stale matwar_100 loot on endWar. See MATWAR_REMOTE_REVIEW.md.
+
+- [ ] INV-015: bind faction weapon-stock access to a short-lived player/fraction/stock intent; recheck duty, rank, stock-open state, position and dimension on open and every mutation; clear stale OnFracStock. See FRACTION_STOCK_SESSION_REVIEW.md.
