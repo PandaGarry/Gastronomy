@@ -505,3 +505,10 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - [ ] Confirm the generated DB model and actual schema both remain signed INT until an explicitly reviewed BIGINT migration.
 
 Static source patch only; no compiler, disposable DB or RAGE UI test has run. See `ECONOMY_REVIEW.md`.
+
+
+## Auction offline refund — MONEY-036 boundary extension
+
+- [ ] With previous bidder offline and bank account absent from cache, verify `ReturnMoney` accepts only a non-null DB balance and positive refund; reject negative state and any `current + refund > Int32.MaxValue` without SQL mutation.
+- [ ] Test exact boundary `current + refund == Int32.MaxValue`, `Int32.MaxValue + 1`, DB null balance, missing character row, DB exception, duplicate refund and reconnect/restart.
+- [ ] Confirm refund log/notification only after a durable credit receipt; current source still logs before DB/online credit acknowledgement, so this test remains expected to fail until settlement is redesigned.
