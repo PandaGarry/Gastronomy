@@ -302,3 +302,9 @@
 - Traced OnFracStock assignments across FIB, Sheriff, Army, City Hall and Police. No reset was found. The openWeaponStock remote checks only current faction ID and rank, not duty, stock-open state, location, dimension or session freshness.
 - Registered INV-015 and created FRACTION_STOCK_SESSION_REVIEW.md; added staging matrix and linked the finding to the inventory container map.
 - Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
+
+## 2026-11-08 — INV-016 organization stock exit lifecycle
+
+- Traced OpenWeaponStock → LoadOtherItemsData → RemovePlayer. Exit clears InsideOrganizationID and moves the player outside but does not close/revoke the other inventory context; generic item remotes do not recheck organization interior state.
+- Registered INV-016 and created ORGANIZATION_STOCK_SESSION_REVIEW.md; expanded inventory container map and staging matrix.
+- Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
