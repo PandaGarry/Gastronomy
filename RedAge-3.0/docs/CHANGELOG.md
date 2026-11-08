@@ -1,3 +1,10 @@
+## 2026-11-08 — INV-019 weapon/key-ring parent ownership
+
+- Traced weapon and CarKey subcontainer open paths, session location storage, generic inventory move/stack/use remotes and SetItemData cleanup.
+- Registered INV-019: the mutable `other` location is not rebound to current parent item existence/ownership; former-holder access after parent transfer/removal is a staging hypothesis, not a reproduced theft.
+- Added WEAPON_KEYRING_SUBCONTAINER_REVIEW.md and regression matrix; updated issue register, inventory review, master checklist, test plan, coverage, index, roadmap and handoff.
+- Static-only; no gameplay patch, build, RAGE/MySQL runtime or exploit reproduction.
+
 # Журнал работ
 
 ## 2026-11-08 — Аудит продажи автомобиля между игроками
