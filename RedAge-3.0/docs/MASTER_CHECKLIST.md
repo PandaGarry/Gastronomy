@@ -168,3 +168,6 @@
 
 
 - [ ] **MONEY-002 follow-up:** verify repeated/concurrent `Money.Start()` calls create one worker; test valid/invalid UUID and balance boundaries (`0`, negative, `Int32.MaxValue`, above max, `long` extremes); prove DB outage retry and newer-value-wins. Still design durable outbox/restart recovery, bounded retry/backoff/dead-letter and run C# build/MySQL fault tests.
+
+
+- [ ] **MONEY-002 hand-off race:** snapshot-time `ActiveMoneyWrites` markers are now patched; test small wallet change after detach/before SQL, full-save-vs-worker order both ways, wallet mutation during full save, failed save requeue and failed DB-context marker cleanup. Remaining direct SQL writers outside coordinator must be reconciled; durable outbox/backoff and C#/MySQL tests remain open.
