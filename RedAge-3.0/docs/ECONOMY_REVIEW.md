@@ -385,3 +385,22 @@ This is useful evidence that a transaction-backed coordinator is compatible with
 **Исправление (не внедрено):** refund становится settlement leg с уникальным ключом, например `auction:{auctionId}:refund:{uuid}:{reasonCode}`; атомарно фиксировать refund receipt + balance delta и auction state transition. До внедрения определить, какие именно причины/части ставки подлежат возврату, чтобы operation ID отличал независимые legs. Все online/offline paths должны идти через общий coordinator и единый login publication gate.
 
 **Тесты:** online wallet/bank reject; offline NULL/negative/max balance; DB failure до/после UPDATE и потеря commit acknowledgement; affectedRows=0; игрок входит между presence check и write; concurrent/replayed ReturnMoney; auction retry/restart; доказать один refund receipt и одну delta. Static review only; source/build/DB/RAGE tests не менялись/не запускались.
+
+
+## MONEY-056 — account merger cash aggregation is non-idempotent and can overflow before import
+
+**Уверенность: высокая по source control flow; последствия зависят от импортируемых данных и повторного запуска. Приоритет: высокий для migration flow.**
+
+Файл: `Accounts/Merger/Repository.cs`, `MergerAuntification`, `MergerToBiz`, `MergerToChar`.
+
+- `MoneyTo` is a signed `int` accumulator. It sums character cash, business sale value, order/product valuation, business bank balance, house price and house bank balance using `int +=`/multiplication. No checked arithmetic or explicit upper-bound policy is applied before persisting the new character balance.
+- New bank account is created separately by `MoneySystem.Bank.Create`; then new character row is inserted with `Money = Convert.ToInt32(MoneyTo / 10)`. A later step creates customization, vehicles, organization data and inventory.
+- Per-character mapping `accountData.Chars[slot] = charId` is changed in memory during the loop; account save occurs only after all characters have been processed. There is no durable merge-operation ID/checkpoint around character insert + related assets + account slot mapping.
+- Exceptions are caught at the outer method. A failure after creating bank/character/vehicles but before account save can leave orphaned destination records. Retrying may create another set because no unique merge receipt prevents replay. A failure after partial account/asset work also needs reconciliation rather than blind retry.
+- The same flow issues RedBucks cashback during organization conversion before the entire merge has committed, so a retry can potentially repeat an earlier side effect. This must be included in the migration settlement review.
+
+**Риск:** overflow can corrupt the imported cash amount; partial/replayed merge can duplicate destination money/accounts/assets or leave orphan records and already-issued cashback. This is a migration/idempotency defect class, not an ordinary wallet delta.
+
+**Исправление (не внедрено):** introduce a stable source-server + source-account + source-character merge ID; persist a durable per-character migration journal/checkpoint and destination IDs; make each import step idempotent; use checked `long` valuation and explicit conversion/range policy before narrowing to DB INT; transactionally bind destination character/bank and merge receipt where possible; issue cashback only from a durable once-only settlement leg. Define compensation/reconciliation for external assets that cannot share one DB transaction.
+
+**Тесты:** values at INT boundaries and multiplication/addition overflow; fail after bank create, character insert, vehicle import, organization conversion, inventory import and before/after account slot save; replay same merge ID and restart; prove one destination character/bank/asset set and one cashback. Static review only; no migration DB test/build/RAGE run.
