@@ -251,3 +251,5 @@
 ## 2026-11-08 — AutoMechanic service settlement review
 
 - Добавлен `JOB-005`: AutoMechanic repair/fuel acceptance игнорирует результаты списания клиента и начисления механику, но выполняет repair/fuel transfer, success logs и quest progress. `buyFuel` также увеличивает топливный резерв после непроверенного списания. Создан `MECHANIC_SERVICE_REVIEW.md` с failure/replay/restart matrix. Static-only; build/RAGE/DB tests не выполнялись.
+
+- Расширен `BUSINESS_OWNERSHIP_REVIEW.md`: `BUG-002` — admin delete удаляет DB row до null-unsafe owner lookup, из-за чего offline/government owner может оставить runtime BizList/world ghost; `MONEY-047` — результат online owner refund игнорируется перед удалением бизнеса. Добавлены failure/restart tests. Static-only.
