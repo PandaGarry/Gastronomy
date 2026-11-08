@@ -288,3 +288,8 @@
 - Warehouse: own UUID storage; WarehouseExit does not close the other pane and Stock.Perform lacks IsInPostalStock, but qMain requires active npc_stock quest. Determine whether location persistence is intended; do not call it cross-player theft.
 - HeliCrash: server colshape/key-clamp open path; OpenHeliCrash and later item operations lack explicit current box/range binding. Confirm interaction framework and event lifecycle.
 - weapon_<SqlId> / CarKey_<SqlId>: LoadOtherItemsData stores location only, not a server-side parent-item intent. Trace parent transfer/drop/delete and revoke semantics before registering a finding.
+
+## 2026-11-08 continuation — INV-018 HeliCrash key clamp
+
+- InHeliCrash installs KeyClampData before GetHealth checks ArmyLockpick. Generic KeyClamp.OnEnd accepts client value and invokes callback without requiring successful keyDown; HeliCrash End sets health from value and can roll unlock at 0 without verifying IsHack owner/lockpick. Failure leaves reusable KeyClampData. Added INV-018 / HELICRASH_KEYCLAMP_REVIEW.md.
+- Static-only; no source patch/build/RAGE/DB test. Continue remaining warehouse and parent-item subcontainer traces; avoid duplicates with INV-003, INV-012..018 and VEH-012.
