@@ -185,3 +185,12 @@ The worker/full-save ordering now has a process-local coordination layer:
 - `Main.CheckMyPromoCode` offline referral reward now widens the sum and rejects negative/out-of-range result before writing the signed INT column.
 - These are range guards only. They do **not** put these direct writers under the Money worker/full-save coordinator; read-modify-write lost-update races and offline→online transition races remain open. Business-tax repossession and Merger direct writes also need range/ordering review.
 - Static review only; test null DB balance, zero/negative reward, exact max, max+1, `int.MinValue` debit and concurrent pending queue/full save. No C# build or MySQL test.
+
+
+### MONEY-002 follow-up — failed SQL hand-off window (2026-11-08)
+
+A second interleaving was found in `MoneyUpdate`: the detached row's `ActiveMoneyWrites` marker was removed in `finally` immediately after releasing the UUID semaphore, even when `UpdateAsync` threw. `Worker` only called `RequeueMoney` after `MoneyUpdate` returned `false`. A small `Wallet.Change` in that interval could see no pending/in-flight marker, choose not to enqueue, then the failed old row would be rejected by version comparison during retry — losing the latest balance snapshot from the retry path.
+
+**Patch:** `MoneyUpdate` now distinguishes a completed write, a superseded snapshot, and a failed write. It removes the in-flight marker after success or supersession only. On SQL failure it leaves the marker registered until `Worker` calls `RequeueMoney`, which atomically requeues only the still-current version and removes the marker under `QueueLock`. This closes the identified in-process failure/requeue window by source inspection; no runtime interleaving test has run.
+
+**Remaining direct writers requiring safe migration:** `Character.Save.Repository.AddMoney`, `Players.Phone.Auction.Repository.ReturnMoney` offline cash fallback, `Main.CheckMyPromoCode` referral reward, `Main` business repossession proceeds, `Core.Admin.OffGiveMoney`, and `Accounts.Merger.Repository` organization merge refund. They perform independent SQL reads/writes and do not share the per-UUID semaphore/version protocol. Do not blindly wrap these with the coordinator: first decide whether the target can be online and whether the operation is an absolute assignment or additive credit, then preserve any queued in-memory snapshot and make DB mutation/notification ordering explicit. `Accounts.Merger` currently appears to set an absolute `moneyTo` value and needs separate semantic review.
