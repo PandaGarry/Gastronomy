@@ -537,3 +537,12 @@
 - Defined the proposed async coordinator contract: stable operation IDs, unique receipt and bounded cash delta in one InnoDB transaction, typed duplicate/uncertain outcomes, per-character gate through cache handoff and login publication, and removal of legacy absolute worker/full-save writes.
 - Explicitly recorded that synchronous in-memory-first `Wallet.Change` callers must migrate to awaited durable outcomes before success side effects; bank accounts remain a separate ledger.
 - Design/documentation only. No C# source implementation, build, DB integration or runtime tests.
+
+
+
+## 2026-11-08 — MONEY-002 direct cash writer revalidation
+
+- Revalidated `Character.Save.Repository.AddMoney`: SELECT/application delta/absolute UPDATE remains non-atomic; nullable cash is converted to zero; no row lock, per-UUID gate, receipt or affected-row acknowledgement.
+- Revalidated referral online/offline reward ordering, offline auction refund fallback, admin offline grant acknowledgement vs login race, and account merger aggregate cash import.
+- Added regression cases for NULL cash, recipient login during offline writes, partial referral settlement, auction refund identity, merger restart/idempotency and admin login handoff.
+- No source code changed. No C# build, MariaDB fault injection, concurrency or RAGE staging tests ran.
