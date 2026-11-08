@@ -286,3 +286,16 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 20. **Driving school (MONEY-050):** на disposable RAGE account пройти покупку всех license index 0–5; отдельно форсировать `Wallet.Change=false`/exception и shutdown race. При отказе не должны меняться `Licenses`, quest stage, City Hall/faction money, money logs или success notifications. Проверить case 1 quest и cases 3–5 faction credit, повторный callback и reconnect/save. См. `DRIVING_SCHOOL_REVIEW.md`.
 19. **Metro ticket (MONEY-049):** на disposable RAGE account вызвать `metro.server.buyTicket` с `Increase` = `int.MinValue`, -1, 0, 1, обычным значением и `int.MaxValue`; переполнение/невалидные суммы должны завершаться без изменений. Инжектировать `Wallet.Change=false`/exception и проверить отсутствие money log, `buyTicketSuccess` и перехода dimension; затем подтвердить штатную покупку. Static patch only; runtime required. См. `METRO_REVIEW.md`.
 18. **Player trade/tent market (MONEY-048):** на disposable RAGE accounts проверить cash-only, item-only и mixed trades в обоих направлениях; форсировать `Wallet.Change=false`/exception на debit и credit после preflight, server-stop race, full inventory, partial item insert, disconnect, duplicate/concurrent confirm и restart. Для tent purchase проверить `Item.Price * Value` boundaries/overflow, exact stock decrement, buyer debit, seller credit and BattlePass progress ordering. Assert no item transfer or success side effect without confirmed settlement; exact balances/items/logs after reconnect. Static detail: `PLAYER_TRADE_REVIEW.md`.
+
+
+## MONEY-002 — money queue concurrency and recovery (source patch pending validation)
+
+- [ ] Concurrent `AddMoneyUpdate` / `AddDonateUpdate` while worker snapshots and clears; no collection exceptions or lost latest values.
+- [ ] Enqueue a newer absolute balance while an older batch is in DB flush; failed old batch requeue must not overwrite the newer value.
+- [ ] Inject DB failure before first row, mid-batch and after partial success; failed batch is retried and absolute SET does not double-apply a delta.
+- [ ] Disconnect/reconnect DB and verify pending rows eventually flush.
+- [ ] Kill process after in-memory balance mutation but before flush; document current expected limitation (pending queue is not durable) and use this as acceptance test for a future outbox.
+- [ ] Verify unchanged-value UPDATE behavior does not cause false failure/retry loops; no affected-row-count assumption is made by the patch.
+- [ ] Long DB outage: measure retry/log volume and memory growth; define bounded backoff/dead-letter before production closure.
+
+Static source patch only; no C# build or DB fault injection has run. See `ECONOMY_REVIEW.md`.
