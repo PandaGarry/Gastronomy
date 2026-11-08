@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Database;
 using LinqToDB;
@@ -13,16 +12,19 @@ namespace NeptuneEvo.Database.Models
     {
         private static readonly nLog Log = new nLog("Database.Money");
         private static readonly object QueueLock = new object();
+        private static int _workerStarted;
 
         public static void Start()
         {
-            var thread = new Thread(Worker);
-            thread.IsBackground = true;
-            thread.Name = "MoneySave";
-            thread.Start();
+            // Startup may be invoked more than once by server lifecycle code.
+            // Keep exactly one persistence worker per process.
+            if (Interlocked.Exchange(ref _workerStarted, 1) != 0)
+                return;
+
+            Task.Run(Worker);
         }
 
-        private static async void Worker()
+        private static async Task Worker()
         {
             while (true)
             {
@@ -60,7 +62,8 @@ namespace NeptuneEvo.Database.Models
                     RequeueMoney(moneyBatch);
                 }
 
-                Thread.Sleep(1000);
+                // Do not block a thread-pool thread between asynchronous DB batches.
+                await Task.Delay(1000);
             }
         }
 
@@ -119,6 +122,15 @@ namespace NeptuneEvo.Database.Models
 
         public static void AddMoneyUpdate(int uuid, long amount)
         {
+            // The current characters.Money column and update mapping are signed INT.
+            // Reject invalid snapshots here instead of poisoning the retry queue with
+            // a Convert.ToInt32 overflow that would fail on every worker pass.
+            if (uuid <= 0 || amount < 0 || amount > int.MaxValue)
+            {
+                Log.Write($"AddMoneyUpdate rejected invalid snapshot (UUID: {uuid}, amount: {amount}).");
+                return;
+            }
+
             lock (QueueLock)
             {
                 MoneyUpdateList[uuid] = new object[] { uuid, amount };
