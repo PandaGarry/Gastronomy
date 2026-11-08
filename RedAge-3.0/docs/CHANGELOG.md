@@ -430,3 +430,8 @@
 
 - `Core/Businesses.cs`: reject `amount <= 0`, use bounded stock comparison after positive validation, and return false when no matching product is found.
 - Owner-bank failure rollback, unchecked customer wallet debit, exact item/weapon grant, dirty-save and durable idempotent settlement remain open. Static assertions only; no C# build, RAGE or MySQL tests.
+
+## 2026-11-08 — MONEY-042 BUY_CAR settlement guard
+
+- `Main.cs`: validate seller/price; check seller wallet credit before vehicle holder mutation; attempt buyer refund on seller-credit rejection and critically log failed compensation.
+- Static assertions passed. Durable idempotent receipt, async holder DB retry/reconciliation and all RAGE/MySQL tests remain pending.
