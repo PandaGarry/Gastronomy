@@ -44,3 +44,10 @@
 - Therefore no C# compilation, unit/integration execution or MySQL fault injection was performed for MONEY-002/MONEY-003/property settlement patches.
 - Static source assertions were executed against the current `redage/audit-continuation` branch for bank locking, two-leg transfer mutation, positive amount/overflow guards, one-shot ATM confirmation, revision-aware save retry, dirty marking, concurrent delete queue, and migrated bank/property call sites. Assertions passed; they are not a substitute for compiler/runtime tests.
 - RAGE:MP staging and multi-client tests remain unavailable. Do not close affected findings or claim runtime validation.
+
+
+### 2026-11-08 — MONEY-002 worker follow-up static verification
+
+- Source patch: one-worker startup guard, `Task`-based loop with nonblocking delay, and `AddMoneyUpdate` validation against UUID and signed DB INT balance range.
+- Static assertions checked the guard, async worker signature, delay, range validation and removal of blocking `Thread.Sleep`. Assertions passed; no C# compiler is available, so compilation was not performed.
+- No concurrency test, MySQL fault injection, restart/crash durability test or RAGE staging test was run. Queue remains in-memory only.
