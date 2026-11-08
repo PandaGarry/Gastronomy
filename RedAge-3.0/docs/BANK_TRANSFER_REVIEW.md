@@ -71,3 +71,16 @@ The following bounded changes are now applied in `MoneySystem/Bank.cs`:
 - [ ] mutate account while async save is in flight; newer revision remains dirty
 - [ ] balance outside DB INT range; no cast wrap/dirty-flag loss; explicit migration/reconciliation required
 - [ ] restart after memory mutation before DB commit; document/recover via future durable ledger/outbox
+
+## 2026-11-08 follow-up — bank account creation bounds and synchronized reads
+
+A further source patch was applied in `MoneySystem/Bank.cs`:
+
+- `GetBalance` now reads the account balance under the same `AccountSync` lock used by balance mutations, avoiding an unsynchronized read of the mutable `Data.Balance` field.
+- `Create` rejects empty holders, negative balances and account types outside the current signed `TINYINT` representation before DB insertion.
+- Initial balance is converted with `checked(Convert.ToInt32(balance))` before insert, and the cache is initialized from that exact validated DB value. This prevents silent truncation where MySQL stores one value but the in-memory cache holds another.
+- A failed cache registration after DB insert is logged as an error rather than silently returning a successful account ID.
+
+**Limits:** the schema remains `INT` for balance; balances above `Int32.MaxValue` require a coordinated schema migration, not a wider cache alone. The cache-registration failure path can leave a DB row requiring reconciliation; it is considered exceptional and needs explicit failure-injection coverage. The returned mutable `Data` object from `Get(int)` is still a legacy escape hatch and needs a broader caller audit before changing its contract.
+
+**Validation:** source patch only. No .NET build, MySQL integration test, concurrent read/write test, or RAGE staging run has been performed.
