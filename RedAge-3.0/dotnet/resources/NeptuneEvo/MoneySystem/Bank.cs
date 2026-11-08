@@ -76,6 +76,55 @@ namespace NeptuneEvo.MoneySystem
                 return Accounts.TryGetValue(bankId, out var bank) ? bank.Balance : 0;
             }
         }
+
+        // Replaces an account balance through the same synchronization and persistence
+        // boundary used by normal bank mutations. Intended for ownership/tax lifecycle flows.
+        public static bool SetBalance(int bankId, long balance)
+        {
+            if (balance < 0 || balance > int.MaxValue)
+                return false;
+
+            lock (AccountSync)
+            {
+                if (!Accounts.TryGetValue(bankId, out var bank))
+                    return false;
+
+                bank.Balance = balance;
+                bank.Revision++;
+                bank.IsSave = true;
+                return true;
+            }
+        }
+
+        // Hourly property tax historically permits a temporary negative balance so the
+        // existing repossession path can run. Keep that policy, but synchronize and persist it.
+        public static bool ApplyBalanceAdjustment(int bankId, long amount, out long newBalance)
+        {
+            lock (AccountSync)
+            {
+                newBalance = 0;
+                if (!Accounts.TryGetValue(bankId, out var bank))
+                    return false;
+
+                try
+                {
+                    newBalance = checked(bank.Balance + amount);
+                }
+                catch (OverflowException)
+                {
+                    Log.Write($"Balance adjustment overflow [bank:{bankId}, balance:{bank.Balance}, amount:{amount}]", nLog.Type.Warn);
+                    return false;
+                }
+
+                if (newBalance < int.MinValue || newBalance > int.MaxValue)
+                    return false;
+
+                bank.Balance = newBalance;
+                bank.Revision++;
+                bank.IsSave = true;
+                return true;
+            }
+        }
         #region Changing account balance
         public static bool Change(int bankId, long amount, bool notify = true)
         {
