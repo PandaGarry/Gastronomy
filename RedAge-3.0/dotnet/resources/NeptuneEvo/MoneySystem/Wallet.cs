@@ -26,16 +26,23 @@ namespace NeptuneEvo.MoneySystem
             {
                 var characterData = player.GetCharacterData();
                 if (characterData == null) return false;
-                // The persisted characters.money column is signed INT. Keep the in-memory
-                // long contract inside that range and never narrow before validating it.
-                long temp = checked(characterData.Money + (long)amount);
-                if (temp < 0 || temp > int.MaxValue) return false;
-                if (amount < 0 && Admin.IsServerStoping) return false;
-                characterData.Money = temp;
-                balanceChanged = true;
-
-                if (amount >= 10_000 || amount <= -10_000)
-                    Database.Models.Money.AddMoneyUpdate(characterData.UUID, characterData.Money);
+                long temp;
+                // The same striped lock protects the balance snapshot used by SaveSql.
+                // Version tracking invalidates detached worker snapshots on every mutation.
+                lock (Database.Models.Money.GetCharacterMoneySyncLock(characterData.UUID))
+                {
+                    // The persisted characters.money column is signed INT. Keep the in-memory
+                    // long contract inside that range and never narrow before validating it.
+                    temp = checked(characterData.Money + (long)amount);
+                    if (temp < 0 || temp > int.MaxValue) return false;
+                    if (amount < 0 && Admin.IsServerStoping) return false;
+                    characterData.Money = temp;
+                    balanceChanged = true;
+                    Database.Models.Money.AddMoneyUpdate(
+                        characterData.UUID,
+                        characterData.Money,
+                        amount >= 10_000 || amount <= -10_000);
+                }
 
                 if (amount >= 1) characterData.EarnedMoney += (ulong)amount;
                 if (!isDisconnect)
