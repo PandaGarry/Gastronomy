@@ -106,6 +106,7 @@ namespace NeptuneEvo.MoneySystem
                         return false;
 
                     bank.Balance = newBalance;
+                    bank.Revision++;
                     if (bank.Type == 1 && amount >= 10000)
                         bank.IsSave = true;
                     else if (bank.Type != 1)
@@ -189,6 +190,8 @@ namespace NeptuneEvo.MoneySystem
 
                     firstAcc.Balance = firstBalance;
                     lastAcc.Balance = lastBalance;
+                    firstAcc.Revision++;
+                    lastAcc.Revision++;
                     // Persist both sides; small personal-account transfers must not remain cache-only.
                     firstAcc.IsSave = true;
                     lastAcc.IsSave = true;
@@ -244,33 +247,81 @@ namespace NeptuneEvo.MoneySystem
         
         public static void SetSave(int bankId)
         {
-            if (Accounts.ContainsKey(bankId))
-                Accounts[bankId].IsSave = true;
+            lock (AccountSync)
+            {
+                if (Accounts.TryGetValue(bankId, out var bank))
+                {
+                    bank.IsSave = true;
+                    bank.Revision++;
+                }
+            }
         }
         public static async Task Save(ServerBD db, int bankId)
         {
+            Data bank;
+            long balanceSnapshot;
+            long revisionSnapshot;
+            string holderSnapshot;
+            bool saveHolderSnapshot;
             try
             {
-                if (!Accounts.ContainsKey(bankId)) return;
+                lock (AccountSync)
+                {
+                    if (!Accounts.TryGetValue(bankId, out bank) || !bank.IsSave)
+                        return;
 
-                var bank = Accounts[bankId];
-                bank.IsSave = false;
-                    
+                    balanceSnapshot = bank.Balance;
+                    revisionSnapshot = bank.Revision;
+                    holderSnapshot = bank.Holder;
+                    saveHolderSnapshot = bank.IsSaveHolder;
+                }
+
+                // The database schema currently stores INT. Reject overflow without clearing
+                // the dirty flag so the account remains visible for migration/reconciliation.
+                int databaseBalance;
+                try
+                {
+                    databaseBalance = checked(Convert.ToInt32(balanceSnapshot));
+                }
+                catch (OverflowException)
+                {
+                    Log.Write($"Save rejected: balance outside database INT range [bank:{bankId}, balance:{balanceSnapshot}]", nLog.Type.Error);
+                    return;
+                }
+
                 var updateBank = db.Money
                     .Where(m => m.Id == bankId)
-                    .Set(m => m.Balance, Convert.ToInt32(bank.Balance));
+                    .Set(m => m.Balance, databaseBalance);
 
-                if (bank.IsSaveHolder)
-                    updateBank = updateBank.Set(b => b.Holder, bank.Holder);
-                
-                bank.IsSaveHolder = false;
-                        
-                await updateBank
-                    .UpdateAsync();
+                if (saveHolderSnapshot)
+                    updateBank = updateBank.Set(b => b.Holder, holderSnapshot);
+
+                await updateBank.UpdateAsync();
+
+                lock (AccountSync)
+                {
+                    // A mutation during the async DB write has a newer revision and must
+                    // remain dirty for the next save pass.
+                    if (bank.Revision == revisionSnapshot)
+                    {
+                        bank.IsSave = false;
+                        if (saveHolderSnapshot)
+                            bank.IsSaveHolder = false;
+                    }
+                    else
+                    {
+                        bank.IsSave = true;
+                    }
+                }
             }
             catch (Exception e)
             {
-                Log.Write($"Save Exception: {e.ToString()}");
+                lock (AccountSync)
+                {
+                    if (Accounts.TryGetValue(bankId, out var bank))
+                        bank.IsSave = true;
+                }
+                Log.Write($"Save Exception: {e}");
             }
         }
         #endregion Save Acc
@@ -382,9 +433,13 @@ namespace NeptuneEvo.MoneySystem
                 {
                     if (Accounts.ContainsKey(id))
                     {
-                        Accounts[id].Holder = newName;
-                        Accounts[id].IsSaveHolder = true;
-                        Accounts[id].IsSave = true;
+                        lock (AccountSync)
+                        {
+                            Accounts[id].Holder = newName;
+                            Accounts[id].IsSaveHolder = true;
+                            Accounts[id].IsSave = true;
+                            Accounts[id].Revision++;
+                        }
                     }
                 }
             }
@@ -402,6 +457,7 @@ namespace NeptuneEvo.MoneySystem
             public long Balance { get; set; }
             public bool IsSave { get; set; }
             public bool IsSaveHolder { get; set; }
+            public long Revision { get; set; }
         }
     }
 
