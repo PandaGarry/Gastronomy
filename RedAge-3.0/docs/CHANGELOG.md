@@ -297,7 +297,7 @@
 ## 2026-11-08 — MONEY-052 Street race finish authorization
 
 - `server.streetrace.finished` previously trusted a client-triggered finish event without checking that the race had started or that the caller was near the server-side finish position. Added active-race and 10m server-position checks to prevent pre-start payout and remote finish claims.
-- Added MONEY-052 and regression scenarios. Waypoint validation, payout result/durability, abort payout and concurrency remain open; no build or RAGE staging tests have been run.
+- Added MONEY-052 and regression scenarios. Finite/minimum-distance waypoint validation is now applied; map-boundary policy, payout result/durability, abort payout and concurrency remain open; no build or RAGE staging tests have been run.
 
 ## 2026-11-08 — PERF-002 CEF production build defaults
 
