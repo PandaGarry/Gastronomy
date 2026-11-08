@@ -51,3 +51,10 @@
 - Source patch: one-worker startup guard, `Task`-based loop with nonblocking delay, and `AddMoneyUpdate` validation against UUID and signed DB INT balance range.
 - Static assertions checked the guard, async worker signature, delay, range validation and removal of blocking `Thread.Sleep`. Assertions passed; no C# compiler is available, so compilation was not performed.
 - No concurrency test, MySQL fault injection, restart/crash durability test or RAGE staging test was run. Queue remains in-memory only.
+
+
+### 2026-11-08 — MONEY-036 wallet range patch static assertions
+
+- Re-fetched the working-branch sources and asserted: `Wallet.Change` uses checked `long` addition; rejects negative and above-`Int32.MaxValue` results before mutation; full `Character.SaveSql` rejects invalid balances before bank/other save side effects; generated DB model still maps `characters.money` to signed `int(11)`; `Money.AddMoneyUpdate` validates its snapshot range; offline auction refund validates DB balance and widened result before narrowing.
+- Assertions passed after correcting one documentation-status matcher. These are textual/static assertions, not C# compilation or executable unit tests.
+- Environment check: Node `v22.16.0` present; `dotnet`, `msbuild`, `csc`, `mcs`, `mysql` and `mariadb` unavailable. No build, DB round-trip/fault injection, worker concurrency or RAGE UI test was performed.
