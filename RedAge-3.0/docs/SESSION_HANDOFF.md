@@ -243,3 +243,10 @@
 - Client mileage calc runs on a 200ms render event but adds a per-second centimeter value without elapsed-time scaling; likely ~5x at exact cadence, pending runtime measurement. Added as a client-side observation, not a separate issue.
 - Registered VEH-011; updated TAXI_MILEAGE_REVIEW, ISSUES, MASTER_CHECKLIST, TEST_PLAN, AUDIT_COVERAGE, INDEX, ROADMAP, CHANGELOG and SESSION_HANDOFF. Static-only, no source changes/build/RAGE/DB tests.
 - Next: continue uncovered vehicle sync/control and garage/storage lifecycle; avoid duplicating MONEY-012, PROG-007, VEH-007..010.
+
+
+## 2026-11-08 continuation — INV-012 vehicle trunk inventory
+
+- Found vehicleSelected branch 3 opens a vehicle container after one-time 5m/trunk-open check, then generic inventory move/stack/use handlers mutate `other` without rechecking vehicle ACL, proximity, dimension, door state or selected vehicle. ItemsUse can transfer an `other` item to character inventory.
+- Registered INV-012 and created VEHICLE_TRUNK_ACCESS_REVIEW.md. Open-trunk public access remains policy-dependent; no successful theft is claimed. Updated INVENTORY_REVIEW, ISSUES, TEST_PLAN, MASTER_CHECKLIST, AUDIT_COVERAGE, INDEX, ROADMAP, CHANGELOG and SESSION_HANDOFF.
+- Static-only; no source changes/build/RAGE/DB tests. Next: trace vehicle trunk close/session invalidation, storage ownership, and all other `LoadOtherItemsData` endpoints; avoid duplicating INV-003/INV-012.
