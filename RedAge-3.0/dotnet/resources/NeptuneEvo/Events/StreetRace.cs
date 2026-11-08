@@ -370,6 +370,15 @@ namespace NeptuneEvo.Events
                 int streetRaceId = PlayerToStreetRaceId[player.Value];
                 if (!StreetRaceList.ContainsKey(streetRaceId)) return;
                 StreetRaceData streetRaceData = StreetRaceList[streetRaceId];
+
+                // The finish event is client-triggered; only an active race participant
+                // physically at the server-side finish position may claim the result.
+                if (!streetRaceData.Status)
+                    return;
+
+                if (player.Position.DistanceTo(streetRaceData.Position) > 10f)
+                    return;
+
                 int cost = Convert.ToInt32(streetRaceData.rate * 2 * 0.9);
                 Wallet.Change(player, cost);
                 //Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.YouWinGonka, cost), 8000);
