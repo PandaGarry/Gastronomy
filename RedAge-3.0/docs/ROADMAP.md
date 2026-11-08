@@ -176,3 +176,9 @@
 
 - Patched the detach→SQL hand-off gap by marking detached UUIDs active at queue snapshot time. Small wallet mutations in that interval now enqueue a newer revision rather than being skipped with no replacement.
 - Per-UUID semaphore/revision coordination between Money worker and full character save remains partial. Direct SQL cash writers outside the coordinator and volatile queue durability remain next; see `ISSUES.md`, `ECONOMY_REVIEW.md` and `TEST_PLAN.md`.
+
+
+## 2026-11-08 — MONEY-002 persistence ordering follow-up
+
+- Versioned in-process coordination now covers Wallet.Change, detached money worker batches and full Character.SaveSql; stale worker snapshots are skipped and small changes during pending/in-flight writes are coalesced.
+- Direct cash SQL writers outside the coordinator remain the next migration target. Durable outbox/restart recovery, retry policy, compiler, DB concurrency and RAGE tests remain open.
