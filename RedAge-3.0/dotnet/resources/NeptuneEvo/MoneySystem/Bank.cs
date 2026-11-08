@@ -71,11 +71,10 @@ namespace NeptuneEvo.MoneySystem
 
         public static long GetBalance(int bankId)
         {
-
-            if (Accounts.ContainsKey(bankId))
-                return Accounts[bankId].Balance;
-
-            return 0;
+            lock (AccountSync)
+            {
+                return Accounts.TryGetValue(bankId, out var bank) ? bank.Balance : 0;
+            }
         }
         #region Changing account balance
         public static bool Change(int bankId, long amount, bool notify = true)
@@ -365,28 +364,48 @@ namespace NeptuneEvo.MoneySystem
         {
             try
             {
+                // The current MySQL schema stores account type as TINYINT and balance as INT.
+                // Validate before inserting so the cache can never disagree with a truncated row.
+                if (string.IsNullOrWhiteSpace(holder) || type < 0 || type > sbyte.MaxValue || balance < 0)
+                    return 0;
+
+                int databaseBalance;
+                try
+                {
+                    databaseBalance = checked(Convert.ToInt32(balance));
+                }
+                catch (OverflowException)
+                {
+                    Log.Write($"Create rejected: balance outside database INT range [holder:{holder}, balance:{balance}]", nLog.Type.Warn);
+                    return 0;
+                }
+
                 await using var db = new ServerBD("MainDB");//В отдельном потоке
 
                 int moneyId = await db.InsertWithInt32IdentityAsync(new Moneys
                 {
                     Type = (sbyte)type,
                     Holder = holder,
-                    Balance = (int)balance,
+                    Balance = databaseBalance,
                 });
 
                 Data data = new Data();
                 data.ID = moneyId;
                 data.Type = type;
                 data.Holder = holder;
-                data.Balance = balance;
-                Accounts.TryAdd(moneyId, data);
+                data.Balance = databaseBalance;
+                if (!Accounts.TryAdd(moneyId, data))
+                {
+                    Log.Write($"Create failed to register inserted account in cache [bank:{moneyId}]", nLog.Type.Error);
+                    return 0;
+                }
 
                 Log.Write($"Created new Bank Account! ID:{moneyId}", nLog.Type.Success);
                 return moneyId;
             }
             catch (Exception e)
             {
-                Log.Write($"Create Exception: {e.ToString()}");
+                Log.Write($"Create Exception: {e}");
                 return 0;
             }
         }
