@@ -3018,7 +3018,22 @@ namespace NeptuneEvo.Core
                     Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.AdminTransferRestricted), 3000);
                     return;
                 }
-                Wallet.Change(player, -biz.SellPrice);
+                int tax = Convert.ToInt32(biz.SellPrice / 100f * biz.Tax);
+                long previousBusinessBalance = Bank.GetBalance(biz.BankID);
+                if (!Bank.SetBalance(biz.BankID, (long)tax * 2))
+                {
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось подготовить банковский счёт бизнеса. Покупка отменена.", 3000);
+                    return;
+                }
+
+                if (!Wallet.Change(player, -biz.SellPrice))
+                {
+                    if (!Bank.SetBalance(biz.BankID, previousBusinessBalance))
+                        Bank.Log.Write($"Business purchase rollback failed [business:{biz.ID}, bank:{biz.BankID}]");
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось списать оплату. Покупка отменена.", 3000);
+                    return;
+                }
+
                 GameLog.Money($"player({characterData.UUID})", $"server", biz.SellPrice, $"buyBiz({biz.ID})");
                 //Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.BizBuy, BusinessManager.BusinessTypeNames[biz.Type]), 3000);
                 Players.Phone.Messages.Repository.AddSystemMessage(player, (int)DefaultNumber.Bank, LangFunc.GetText(LangType.Ru, DataName.BizBuy, BusinessManager.BusinessTypeNames[biz.Type], biz.SellPrice), DateTime.Now);
@@ -3040,13 +3055,6 @@ namespace NeptuneEvo.Core
                 biz.Orders = orders;
                 biz.SetOwner (player.Name);
                 characterData.BizIDs.Add(id);
-                
-                int tax = Convert.ToInt32(biz.SellPrice / 100f * biz.Tax);
-                if (!Bank.SetBalance(biz.BankID, (long)tax * 2))
-                {
-                    Log.Write($"buyBusinessCommand: failed to initialize bank balance [business:{id}, bank:{biz.BankID}]");
-                    return;
-                }
                 
                 Character.Save.Repository.SaveBiz(player);
             }
