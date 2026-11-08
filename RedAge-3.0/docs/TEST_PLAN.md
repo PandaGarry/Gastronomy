@@ -706,3 +706,16 @@ Static source review only. These tests require a disposable MariaDB database and
 - [ ] Disconnect after DB commit but before cache update; reconnect and assert DB-authoritative balance with no duplicate operation.
 - [ ] Verify receipt retention/archive policy preserves replay protection across the maximum supported retry horizon.
 - Status: protocol design only. No receipt DDL, code, MariaDB or runtime test exists yet.
+
+
+### MONEY-002 — stable operation identity contract by caller (2026-11-08)
+
+- [ ] Lottery: persist draw round ID + selected ticket number + winner UUID before payout; restart/retry must reuse the same draw result and cash operation ID.
+- [ ] Auction: add an immutable server-generated bid-event ID; test same bidder raising multiple bids, outbid refund, duplicate callback and retry after lost commit acknowledgement. Auction ID + mutable LastBetUUID/LastPrice alone is insufficient.
+- [ ] Referral: verify the deployed refferals uniqueness/DDL; use a durable referred-character/referrer identity only after proving uniqueness, and include the cash reward leg.
+- [ ] Business repossession: persist a repossession event/generation ID bound to business ID and owner/version before payout or ownership/bank mutation.
+- [ ] Admin offline grant: persist one request ID at command acceptance; retry the same request ID and reject reuse with a different target/delta.
+- [ ] Table task: persist completion/reward generation and award slot; task ID + UUID alone must not allow repeat season/completion awards.
+- [ ] Account merger: persist source server + source character + destination account/merge request mapping before creating destination bank/character/assets; replay resumes the same merge.
+- [ ] Generic AddMoney/Wallet APIs: require caller-supplied stable event identity; never mint an ID inside the retrying persistence method.
+- Status: identity mapping is design-only; source event IDs/DDL constraints and end-to-end replay tests remain to be implemented.
