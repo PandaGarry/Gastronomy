@@ -467,3 +467,10 @@ Still open: direct cash SQL writers outside this coordinator (including offline 
 Applied a bounded ordering fix in Core/Admin.cs: OffGiveMoney now awaits the DB update, checks for exactly one affected character row, and only then emits money/admin logs and success notification. A failed or zero-row update no longer produces a false success acknowledgement.
 
 This is not a full money-writer migration. The read-then-absolute-write remains vulnerable to concurrent offline grants and races with online wallet persistence; there is no durable receipt/idempotency or crash recovery. Static source patch only; C# build and DB fault-injection remain pending. Regression cases added to TEST_PLAN.md; see ECONOMY_REVIEW.md.
+
+
+## MONEY-002 — coordinator implementation contract (2026-11-08)
+
+Before coding the durable character-cash coordinator, use the contract in `ECONOMY_REVIEW.md` as a hard design gate: stable operation IDs; unique receipt + bounded cash delta in one InnoDB transaction; one transaction owner/context; typed outcomes including duplicate and uncertain commit; shared per-UUID async gate across DB commit, online cache update and login cache publication; no legacy absolute worker/full-save write to `characters.money`; asynchronous caller migration before success side effects. Bank-account balances remain a separate ledger. Do not add a background outbox after an in-memory-first mutation and call it crash-durable.
+
+Implementation sequence: schema/deployed-engine verification → receipt DDL → coordinator and idempotent retry → login/cache handoff → remove legacy cash writers → migrate reward/payout/admin call sites → concurrency/crash/mixed-writer tests. MONEY-002 stays open until build and integration evidence exists.
