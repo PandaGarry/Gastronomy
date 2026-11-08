@@ -76,3 +76,8 @@ Business admin deletion was added to the ownership lifecycle review: `BUG-002` r
 ### Vehicle trunk reservation lifecycle — 2026-11-08
 
 Static trace found that CEF `closeOther` forwards to server `OtherClose`, which clears the open-container location but not `SelectedVeh`/`BagInUse`. Full inventory close and disconnect have separate release paths, so closing only the auxiliary pane can leave the vehicle unavailable to other players until one of those paths runs. Added VEH-012 and VEHICLE_TRUNK_LIFECYCLE_REVIEW.md. No source patch or runtime reproduction; verify second-player reopen and stale-owner race on RAGE staging. This is distinct from INV-012 per-operation authorization.
+
+
+### Event loot remote authorization — 2026-11-08
+
+AirDrop trace: team registration is not spatial participation; StartedHack has no player-to-crate position/dimension check, AirdropChangeLockStatus trusts client health under a generic IsAirDropHacking Boolean, and OpenInventory checks team registration/unlocked state but not caller proximity/dimension. MatWar trace: start/progress/open handlers lack active-war and spatial/session binding; completion trusts client health; endWar removes client objects but does not clear matwar_100 inventory/lock state. Added INV-013 and INV-014 with separate reviews and staging matrices. Static-only; no exploit reproduction, source patch or runtime test.
