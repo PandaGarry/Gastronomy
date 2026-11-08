@@ -177,3 +177,6 @@
 
 
 - [ ] **MONEY-002 coordinator design gate:** implement and review immutable operation IDs, unique receipt + bounded delta in one InnoDB transaction, typed duplicate/uncertain results, shared async UUID gate through login/cache publication, and removal of legacy absolute writes before migrating payout/referral/admin callers. See ECONOMY_REVIEW.md and REDAGE_MASTER_PLAN.md.
+
+
+- [ ] **MONEY-060 — ticket fine:** partial guard added: return immediately when both Wallet.Change and Bank.Change reject, before city/officer credits or success effects. Validate wallet success, bank fallback success, both-fail after spend-after-prompt, duplicate/concurrent confirmation, shutdown and persistence. Durable one-shot fine receipt remains open; see ECONOMY_REVIEW.md and TEST_PLAN.md.
