@@ -445,3 +445,12 @@
 - Login race подтверждён точным порядком: DB row SELECT → создание `CharacterData.Money` → несколько async load operations → `SetCharacterData`; единый money lock вокруг всего read-to-publication интервала отсутствует.
 - Source code не менялся. Следующий шаг: зафиксировать coordinator contract (API, transaction/context ownership, result semantics, login publication gate, receipts, idempotency keys, legacy writer migration), затем реализация небольшими проверяемыми срезами. Не добавлять изолированный atomic increment.
 - C# build, disposable MariaDB transaction/fault injection, concurrency tests и RAGE staging не запускались.
+
+
+## Контрольная точка 2026-11-08 — MONEY-002 coordinator contract
+
+- Сформулирован дизайн-gate до реализации: immutable operation + стабильный operation ID; unique receipt и bounded delta в одной InnoDB-транзакции; один владелец transaction/context; typed result с duplicate/uncertain outcome; общий per-UUID async gate для commit, cache handoff и login publication.
+- Зафиксировано, что legacy Money worker и полный SaveSql больше не должны записывать абсолютное значение `characters.money` после перехода на coordinator; `Wallet.Change` требует async caller migration и проверки durable result до success side effects.
+- Банк — отдельный ledger; cross-ledger settlement не входит автоматически в этот coordinator.
+- Документы обновлены: ECONOMY_REVIEW, REDAGE_MASTER_PLAN, TEST_PLAN, MASTER_CHECKLIST, CHANGELOG, SESSION_HANDOFF.
+- Source code не менялся. Следующий этап — implementation design review на точных call sites и DDL, затем первый вертикальный slice (receipt schema + coordinator) с отдельным тестовым harness. Никаких build/DB/RAGE результатов не заявлено.
