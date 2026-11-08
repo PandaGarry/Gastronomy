@@ -159,4 +159,11 @@ Static trace of ItemsUse → LoadOtherItemsData → GetLocationName/GetItemData/
 - Static source review only. No C# build, disposable MariaDB fault injection, restart test or RAGE staging was run.
 
 
-- Fraction ticket confirmation (`FractionCommands.ticketConfirm`) was traced from prompt-time balance check to confirmation debit and payout. Added MONEY-060: after both Wallet.Change and Bank.Change fail, handler notifies but does not return, then credits city/officer and emits success. Static-only; direct remote/replay/failure tests pending.
+- Fraction ticket confirmation was traced from prompt-time balance check through debit and payout. MONEY-033 consume-once session intent guard and MONEY-060 both-debits-failed early return are now patched and statically re-read. Durable receipt/split payout and all RAGE/DB replay/failure/restart tests remain pending.
+
+
+### Ticket settlement follow-up — 2026-11-08
+
+- MONEY-033: pending ticket intent is detached under the shared session lock before confirmation side effects; duplicate/concurrent reuse is blocked at the in-memory intent boundary.
+- MONEY-060: failed wallet + bank debit now exits before City Hall/officer credits and success effects.
+- Static source review only; no C# build, disposable MariaDB fault injection or RAGE staging test has run.
