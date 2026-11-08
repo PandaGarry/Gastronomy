@@ -1,29 +1,30 @@
 # Phone auction lifecycle — static review
 
-Обновлено: 2026-11-08. Traced property listing creation, first/subsequent bids, auction end and house/business award settlement. Narrow auction lifecycle slice; no code changes, .NET build, RAGE staging or DB fault injection.
+Обновлено: 2026-11-08. Traced property listing creation, first/subsequent bids, auction end and house/business award settlement. Source patch now present on `redage/audit-continuation`; no .NET build, RAGE staging or DB fault injection has been performed.
 
-## MONEY-023 — first bid debits the bidder before refunding the no-bid sentinel
+## MONEY-023 — first bid sentinel and offline previous-bidder lookup
 
-**Приоритет: высокий; static control flow confirmed, runtime not reproduced.**
+**Приоритет: высокий; source patch applied, offline settlement still needs staging.**
 
-- New auction rows initialize `LastBetUUID = 0` and `LastPrice = price` (`Players/Phone/Auction/Repository.cs:290-305, 309-324`).
-- `OnBet` debits `price + 1%` from the bidder before unconditionally calling `ReturnMoney(auctionData.LastBetUUID, auctionData.LastPrice, ...)` (`:525-538`).
-- `ReturnMoney` treats the UUID as a connected-player lookup and immediately dereferences the result (`:562-568`); `Main.GetPlayerByUUID` explicitly returns null when the UUID is not connected (`Main.cs:4998-5005`). Thus the first-bid sentinel `0` can throw after the debit, and the same null dereference also makes the intended offline-character DB refund/payout branch unreachable for a real offline previous bidder or offline seller. In an overbid, the new bidder has already been debited before the previous-bid refund call; in house/business/vehicle award methods, seller payout is called before the asset handoff, so an offline seller can interrupt award processing. The event wrapper simply forwards to `OnBet` (`Events.cs:24-25`); no compensation is visible.
-- The bidder's own selected bid is the only account debited here; this is not evidence of cross-player debit. The in-memory debit may later be persisted by character save/disconnect. Test the sentinel on a disposable server before reporting as runtime-proven.
+- New auction rows initialize `LastBetUUID = 0` and `LastPrice = price`. UUID zero is a no-bid sentinel, not a funded prior bid.
+- `OnBet` now calls `ReturnMoney` only when `LastBetUUID > 0 && LastPrice > 0`, so the first bidder is not charged and then interrupted by a bogus refund to UUID zero.
+- `ReturnMoney` now uses `player?.GetCharacterData()`; when the prior bidder/seller is offline, execution can reach the existing asynchronous DB fallback instead of throwing on a null player.
+- The offline fallback is not yet a durable idempotent receipt, and online/offline `Bank.Change` / `Wallet.Change` results are still not checked here. The broader refund/payout atomicity problem remains open.
 
-**Remediation (not implemented):** refund the previous leader only when `LastBetUUID` identifies an actual prior bidder; settle debit/refund/bid update atomically or compensate on any exception. Require a valid positive starting price and use an explicit nullable/no-bid state rather than UUID zero.
+**Patch:** `Players/Phone/Auction/Repository.cs` on `redage/audit-continuation`.
 
-**Regression:** first bid on a fresh auction of each type; offline previous bidder on overbid; offline seller at auction end for house/business/vehicle; confirm exact debit/refund/proceeds and asset handoff after reconnect/restart. Inject refund/update failure and verify durable retry/compensation; no `ReturnMoney(0,...)`.
+**Regression:** first bid on a fresh auction of each type; overbid while previous bidder is offline; auction end while seller is offline for house/business/vehicle; confirm exact debit/refund/proceeds and asset handoff after reconnect/restart. Inject refund/update failure and verify durable retry/compensation; no `ReturnMoney(0,...)`.
 
 ## MONEY-024 — expired/ended auctions still accept bids while the row remains cached
 
-**Приоритет: средний; conditional stale-cache window, not reproduced.**
+**Приоритет: средний; source guard/serialization patch applied, runtime concurrency pending.**
 
-- `OnBet` finds by ID but does not reject `auctionData.IsEnd` or compare `auctionData.Time` to current time (`:466-504`).
-- `End` marks the record ended and settles the asset (`:426-455`), but the ended auction is removed from `AuctionsData` only after `SaveAuctions` writes it (`:393-418`). That persistence worker sleeps 30 seconds (`Database/Models/Phone.cs:19-42`).
-- During the window after settlement and before cache removal, a direct `server.phone.auction.bet` call with the known ID can still debit the caller. With an existing top bidder, `OnBet` can also return that bidder's previous stake, mutate the already-ended auction, and never reassign the already-settled asset. Separately, bids submitted after `Time` but before the periodic `GetEnd` pass can be accepted late. The range is timing-dependent and has not been reproduced.
+- `OnBet` now rejects `auctionData.IsEnd` and `DateTime.Now >= auctionData.Time` before any debit.
+- `OnBet` and `End` now share `lock (auctionData)`; `End` also rechecks `IsEnd` while holding the lock. This serializes the bid/end transition for the same in-memory auction record.
+- The ended row may still remain cached until the existing save worker removes it, but stale IDs now hit the state/deadline guard.
+- Other readers/writers of `AuctionsData` and the DB persistence worker have not been proven to share this lock; durable concurrency and restart behavior remain staging tasks.
 
-**Remediation (not implemented):** atomically check both `!IsEnd` and `DateTime.Now < Time` at bid settlement; serialize end/bid transitions on one authoritative lock/state machine and remove or reject ended records immediately.
+**Patch:** `Players/Phone/Auction/Repository.cs` on `redage/audit-continuation`.
 
 **Regression:** bid before/at/after deadline, callback after `End` but before DB flush, repeated stale IDs, and concurrent end/bid. Assert no post-end debit/refund or auction-state mutation and exactly one asset transfer.
 
@@ -56,22 +57,18 @@
 House auctions do not need a separate character house-ID list in the inspected `GetHouse` path; the offline winner observation above is specific to business `BizIDs`. Vehicle/other-item auction mutations and auction escrow persistence require separate review.
 
 
-## MONEY-038 — unchecked auction bid fee arithmetic can turn a debit into a credit
+## MONEY-038 — unchecked auction bid fee arithmetic could turn a debit into a credit
 
-**Приоритет: критичный; арифметическая цепочка и положительное зачисление подтверждены статически, runtime не воспроизведён.**
+**Приоритет: высокий до прохождения build/RAGE boundary tests. Source patch applied.**
 
-- Remote server.phone.auction.bet accepts price as a client-supplied int and forwards it unchanged to Repository.OnBet (Players/Phone/Auction/Events.cs:23-25).
-- OnBet checks only that the new price is greater than LastPrice; it does not enforce a positive value or a maximum bid (Players/Phone/Auction/Repository.cs:466-503).
-- At :525, priceAndPercent is calculated as price + Convert.ToInt32(price / 100) in int. The project file does not enable checked arithmetic (NeptuneEvo.csproj has no CheckForOverflowUnderflow property).
-- For price = int.MaxValue (2,147,483,647), the mathematical sum is 2,168,958,483, which wraps in the default unchecked int context to -2,126,008,813.
-- The next line calls Bank.Change(characterData.Bank, -priceAndPercent). The unary negation therefore becomes positive 2,126,008,813; Bank.Change treats positive amounts as credits and adds them to the bank balance (MoneySystem/Bank.cs:79-115). The caller does not reject the resulting positive credit.
-- This is a direct client-controlled remote argument, not a UI-only value. Whether a particular account balance/DB configuration permits the full amount and the exact runtime outcome still require staging; the unsafe arithmetic and credit direction are statically established.
-- On a fresh auction, the existing MONEY-023 sentinel path may throw after this bank credit and before the bid state changes; that is a separate compounding failure, not a reason to merge the findings.
+- The remote still supplies `price` as an `int`, but `OnBet` now rejects `price <= 0` before any money/state mutation.
+- Fee arithmetic now widens before addition: `long priceAndPercent = (long)price + (price / 100L)`. For `int.MaxValue`, the total is 2,168,958,483 and remains positive; negating it therefore remains a debit when passed to `Bank.Change`, not the previous wrapped positive credit.
+- The computed fee is passed to `GameLog.Money` as a `long`; the API supports that type.
+- No server-defined maximum auction bid was found in the inspected config/UI path. The patch removes signed-int wraparound but does not invent an economy cap; owner policy for a maximum bid remains open.
 
-**Remediation (not implemented):** validate price > 0 and a server-defined maximum before arithmetic; compute fee/total using checked long arithmetic; reject overflow and values outside the supported bank/economy range; pass a validated negative debit to the bank only. Make the bid reservation and previous-bid refund one serialized, durable settlement.
+**Patch:** `Players/Phone/Auction/Repository.cs` on `redage/audit-continuation`.
 
-**Regression:** direct remote bids at int.MaxValue, int.MaxValue-1, the maximum permitted bid, one above maximum, zero, negative and int.MinValue; verify the bank balance never increases from a bid, no integer wrap occurs, and no state/log/notification is committed on rejected input. Inject bank debit failure and first-bid sentinel failure; test concurrency and restart persistence.
-
+**Regression:** direct remote bids at `int.MaxValue`, `int.MaxValue-1`, configured/policy maximum once established, zero, negative and `int.MinValue`; verify the bank balance never increases from a bid, no integer wrap occurs, and no state/log/notification is committed on rejected input. Inject bank debit failure and test concurrency/restart persistence.
 
 ## INV-011 — Other-item auction escrow has no end-of-auction award or return path
 
