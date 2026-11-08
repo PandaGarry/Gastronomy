@@ -565,3 +565,9 @@
 - 2026-11-08 — Reconciled MONEY-019/MONEY-040 status: reviewed house/business hourly tax paths now use ApplyBalanceAdjustment and dirty the bank account; durable cross-ledger tax settlement and repossession owner/payout issues remain open.
 
 - 2026-11-08 — MONEY-060: `ticketConfirm` continues to split fine proceeds and emit success events after both wallet and bank debit attempts return false; added failure/replay regression plan. Static-only; source unchanged.
+
+
+## 2026-11-08 — MONEY-060 ticket settlement guard
+
+- `FractionCommands.ticketConfirm` now returns immediately after both wallet and bank debit attempts fail, before city/officer credits, success events or paid fine log.
+- This is a narrow guard for the confirmed free-fine payout path; it does not provide one-shot replay protection or durable atomic settlement. C# build, RAGE staging and DB/failure tests remain pending.
