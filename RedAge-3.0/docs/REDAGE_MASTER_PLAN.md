@@ -431,3 +431,11 @@ Static review found unchecked second legs in regular ATM cash deposit/withdrawal
 
 - `VehicleManager.RepairCar` now returns success/failure; `RepairMyVeh` checks the $500 debit before repair and attempts refund if repair fails, with critical log on failed refund.
 - This closes the wallet-rejection/free-repair window only. Server-owned dialog intent, location/mechanic policy and durable refund remain open. Static-only; no build/RAGE tests.
+
+
+## 2026-11-08 — MONEY-002 worker lifecycle/range hardening
+
+- `Database/Models/Money.cs`: made `Start()` idempotent per process with an `Interlocked` guard; moved the worker to `Task`-based async execution and replaced blocking sleep with `Task.Delay`.
+- `AddMoneyUpdate` now rejects invalid UUID, negative balance and values above the existing signed DB INT limit before enqueue, preventing a poison retry batch caused by `Convert.ToInt32(long)` overflow.
+- Retained the existing shared queue lock, atomic snapshot/clear, failed-batch requeue and newer-value-wins behavior.
+- Remaining: in-memory-only durability, no DB outbox/transaction, retry backoff/dead-letter, and no .NET build, concurrency test or MySQL fault injection. MONEY-002 remains open.
