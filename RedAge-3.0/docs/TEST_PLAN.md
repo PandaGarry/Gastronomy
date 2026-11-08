@@ -526,3 +526,12 @@ Static source patch only; no compiler, disposable DB or RAGE UI test has run. Se
 - [ ] Audit and test remaining direct SQL writers outside the coordinator: `Character.Save.Repository.AddMoney`, auction offline refund, Main referral/business-tax, Admin OffGiveMoney and Accounts.Merger.
 
 Source assertions only; no C# build or DB fault-injection has run. See `ECONOMY_REVIEW.md`.
+
+
+### MONEY-002 — failed write marker / retry registration interleaving
+
+- [ ] Inject `UpdateAsync` failure for a detached UUID snapshot while holding the per-UUID semaphore; force a small `Wallet.Change` after SQL failure but before `RequeueMoney`. Assert it observes `ActiveMoneyWrites`, enqueues the new version, and the old failed snapshot cannot replace it.
+- [ ] Repeat with a failure on the first, middle and last row of a multi-UUID batch; successful rows clear their markers, failed/unprocessed rows retain markers until retry registration, and no marker leaks remain.
+- [ ] Verify superseded snapshots clear their marker while preserving the newer queued snapshot.
+- [ ] Run a high-contention stress test with wallet mutations, full character saves, worker detach, SQL latency and transient exceptions; compare final in-memory and DB balance after queue drains.
+- [ ] Audit/migrate direct SQL cash writers listed in `ECONOMY_REVIEW.md` only after their online/offline semantics and queued-snapshot interaction are resolved.
