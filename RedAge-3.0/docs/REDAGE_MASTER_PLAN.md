@@ -496,3 +496,9 @@ Implementation sequence: schema/deployed-engine verification → receipt DDL →
 - [ ] Make fine confirmation fail closed: if wallet debit and bank fallback both fail, no city/officer payout, success event or paid log may run.
 - [ ] Replace prompt-time-only funds check with one-shot confirmation intent and durable idempotent fine settlement; test target spending between prompt and confirmation, both-debit failure, fallback success, replay and shutdown.
 - [ ] Keep this in the money-writer migration inventory; source fix is not yet applied and no runtime test has run.
+
+
+### MONEY-060 — ticket fine interim guard (2026-11-08)
+
+- `ticketConfirm` now stops immediately when both wallet and bank debit attempts reject; no city/officer split payout or success effects follow the failed debit.
+- This is a bounded mitigation only. Durable one-shot fine intent/receipt, online cache persistence, replay/concurrency and failure/restart validation remain open. See `ISSUES.md`, `ECONOMY_REVIEW.md`, `TEST_PLAN.md`.
