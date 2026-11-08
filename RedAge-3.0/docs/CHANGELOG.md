@@ -563,3 +563,5 @@
 - 2026-11-08 — MONEY-058: documented that Bank.Transfer's two-account cache mutation is not a durable DB transaction; background worker saves each account separately, leaving a conditional one-sided crash window. No runtime crash reproduction.
 - 2026-11-08 — MONEY-059: documented signed INT mismatch: Bank.Change/Transfer permit long balances beyond schema range, while Bank.Save rejects conversion and leaves the account dirty. Boundary tests pending.
 - 2026-11-08 — Reconciled MONEY-019/MONEY-040 status: reviewed house/business hourly tax paths now use ApplyBalanceAdjustment and dirty the bank account; durable cross-ledger tax settlement and repossession owner/payout issues remain open.
+
+- 2026-11-08 — MONEY-060: `ticketConfirm` continues to split fine proceeds and emit success events after both wallet and bank debit attempts return false; added failure/replay regression plan. Static-only; source unchanged.
