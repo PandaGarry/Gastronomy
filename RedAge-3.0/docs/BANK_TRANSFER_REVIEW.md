@@ -146,3 +146,18 @@ The property acquisition call sites were checked after routing bank balance writ
 The audit found several callers directly mutating `Bank.Data.Balance` or `IsSave`, bypassing the new lock/revision contract. Current branch changes route hourly house/business tax through `ApplyBalanceAdjustment`; admin bank grants now use a snapshot lookup and require `Bank.Change` success; house/business auction awards initialize account balances through `Bank.SetBalance` before ownership/auction-state commit; house purchase checks the buyer debit before ownership effects and rolls back the preinitialized bank balance on debit rejection. `Core/Businesses.buyBusinessCommand` already uses `Bank.SetBalance` for business-account initialization.
 
 `Bank.Get(int)`/`Get(string)` return snapshots, not live objects. `Bank.Accounts` remains a public mutable dictionary, so direct external property mutation is still possible and needs a complete call-site audit. The reviewed `Main.cs` tax path no longer writes Balance directly. Cross-ledger settlement (bank + wallet + ownership + faction credits) remains non-atomic.
+
+
+## 2026-11-08 follow-up — external bank mutation call-site migration
+
+A targeted scan of current-branch call sites found and removed active direct `Bank.Data.Balance` writes in the reviewed paths:
+
+- `Main.cs` hourly business/house tax now uses `ApplyBalanceAdjustment`; the tax accumulator is updated only after the bank adjustment succeeds.
+- `HouseManager` property purchase validates the property bank, debits the buyer first, then initializes the bank; if initialization unexpectedly fails it attempts a refund. This avoids rolling back a pre-written bank balance after a failed debit.
+- House and business auction award paths initialize bank balances through `Bank.SetBalance` before assigning the owner/committing auction state.
+- Admin bank grants read a snapshot and require `Bank.Change` success before logging/notification.
+- `Core/Businesses.buyBusinessCommand` already routes initial business balance through `Bank.SetBalance`.
+
+Static assertions over these six current-branch files found no active direct `.Balance =`, `.Balance +=` or `.Balance -=` writes. This is a targeted slice, not a whole-repository proof: public `Bank.Accounts` remains exposed and unreviewed call sites may still mutate `Data` directly. A separate code-search result from the default branch is stale relative to this branch; each cited file was fetched from the working branch before this check.
+
+**Remaining:** house/business ownership, buyer wallet, property bank and faction/city-hall credits are not one durable transaction. House repossession owner persistence (PROP-003), auction offline payout and exact settlement idempotency remain open.
