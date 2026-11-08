@@ -262,7 +262,22 @@ namespace NeptuneEvo.Events
                 else if (!PlayerToStreetRaceId.ContainsKey(player.Value)) return;
                 else if (!StreetRaceList.ContainsKey(player.Value)) return;
                 StreetRaceData streetRaceData = StreetRaceList[player.Value];
-                streetRaceData.Position = new Vector3(sr_X, sr_Y, sr_Z);
+                if (streetRaceData.Status)
+                    return;
+
+                if (float.IsNaN(sr_X) || float.IsInfinity(sr_X) ||
+                    float.IsNaN(sr_Y) || float.IsInfinity(sr_Y) ||
+                    float.IsNaN(sr_Z) || float.IsInfinity(sr_Z))
+                    return;
+
+                var finishPosition = new Vector3(sr_X, sr_Y, sr_Z);
+                if (player.Position.DistanceTo(finishPosition) <= 50f)
+                {
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.CantGonkaNow), 3000);
+                    return;
+                }
+
+                streetRaceData.Position = finishPosition;
                 if (!sessionData.CuffedData.Cuffed && !sessionData.DeathData.InDeath)
                 {
                     var targetSessionData = streetRaceData.joined.GetSessionData();
