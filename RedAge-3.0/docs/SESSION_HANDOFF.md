@@ -338,3 +338,5 @@
 - Bank.Save now snapshots balance/holder/revision, clears dirty flags only after DB success and only if no newer mutation occurred; exceptions retain dirty state. Values outside DB INT range are not silently narrowed.
 - Remaining: process-local lock only; no durable transaction/idempotency ledger; crash between cache mutation and DB write can still leave stale/lost state; asynchronous save ordering is not crash-safe. Keep MONEY-003 open.
 - Validation: static source review only. No .NET SDK/MSBuild in current runtime; no build, MySQL fault injection, concurrency or RAGE staging test executed.
+
+- Follow-up: `GetBalance`, `Get(string)`, `Create` cache registration, `Remove` and `changeHolder` now use `AccountSync` so account lifecycle/read paths cannot interleave with locked transfers. `Get(int)` still exposes mutable `Data`; audit its callers before treating lock coverage as complete.
