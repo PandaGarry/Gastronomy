@@ -68,7 +68,7 @@
 
 - Все изменения этой работы — только в `RedAge-3.0/` на `redage/audit-continuation`.
 - `main` не менять напрямую; PR #4 остаётся Draft и не сливается автоматически.
-- Рабочая ветка происходит от `arena/fab5bf55-gastronomy`; PR нацелен на `main`. История веток расходится: в `main` есть отдельный commit, отсутствующий в рабочей ветке. До merge требуется отдельное reconciliation и review полного diff.
+- Рабочая ветка происходит от `arena/fab5bf55-gastronomy`; PR #4 нацелен на `main`. GitHub compare на текущем срезе: `diverged`, head ahead by 838 commits и behind by 1 commit относительно `main`; merge base `aa07885aba2cc5a83f6cdcf35ff336b63c0fbc7a`. PR API сообщает `mergeable=false`. До merge требуется отдельное reconciliation и review полного diff.
 - Пустой GitHub CI status не означает успешный build.
 - Static assertions не являются C# build, MariaDB transaction test или RAGE:MP runtime test.
 - Не запускать destructive/fault-injection тесты на production и не использовать реальные платёжные данные.
