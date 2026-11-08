@@ -25,3 +25,8 @@
 ## Scope boundary
 
 INV-012 is a concrete vehicle-container case within the broader INV-003 server-side container policy gap. It does not claim the physical-open-trunk design is inherently insecure; the missing per-operation session, range and context revalidation is the specific finding.
+
+
+## Related lifecycle finding
+
+The authorization/session issue above is tracked as INV-012. A separate cleanup defect is tracked as VEH-012 in `VEHICLE_TRUNK_LIFECYCLE_REVIEW.md`: closing only the auxiliary pane invokes `OtherClose` but currently does not release the selected vehicle's `BagInUse` reservation. Keep access revalidation and reservation release as separate fixes and regression suites.
