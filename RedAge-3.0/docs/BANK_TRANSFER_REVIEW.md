@@ -161,3 +161,14 @@ A targeted scan of current-branch call sites found and removed active direct `Ba
 Static assertions over these six current-branch files found no active direct `.Balance =`, `.Balance +=` or `.Balance -=` writes. This is a targeted slice, not a whole-repository proof: public `Bank.Accounts` remains exposed and unreviewed call sites may still mutate `Data` directly. A separate code-search result from the default branch is stale relative to this branch; each cited file was fetched from the working branch before this check.
 
 **Remaining:** house/business ownership, buyer wallet, property bank and faction/city-hall credits are not one durable transaction. House repossession owner persistence (PROP-003), auction offline payout and exact settlement idempotency remain open.
+
+
+## MONEY-058 follow-up — transfer cache atomicity is not durable atomicity
+
+The current `Bank.Transfer` lock protects both in-memory balances and sets both accounts dirty together. It does **not** persist both sides in one transaction: `Database.Models.Bank.Worker` iterates dirty IDs and invokes `Bank.Save` separately; each call performs its own `UPDATE money`. A process/connection failure between the two updates can leave one leg persisted and the other pending/lost at restart. No transfer receipt or reconciliation journal exists. This is a static crash window, not a reproduced incident.
+
+**Required design:** stable transfer ID + unique receipt + conditional debit/credit in one owned InnoDB transaction; commit before notifying; update cache only after commit or use explicit pending/recovery state. Add failure injection after each SQL statement and verify balance conservation after restart.
+
+## MONEY-059 — signed INT persistence boundary
+
+`Bank.Change` and `Bank.Transfer` validate checked `long` arithmetic but not the schema's signed `INT` maximum. `Bank.Save` rejects values that do not convert to `Int32` and leaves the dirty flag set. Thus a successful in-memory credit can remain unpersistable and be lost on restart. Enforce `0..Int32.MaxValue` at mutation time or migrate the schema and every consumer to BIGINT. Boundary tests are pending.
