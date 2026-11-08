@@ -396,3 +396,8 @@ Static review found unchecked second legs in regular ATM cash deposit/withdrawal
 - Revalidated organization stock withdrawals alongside faction and vehicle cargo. Item grants still ignore AddNewItem result.
 - Confirmed AddNewItem may return a successful slot even when requested quantity was only partially inserted; `-1` is not the only failure signal. `Remove` returns void and suppresses exceptions, so the current callers cannot establish exact consumption.
 - No unsafe item/cargo patch was applied. Require exact-count inventory APIs or durable intent/receipt with quantity-delta verification and compensation. MONEY-035 cash branches are separately guarded. STOCK-001 remains open; static-only.
+
+## 2026-11-08 — STOCK-002 takeProd bounded hardening
+
+- `Core/Businesses.cs`: `takeProd` now rejects nonpositive quantity and returns false when the requested product name is absent, rather than reporting a successful purchase with no stock match.
+- Remaining: stock is still decremented before owner-bank credit; no rollback on bank failure; callers ignore customer debit and item/weapon grant results; business dirty-save remains open under MONEY-022. This is a narrow guard, not a settlement fix. Static-only; no build/RAGE/MySQL tests.
