@@ -46,7 +46,7 @@ module.exports = {
 				use: {
 					loader: 'svelte-loader',
 					options: {
-						hotReload: true
+						hotReload: !prod
 					}
 				}
             },
