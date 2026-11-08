@@ -583,3 +583,16 @@ Source patch only; no compiler or disposable DB test has run.
 - [ ] Referral offline path: fail after success marker, after account RB/VIP update, during cash SELECT/UPDATE, and after commit acknowledgement loss; verify durable pending/retry/reconciliation and exactly one reward per referral identity.
 - [ ] Login publication gate: pause after character SELECT and before `SetCharacterData`; concurrently attempt offline credit; assert the resulting cache and DB balance converge to one authoritative value.
 - [ ] Verify the ledger/receipt unique key and balance mutation roll back together on InnoDB; retry same operation ID concurrently and after process restart and assert one delta.
+
+
+
+### MONEY-002 — revalidated direct-writer edge cases (2026-11-08)
+
+- [ ] `Character.Save.Repository.AddMoney`: set `characters.money=NULL`; verify explicit policy rather than silently interpreting NULL as zero. Test concurrent positive/negative deltas, missing UUID, zero delta, lower bound, `Int32.MaxValue`, DB failure and ambiguous acknowledgement.
+- [ ] Promo-owner / payday caller handoff: pause after online-player lookup returns null, then log the recipient in before the async SELECT/UPDATE; assert cache publication and DB balance cannot diverge. Repeat with disconnect/reconnect and retry of the same logical reward.
+- [ ] Auction offline refund: force the no-loaded-bank fallback; race login after player lookup but before cash SELECT/UPDATE; inject UPDATE failure and affected-row zero; verify one refund per auction/bid identity. Separately verify the loaded-bank route does not accidentally use character cash.
+- [ ] Referral online/offline settlement: fail each reward leg and the success-marker write independently; restart/replay and prove every reward is granted once or remains durably pending. Include target login between offline lookup and cash write.
+- [ ] Account merger: interrupt after destination character insert, after cash aggregate assignment, after property/business conversion, and before account slot/completion update. Retry the same merge and assert no duplicate character, cash, property, RB or items. Exercise aggregate overflow and NULL source cash.
+- [ ] Admin offline grant: verify the current awaited/affected-row acknowledgement patch, then race target login between presence check and DB write; ensure the shared coordinator prevents stale cache/full-save overwrite and retries use the same operation ID.
+
+Static source review only. These tests require a disposable MariaDB database and isolated RAGE staging; none ran in this audit slice.
