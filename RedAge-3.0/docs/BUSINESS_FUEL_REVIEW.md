@@ -23,6 +23,19 @@
 - Duplicate remote, concurrent refuels, disconnect and restart between stock, fraction allowance, City Hall and vehicle-fuel writes.
 - Daily reset and admin FuelLimit decrease while FuelLeft is greater than the new limit; verify allowance cannot be exceeded.
 
+## VEH-009 — petrol remote is not bound to an active nearby fuel station
+
+**Приоритет: высокий; missing session/location/type validation statically confirmed; RAGE event reachability requires staging.**
+
+- SessionData.BizID defaults to -1 (Players/Models/SessionData.cs:61). OnBusinessAction sets it to the ID of whichever business interaction was entered, before switching on the business type (Core/Businesses.cs:1035-1054). The inspected source has no corresponding reset on leaving the business; the same stale-context pattern is independently documented for the 24/7 shop callback in CAS-024.
+- The petrol remote fillCar only checks that BizID is nonnegative/present and the caller is in a vehicle; it does not require biz.Type == 1, current proximity to the selected station, matching dimension or an active server-issued refuelling session (Core/Businesses.cs:2841-2854).
+- It then calls takeProd(biz.ID, lvl, "Бензин", price) and applies fuel to the vehicle (2919-2953). STOCK-002 documents that takeProd returns true when no matching product exists; therefore a BizID left by a non-fuel business can still pass the stock gate despite that business having no petrol product. The unchecked Wallet.Change and stock settlement issues remain covered by STOCK-002; this finding is specifically the missing authorization/context boundary.
+- A player who has previously interacted with a business can directly invoke petrol while away from a station; the selected business can even be a non-fuel business. The precise client remote invocation and RAGE position/dimension behavior were not runtime-tested.
+
+**Remediation (not implemented):** create a short-lived server-side refuelling intent only when entering a Type==1 station; bind it to player, business ID, vehicle identity, position/dimension and expiry. Recheck station proximity/type, driver seat, vehicle identity and active intent on every petrol event. Consume the intent or use a bounded refill session, and reset it on exit/disconnect/context change. Independently make takeProd return false when the product is absent.
+
+**Regression:** interact with a non-fuel business, leave and directly call petrol; interact with a fuel station then move far away/change dimension and call petrol; swap vehicle, passenger seat, stale/deleted business and replay the event. Every invalid context must leave fuel, stock, wallet, owner bank, FuelLeft and City Hall balance unchanged. Confirm legitimate in-range refuelling still works.
+
 ## Scope boundary
 
-This pass covers government fleet refuelling only. MONEY-031 tracks fuel-limit edit authorization; STOCK-002 covers business retail takeProd settlement; faction stock transfers remain STOCK-001. No gameplay code was modified.
+VEH-009 is separate from MONEY-045 (government quota enforcement), STOCK-002 (missing-product success and retail settlement), and CAS-024 (24/7 shop stale BizID).
