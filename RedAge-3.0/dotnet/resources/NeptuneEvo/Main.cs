@@ -2732,6 +2732,11 @@ namespace NeptuneEvo
                                     }
                                     if (Fractions.Ticket.IsVehicleTickets(vehicleData.SqlId))
                                         return;
+                                    if (vehicleData.Holder != sessionData.Name)
+                                    {
+                                        Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Транспорт больше не принадлежит Вам. Продажа отменена.", 3000);
+                                        break;
+                                    }
                                     int price = 0;
                                     if (BusinessManager.BusProductsData.ContainsKey(vehicleData.Model))
                                     {
@@ -2754,7 +2759,16 @@ namespace NeptuneEvo
                                                 break;
                                         }
                                     }
-                                    MoneySystem.Wallet.Change(player, price);
+                                    if (price <= 0)
+                                    {
+                                        Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось определить цену транспорта. Продажа отменена.", 3000);
+                                        break;
+                                    }
+                                    if (!MoneySystem.Wallet.Change(player, price))
+                                    {
+                                        Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось зачислить оплату за транспорт. Продажа отменена.", 3000);
+                                        break;
+                                    }
                                     GameLog.Money($"server", $"player({characterData.UUID})", price, $"carSell({vehicleData.Model}, {number})");
                                     //Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.YouSellCar, vehicleData.Model, number, MoneySystem.Wallet.Format(price)), 3000);
                                     Players.Phone.Messages.Repository.AddSystemMessage(player, (int)DefaultNumber.Bank, LangFunc.GetText(LangType.Ru, DataName.YouSellCar, vehicleData.Model, number, MoneySystem.Wallet.Format(price)), DateTime.Now);
