@@ -2886,7 +2886,15 @@ namespace NeptuneEvo.Core
                         lvl = VehicleManager.VehicleTank[vehicle.Class] - fuel;
                     }
 
-                    if (lvl < 0) return;
+                    if (lvl <= 0) return;
+
+                    var fractionData = player.GetFractionData();
+                    Business biz = BizList[sessionData.BizID];
+                    if (biz.Products == null || biz.Products.Count == 0) return;
+
+                    long totalPrice = (long)lvl * biz.Products[0].Price;
+                    if (totalPrice <= 0 || totalPrice > int.MaxValue) return;
+                    int price = (int)totalPrice;
 
                     int tfuel = fuel + lvl;
                     if (tfuel > VehicleManager.VehicleTank[vehicle.Class])
@@ -2894,9 +2902,6 @@ namespace NeptuneEvo.Core
                         Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.VvedireCorrect), 3000);
                         return;
                     }
-                    var fractionData = player.GetFractionData();
-                    Business biz = BizList[sessionData.BizID];
-                    int price = lvl * biz.Products[0].Price;
                     if (isGov)
                     {
                         if (fractionData == null || Fractions.Manager.FractionTypes[fractionData.Id] != FractionsType.Gov)
@@ -2909,13 +2914,11 @@ namespace NeptuneEvo.Core
                             Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.GosGosZapravit), 6000);
                             return;
                         }
-                        if (lvl > fractionData.FuelLeft) 
-                            lvl = fractionData.FuelLeft;
-                        //if (lvl <= 0 || Fractions.Stocks.fracStocks[frac].FuelLeft < lvl * biz.Products[0].Price)
-                        //{
-                        //    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, $"Лимит на заправку гос. транспорта за день исчерпан", 3000);
-                        //    return;
-                        //}
+                        if (price > fractionData.FuelLeft)
+                        {
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Лимит на заправку гос. транспорта за день исчерпан", 3000);
+                            return;
+                        }
                     }
                     else if (UpdateData.CanIChange(player, price, true) != 255) return;
                     if (!takeProd(biz.ID, lvl, "Бензин", price))
