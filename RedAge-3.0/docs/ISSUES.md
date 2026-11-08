@@ -176,6 +176,8 @@
 
 | INV-018 | Высокий | Статически подтверждён; direct-remote RAGE reproduction required | InHeliCrash installs KeyClampData before GetHealth checks for ArmyLockpick. Generic keyClamp.end accepts a client-supplied value and calls EndCB without requiring a successful keyDown/lockpick reservation; HeliCrash End assigns Health=value and performs a 50% unlock roll for value 0 without checking IsHack owner or lockpick. Failed rolls leave KeyClampData reusable, enabling repeated free attempts. | Require a server-owned active reservation and successful keyDown; bind exact box/player; calculate progress server-side; atomically consume one lockpick and clear state on every terminal path. См. HELICRASH_KEYCLAMP_REVIEW.md. |
 
+| INV-019 | Средний | Статически подтверждён; RAGE staging required | Weapon/key-ring subcontainers are opened by parent SqlId, but LoadOtherItemsData stores only a mutable location string. Shared inventory move/stack/use handlers resolve `other` through that string and do not revalidate that the parent weapon/keyring still exists and remains owned by the caller; SetItemData does not revoke the pane when the parent moves. A former holder may retain a stale path to child storage after parent transfer/removal; practical extraction is not runtime-confirmed. | Bind the subcontainer session to exact parent SqlId/type/owner/version; validate parent ownership on every mutation and revoke on parent transfer/drop/delete/replacement. Test former/new owner, direct remote replay, two viewers and restart. See WEAPON_KEYRING_SUBCONTAINER_REVIEW.md. |
+
 ## Не выводить из этих наблюдений
 
 - Npm audit по свежему разрешению без upstream lock не является точным отчётом о production runtime.
