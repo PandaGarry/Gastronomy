@@ -323,16 +323,17 @@ Finding нельзя закрывать только потому, что код
 
 ## 12. Следующие конкретные действия
 
-1. Проверить MONEY-002 source patch: build, concurrency and DB failure/retry tests; отдельно спроектировать durable outbox/recovery, поскольку текущая очередь остаётся in-memory.\n2. Продолжить текущий bounded audit без дублирования уже изученных review.
-2. Закончить проектирование StreetRace settlement: winner/abort payout, durable receipt/recovery, concurrency; затем покрыть MONEY-051/052 regression tests.
-3. Спроектировать безопасное решение MONEY-048 player trade/tent market.
-4. Продолжить проверку unchecked `Wallet.Change` и stock/item settlement callers, затем оставшиеся Remote Events/delegated callbacks.
-5. Обследовать реальную структуру .NET/CEF проектов и выбрать совместимые тестовые frameworks без необоснованного upgrade runtime.
-6. Добавить первый runnable test harness: pure money arithmetic/validation tests и базовые JS/CEF checks; далее подключить DB integration.
-7. Подготовить отдельную staging/test DB и RAGE:MP environment; не подключаться к production.
-8. Снять performance baseline до любых существенных оптимизаций.
-9. Обновлять этот документ после каждого утверждённого изменения плана и при существенном изменении статуса работ.
-
+1. Проверить MONEY-002 source patch: build, concurrency and DB failure/retry tests; отдельно спроектировать durable outbox/recovery, поскольку текущая очередь остаётся in-memory.
+2. Проверить MONEY-003 bank transfer patch: legacy-target build, parallel transfer/withdrawal tests, duplicate confirmation, MySQL save failure/retry and restart consistency; затем спроектировать DB transaction + durable idempotency ledger.
+3. Продолжить текущий bounded audit без дублирования уже изученных review.
+4. Закончить проектирование StreetRace settlement: winner/abort payout, durable receipt/recovery, concurrency; затем покрыть MONEY-051/052 regression tests.
+5. Спроектировать безопасное решение MONEY-048 player trade/tent market.
+6. Продолжить проверку unchecked Wallet.Change и stock/item settlement callers, затем оставшиеся Remote Events/delegated callbacks.
+7. Обследовать реальную структуру .NET/CEF проектов и выбрать совместимые тестовые frameworks без необоснованного upgrade runtime.
+8. Добавить первый runnable test harness: pure money arithmetic/validation tests и базовые JS/CEF checks; далее подключить DB integration.
+9. Подготовить отдельную staging/test DB и RAGE:MP environment; не подключаться к production.
+10. Снять performance baseline до любых существенных оптимизаций.
+11. Обновлять этот документ после каждого утверждённого изменения плана и при существенном изменении статуса работ.
 
 ### 2026-11-08 — MONEY-003 bank transfer remediation
 
