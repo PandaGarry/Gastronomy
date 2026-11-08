@@ -127,3 +127,5 @@
 - [ ] VEH-009: require a short-lived server-side refuelling intent bound to a nearby Type==1 station and vehicle; revalidate and consume on every petrol remote. See BUSINESS_FUEL_REVIEW.md.
 
 - [ ] JOB-005: make mechanic repair/fuel acceptance and mechanic fuel-reserve purchases exactly-once; confirm both wallet legs before repair/fuel mutation and add stale-offer/replay/restart tests. See MECHANIC_SERVICE_REVIEW.md.
+
+- [ ] BUG-002/MONEY-047: make admin business deletion null-safe and idempotent across DB row, online/offline owner BizIDs/refund, runtime cache and world cleanup; test failures/restart. See BUSINESS_OWNERSHIP_REVIEW.md.
