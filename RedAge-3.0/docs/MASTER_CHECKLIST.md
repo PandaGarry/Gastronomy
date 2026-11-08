@@ -44,7 +44,7 @@
 ## Этап C — Критичные деньги, платежи и игровые активы
 
 - [ ] MONEY-008/009, PROG-001 — Sapper: серверная state machine, RNG, ход, cashout, exactly-once settlement.
-- [ ] STOCK-001 — faction/organization/vehicle stock and cargo transfers: exact Remove/AddNewItem/Wallet.Change result, atomicity, authorization, idempotency and restart recovery; include partial grants and all stock containers. See `FRACTION_STOCK_REVIEW.md` and `ISSUES.md`.
+- [ ] STOCK-001 — faction/organization/vehicle stock and cargo transfers: exact-count AddNewItem/Remove result (AddNewItem can return a slot after partial insertion; Remove is void), atomicity, authorization, idempotency and restart recovery; include partial grants and all stock containers. Cash branches have separate interim MONEY-035 guards. See `FRACTION_STOCK_REVIEW.md` and `ISSUES.md`.
 - [ ] MONEY-042 — player-to-player vehicle sale: check buyer debit and seller credit, durable holder DB commit, sale receipt/idempotency and rollback/reconciliation across restart. See VEHICLE_PLAYER_SALE_REVIEW.md.
 - [ ] MONEY-040/041 — business hourly tax and repossession: mark ordinary tax debit dirty/persistent; durable idempotent online/offline owner compensation before business ownership release. See BUSINESS_TAX_REVIEW.md.
 - [ ] MONEY-039 — ATM business-account deposit: interim second-leg result check and wallet compensation are patched; still implement atomic/idempotent durable settlement, stale BizID/index validation, replay protection and DB/RAGE fault tests. See BUSINESS_BANK_REVIEW.md.
