@@ -25,7 +25,8 @@
 - Organization fleet vehicle slice: `MONEY-014` records conditional payout-before-async-delete replay risk, `MONEY-015` records the ignored evacuation debit result when wallet change may fail during shutdown. Access checks traced but staging tests pending. See `ORG_VEHICLE_REVIEW.md`.
 - Vehicle/garage: `VEH-001` is policy-dependent self-repair callback; `VEH-002` records missing household ownership validation in `server.garage.parking` (unauthorized association/recreation path, exact theft impact unproven); `VEH-003` records negative garage slot keys that can persist and fail spawn; `VEH-004..005` cover missing aircraft action/entity authorization (runtime reachability pending); `VEH-006`/`MONEY-013` cover stale sale confirmation and conditional payout/delete failure; `VEH-007..008` cover vehicle-sync entity authorization and passenger radio policy. Static-only, staging tests unavailable. See the linked vehicle review files.
 
-- Fraction stock/cargo review: `STOCK-001` records non-atomic character↔fraction and vehicle↔fraction transfers; callers ignore `Remove`/`AddNewItem`/`Wallet.Change` outcomes and mutate stock without a verified exact transfer. Static only; fault-injection, replay, concurrency and restart tests remain pending. See `FRACTION_STOCK_REVIEW.md`.\n- Business retail review: `STOCK-002` records takeProd stock decrement before owner-bank confirmation and retail callers ignoring customer debit/item-grant results; `MONEY-022` now also covers stock dirty-save omissions. Static only; see `BUSINESS_RETAIL_REVIEW.md`.
+- Fraction stock/cargo review: `STOCK-001` records non-atomic character↔fraction and vehicle↔fraction transfers; callers ignore `Remove`/`AddNewItem`/`Wallet.Change` outcomes and mutate stock without a verified exact transfer. Static only; fault-injection, replay, concurrency and restart tests remain pending. See `FRACTION_STOCK_REVIEW.md`.
+- Business retail review: `STOCK-002` records takeProd stock decrement before owner-bank confirmation and retail callers ignoring customer debit/item-grant results; `MONEY-022` now also covers stock dirty-save omissions. Static only; see `BUSINESS_RETAIL_REVIEW.md`.
 
 ## Документы
 
@@ -71,7 +72,10 @@
 - [PROPERTY_TAX_REVIEW](PROPERTY_TAX_REVIEW.md) — hourly house-tax account persistence, repossession owner dirty-save and restart behavior.
 - [ATM_REVIEW](ATM_REVIEW.md) — ATM remotes, withdrawal location/eligibility and house-account access checks.
 - [BANK_TRANSFER_REVIEW](BANK_TRANSFER_REVIEW.md) — bank transfer confirmation replay, one-shot state and cooldown enforcement.
-- [BUSINESS_ORDER_REVIEW](BUSINESS_ORDER_REVIEW.md) — business phone purchase/cancel/price mutation, quantity-overflow bank-credit path and dirty-save persistence review.\n- [BUSINESS_RETAIL_REVIEW](BUSINESS_RETAIL_REVIEW.md) — retail stock decrement, owner bank credit, customer debit and item/weapon grant settlement.\n- [BUSINESS_BANK_REVIEW](BUSINESS_BANK_REVIEW.md) — ATM business-account deposit, unchecked second-leg credit and BizID/session validation.\n- [BUSINESS_TAX_REVIEW](BUSINESS_TAX_REVIEW.md) — hourly business tax bank persistence and online/offline repossession compensation.
+- [BUSINESS_ORDER_REVIEW](BUSINESS_ORDER_REVIEW.md) — business phone purchase/cancel/price mutation, quantity-overflow bank-credit path and dirty-save persistence review.
+- [BUSINESS_RETAIL_REVIEW](BUSINESS_RETAIL_REVIEW.md) — retail stock decrement, owner bank credit, customer debit and item/weapon grant settlement.
+- [BUSINESS_BANK_REVIEW](BUSINESS_BANK_REVIEW.md) — ATM business-account deposit, unchecked second-leg credit and BizID/session validation.
+- [BUSINESS_TAX_REVIEW](BUSINESS_TAX_REVIEW.md) — hourly business tax bank persistence and online/offline repossession compensation.
 - [BUSINESS_SALE_REVIEW](BUSINESS_SALE_REVIEW.md) — generic phone sale callback, business/BizIDs persistence ordering and conditional payout replay.
 - [BUSINESS_DELIVERY_REVIEW](BUSINESS_DELIVERY_REVIEW.md) — Trucker order reservation, cargo acquisition and cancellation/disconnect state review.
 - [PHONE_MESSAGES_REVIEW](PHONE_MESSAGES_REVIEW.md) — contact-task progress, SMS CEF rendering/bridge sinks and message-history queue persistence review.
