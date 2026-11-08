@@ -453,18 +453,20 @@ This is useful evidence that a transaction-backed coordinator is compatible with
 **Regression:** credit to exactly `Int32.MaxValue`, one unit above, transfer destination overflow, rejected operation leaves both balances unchanged, dirty flags unchanged, and restart matches DB. Static-only; no build/DB/RAGE tests.
 
 
-## MONEY-060 — ticket confirmation pays out after both debit paths fail
+## MONEY-060 — ticket confirmation previously paid out after both debit paths failed (guard patched)
 
-**Приоритет: высокий; статически подтверждён неверный control flow, runtime не воспроизведён.**
+**Приоритет: высокий; исходный control-flow дефект подтверждён статически, ограниченный source guard внесён; runtime не воспроизведён.**
 
-Файл: `Fractions/FractionCommands.cs`, `ticketToTarget` / `ticketConfirm` (около строк 730–810).
+Файл: `Fractions/FractionCommands.cs`, `ticketConfirm`.
 
-- При создании штрафа сервер проверяет, что у target сейчас достаточно cash или bank balance, затем сохраняет сумму/выписывающего в `TicketsData` и показывает confirmation prompt. Между prompt и confirm игрок может потратить средства; первоначальная проверка не резервирует деньги.
-- В `ticketConfirm`, после `UpdateData.CanIChange`, выполняется `if (!Wallet.Change(target, -sum) && !Bank.Change(targetCharacterData.Bank, -sum, false))`. Если оба debit возвращают `false`, код отправляет две ошибки, но **не делает `return`**.
-- После этого безусловно начисляет 60% в city fraction balance и вызывает `Wallet.Change(player, 40% sum)` для сотрудника; отправляет success events и пишет `GameLog.Ticket`. Таким образом неуспешное списание не останавливает payout/success path.
-- Предпосылка — cash и bank debit оба отклонены (например, target потратил деньги после открытия prompt, либо оба метода отклоняют mutation во время shutdown). Это не утверждение, что любой штраф можно оплатить бесплатно; исходная проверка funds существует, но устаревает до confirm.
-- Наличие двух отдельных debit paths также не создаёт единого durable settlement; успешный cash debit и failed bank fallback behavior нужно проверять отдельно, но основная ошибка здесь — отсутствие early return после обоих отказов.
+- При выдаче штрафа сервер проверяет баланс только в момент открытия prompt; деньги не резервируются, поэтому target может потратить средства до подтверждения.
+- До патча `ticketConfirm` пытался выполнить Wallet debit и fallback Bank debit. При отказе обоих методов отправлялись error notifications, но handler продолжал выполнять split payout и success effects.
+- **Внесён source guard:** после отказа обоих debit методов handler уведомляет стороны и немедленно делает `return`. Городской фонд, сотрудник, success events и `GameLog.Ticket` больше не должны получать успешную выплату при двух неудачных списаниях.
+- Отдельно исправлен MONEY-033: pending ticket intent теперь consume-once на уровне session state. Это не заменяет durable receipt.
+- Успешный wallet debit, fallback bank debit и последующие payout legs всё ещё не являются одной durable transaction. Если city/officer credit частично не проходит, отсутствует durable recovery/идемпотентность.
 
-**Исправление:** если wallet debit не прошёл и bank debit тоже не прошёл — немедленно завершить обработчик без фондовых credit, уведомления об успехе или GameLog success. Лучше сделать один settlement service с уникальным fine ID, source selection/revalidation и атомарным debit + split credits; confirmation intent должен быть одноразовым.
+**Оставшееся исправление:** единый fine settlement service с stable ticket ID, unique receipt, debit + split credit в одной транзакции либо durable journal/reconciliation; success notifications/logs только после подтверждённого settlement. Банк и character cash — разные ledger domains, поэтому cross-ledger transfer требует явного дизайна.
 
-**Regression:** открыть штраф при достаточном балансе, потратить cash и bank до confirm; force Wallet.Change=false + Bank.Change=false; shutdown rejection; insufficient funds; успешный wallet debit; wallet fail + bank success; repeated/concurrent confirm. При failed debit не должно быть city/officer credit, success event или paid GameLog; при success ровно одна выплата. Static-only; no build/RAGE/DB tests.
+**Regression:** spend-after-prompt; Wallet=false + Bank=false; shutdown rejection; wallet success; wallet failure + bank success; failed debit must not mutate City Hall/officer balances or emit success/GameLog; duplicate/concurrent confirmation; failure after each payout leg; restart and DB commit-acknowledgement loss.
+
+**Статус тестов:** только повторная статическая проверка изменённого source block. C# build, RAGE staging, MariaDB fault-injection и concurrency/restart tests не выполнялись.
