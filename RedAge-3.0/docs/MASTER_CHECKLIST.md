@@ -120,3 +120,5 @@
 - [ ] VEH-011 — mileage remote: reject negative/oversized client deltas before uint conversion; bind accepted distance to server-measured movement/time and prevent counter wrap. Test int boundaries, replay/cadence and no fare/progression on invalid deltas. See TAXI_MILEAGE_REVIEW.md.
 
 - [ ] INV-012 — vehicle trunk inventory: bind session to exact vehicle and authorized access policy; revalidate distance/dimension/door/ownership/rank on every move, stack, use and drop. Revoke stale sessions and test walk-away/replay. See VEHICLE_TRUNK_ACCESS_REVIEW.md.
+
+- [ ] VEH-012 — release vehicle BagInUse reservation and clear SelectedVeh on auxiliary-pane close/context replacement, full close, disconnect and vehicle deletion; use an owner/session-bound idempotent release and test stale-owner races. See VEHICLE_TRUNK_LIFECYCLE_REVIEW.md.
