@@ -480,3 +480,13 @@
 
 
 - 2026-11-08: MONEY-002 worker hand-off hardening: mark detached UUID snapshots as in-flight at the same locked snapshot/clear boundary, so small wallet changes during the gap before SQL setup enqueue a newer revision rather than being lost when the old snapshot is skipped. Failed context/batch retry clears the marker and restores only a still-current version. Static only; direct SQL writers and durable outbox remain open.
+
+
+## 2026-11-08 — MONEY-002 versioned writer ordering patch
+
+- Added fixed 64-stripe async write gates and sync balance monitors to coordinate Wallet.Change, detached Database.Models.Money worker snapshots and full Character.Save.Repository.SaveSql writes.
+- Added per-UUID revision counters; the worker checks detached revision immediately before SQL, skips stale snapshots, and retries only revisions that remain current.
+- SaveSql captures the cash balance under the shared monitor, invalidates older queued snapshots, serializes its SQL update and restores the snapshot after failure unless a newer Wallet mutation replaced it.
+- Wallet.Change advances revision on every mutation. Small changes are coalesced into the queue only when a batch/save is pending or in-flight, preserving the existing eager-write threshold otherwise.
+- Detached batches are marked in-flight at snapshot time to close the gap before worker SQL setup.
+- Remaining direct DB cash writers and durable outbox/restart recovery are not yet covered. Static checks only; no compiler, concurrency or DB tests.
