@@ -4636,10 +4636,18 @@ namespace NeptuneEvo
                         }
 
                         int tax = Convert.ToInt32(biz.SellPrice / 100f * biz.Tax);
-                        biz.Zatratq += tax;
-                        if (!MoneySystem.Bank.ApplyBalanceAdjustment(biz.BankID, -tax, out long bizBalanceAfterTax))
+                        if (tax < 0)
+                        {
+                            MoneySystem.Bank.Log.Write($"Business tax rejected: negative amount [business:{biz.ID}, tax:{tax}]", nLog.Type.Warn);
                             continue;
-                        
+                        }
+                        if (!MoneySystem.Bank.ApplyBalanceAdjustment(biz.BankID, -tax, out long bizBalanceAfterTax))
+                        {
+                            MoneySystem.Bank.Log.Write($"Business tax bank adjustment failed [business:{biz.ID}, bank:{biz.BankID}, tax:{tax}]");
+                            continue;
+                        }
+                        biz.Zatratq += tax;
+
                         var fractionData = Fractions.Manager.GetFractionData((int) Fractions.Models.Fractions.CITY);
                         if (fractionData != null)
                             fractionData.Money += tax;
