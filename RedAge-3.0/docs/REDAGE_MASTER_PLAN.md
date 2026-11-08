@@ -342,3 +342,10 @@ Applied a bounded source patch to `MoneySystem/Bank.cs`: account balance mutatio
 ### 2026-11-08 — MONEY-003 follow-up: account creation and reads
 
 Applied a bounded patch: `Bank.GetBalance` uses the shared account synchronization lock; `Bank.Create` rejects invalid holder/type/negative balance and checks conversion to the existing MySQL INT balance column before insertion. The cache is initialized from the validated DB value. Regression cases were added. This does not resolve the mutable `Bank.Data` reference escape hatch, bank deletion queue races, DB transactionality or crash recovery. Static-only; no .NET build, MySQL or RAGE tests.
+
+
+### 2026-11-08 — MONEY-003 follow-up: direct bank balance mutation encapsulation
+
+Added `Bank.SetBalance` and `Bank.ApplyBalanceAdjustment` so legacy property/business lifecycle paths mutate account balances under `AccountSync`, increment revision and mark persistence dirty. Routed business and house purchase initialization, auction property award initialization, and hourly business/house tax plus repossession reset through these APIs. The tax adjustment intentionally preserves the legacy temporary-negative-balance behavior used to trigger repossession; normal `Bank.Change` still rejects overdrafts. Regression cases are recorded in `BANK_TRANSFER_REVIEW.md` and `TEST_PLAN.md`.
+
+Remaining: audit all mutable `Bank.Data` references/direct writes; verify purchase debit/ownership/bank initialization ordering; durable atomic settlement across property ownership, bank and faction/tax balances; legacy-target build; DB fault injection; concurrent transfer-vs-tax tests; RAGE staging. This is source-only remediation, not runtime-tested or crash-safe.
