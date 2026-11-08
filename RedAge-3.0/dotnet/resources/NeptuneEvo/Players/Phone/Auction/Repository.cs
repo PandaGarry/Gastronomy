@@ -425,26 +425,29 @@ namespace NeptuneEvo.Players.Phone.Auction
         
         private static void End(AuctionData auctionData)
         {
-            SendPlayer(auctionData.Id, "delItem");
+            lock (auctionData)
+            {
+                if (auctionData.IsEnd)
+                    return;
 
-            auctionData.IsSave = true;
-            auctionData.IsEnd = true;
-            
-            Messages.Repository.AddSystemMessageToUuid(auctionData.CreateUUID, (int) DefaultNumber.Auction, $"Аукцион на {auctionData.Title} закончен.", DateTime.Now);
-            
-            if (auctionData.Type == AuctionType.House)
-                House.Repository.SetOwner(auctionData);
-            
-            else if (auctionData.Type == AuctionType.Biz)
-                Businesses.Repository.SetOwner(auctionData);
-                    
-            else if (auctionData.Type == AuctionType.Vehicle)
-                Vehicles.Repository.SetOwner(auctionData);
-            
-            //var player = Main.GetPlayerByUUID(auctionData.LastBetUUID);
-            
-            
+                SendPlayer(auctionData.Id, "delItem");
+
+                auctionData.IsSave = true;
+                auctionData.IsEnd = true;
+
+                Messages.Repository.AddSystemMessageToUuid(auctionData.CreateUUID, (int) DefaultNumber.Auction, $"Аукцион на {auctionData.Title} закончен.", DateTime.Now);
+
+                if (auctionData.Type == AuctionType.House)
+                    House.Repository.SetOwner(auctionData);
+
+                else if (auctionData.Type == AuctionType.Biz)
+                    Businesses.Repository.SetOwner(auctionData);
+
+                else if (auctionData.Type == AuctionType.Vehicle)
+                    Vehicles.Repository.SetOwner(auctionData);
+            }
         }
+
         public static void GetEnd()
         {
             var auctionsData = AuctionsData
@@ -466,16 +469,15 @@ namespace NeptuneEvo.Players.Phone.Auction
         public static void OnBet(ExtPlayer player, int id, int price)
         {
             var characterData = player.GetCharacterData();
-            if (characterData == null) 
+            if (characterData == null)
                 return;
-            
-            
+
             if (!FunctionsAccess.IsWorking("phoneauction"))
             {
                 Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.FunctionOffByAdmins), 3000);
                 return;
             }
-            
+
             var auctionData = AuctionsData.FirstOrDefault(a => a.Id == id);
 
             if (auctionData == null)
@@ -484,79 +486,99 @@ namespace NeptuneEvo.Players.Phone.Auction
                 Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, $"Лот не найден...", 3000);
                 return;
             }
-            
-            if (auctionData.CreateUUID == characterData.UUID)
-            {
-                Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, $"Вы не можете сделать ставку на свой лот.", 3000);
-                return;
-            }
 
-            if (auctionData.LastBetUUID == characterData.UUID)
+            lock (auctionData)
             {
-                Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, $"Последняя ставка и так ваша.", 3000);
-                return;
-            }
-            if (auctionData.LastPrice >= price)
-            {
-                Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, $"Ставка не может быть меньше, чем текущая.", 3000);
-                return;
-            }
-
-
-            if (auctionData.Type == AuctionType.House)
-            {
-                var house = Houses.HouseManager.GetHouse(player, true);
-                if (house != null)
+                // The bid and end transitions share this lock. Never accept a bid on a
+                // lot whose deadline has passed, even if the periodic end worker is late.
+                if (auctionData.IsEnd || DateTime.Now >= auctionData.Time)
                 {
-                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "У вас уже есть дом.", 3000);
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Аукцион уже завершён.", 3000);
                     return;
                 }
 
-            }
-            else if (auctionData.Type == AuctionType.Biz)
-            {
-                if (characterData.BizIDs.Count > 0)
+                if (price <= 0)
                 {
-                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "У вас уже есть бизнес.", 3000);
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Ставка должна быть положительной.", 3000);
                     return;
                 }
-            }
 
-            var priceAndPercent = price + Convert.ToInt32(price / 100);
-            if (!Bank.Change(characterData.Bank, -priceAndPercent))
-            {
-                Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.NoBankMoney), 3000);
-                return;
-            }
-            
-            GameLog.Money($"player({characterData.UUID})", $"auction(Bet)", priceAndPercent, $"auction [#{auctionData.Id}]: Ставка ({auctionData.Type.ToString()})");
-            ReturnMoney(auctionData.LastBetUUID, auctionData.LastPrice, auctionData.Id, auctionData.Type, "Вашу ставку перебили!");
+                if (auctionData.CreateUUID == characterData.UUID)
+                {
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, $"Вы не можете сделать ставку на свой лот.", 3000);
+                    return;
+                }
 
-            var isAddMyList = auctionData.BetsData.Any(b => b.UUID == characterData.UUID);
-            
-            auctionData.LastBetUUID = characterData.UUID;
-            auctionData.LastPrice = price;
-            if (!isAddMyList)
-                auctionData.BetCount++;
-            
-            auctionData.BetsData.Add(new AuctionBetData
-            {
-                Bet = price,
-                UUID = characterData.UUID,
-                Name = player.Name
-            });
-            auctionData.IsSave = true;
-            
-            Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, $"Вы сделали ставку.", 3000);
-            //Update(auctionData);
-            if (!isAddMyList)
-            {
-                Trigger.ClientEvent(player, "client.phone.auction.delItem", auctionData.Id, true);
-                Trigger.ClientEvent(player, "client.phone.auction.addMyItem", JsonConvert.SerializeObject(GetData(auctionData)));
-                SendPlayer(JsonConvert.SerializeObject(GetData(auctionData)), "updateItem", characterData.UUID);
+                if (auctionData.LastBetUUID == characterData.UUID)
+                {
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, $"Последняя ставка и так ваша.", 3000);
+                    return;
+                }
+
+                if (auctionData.LastPrice >= price)
+                {
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, $"Ставка не может быть меньше, чем текущая.", 3000);
+                    return;
+                }
+
+                if (auctionData.Type == AuctionType.House)
+                {
+                    var house = Houses.HouseManager.GetHouse(player, true);
+                    if (house != null)
+                    {
+                        Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "У вас уже есть дом.", 3000);
+                        return;
+                    }
+                }
+                else if (auctionData.Type == AuctionType.Biz)
+                {
+                    if (characterData.BizIDs.Count > 0)
+                    {
+                        Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "У вас уже есть бизнес.", 3000);
+                        return;
+                    }
+                }
+
+                // Use wide arithmetic: int addition can wrap and turn the debit into a credit.
+                long priceAndPercent = (long)price + (price / 100L);
+                if (!Bank.Change(characterData.Bank, -priceAndPercent))
+                {
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.NoBankMoney), 3000);
+                    return;
+                }
+
+                GameLog.Money($"player({characterData.UUID})", $"auction(Bet)", priceAndPercent, $"auction [#{auctionData.Id}]: Ставка ({auctionData.Type.ToString()})");
+
+                // A newly created auction has no previous bidder (UUID 0); its
+                // starting price is not money held in escrow and must not be refunded.
+                if (auctionData.LastBetUUID > 0 && auctionData.LastPrice > 0)
+                    ReturnMoney(auctionData.LastBetUUID, auctionData.LastPrice, auctionData.Id, auctionData.Type, "Вашу ставку перебили!");
+
+                var isAddMyList = auctionData.BetsData.Any(b => b.UUID == characterData.UUID);
+
+                auctionData.LastBetUUID = characterData.UUID;
+                auctionData.LastPrice = price;
+                if (!isAddMyList)
+                    auctionData.BetCount++;
+
+                auctionData.BetsData.Add(new AuctionBetData
+                {
+                    Bet = price,
+                    UUID = characterData.UUID,
+                    Name = player.Name
+                });
+                auctionData.IsSave = true;
+
+                Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, $"Вы сделали ставку.", 3000);
+                if (!isAddMyList)
+                {
+                    Trigger.ClientEvent(player, "client.phone.auction.delItem", auctionData.Id, true);
+                    Trigger.ClientEvent(player, "client.phone.auction.addMyItem", JsonConvert.SerializeObject(GetData(auctionData)));
+                    SendPlayer(JsonConvert.SerializeObject(GetData(auctionData)), "updateItem", characterData.UUID);
+                }
+                else
+                    SendPlayer(JsonConvert.SerializeObject(GetData(auctionData)), "updateItem");
             }
-            else
-                SendPlayer(JsonConvert.SerializeObject(GetData(auctionData)), "updateItem");
         }
 
         public static void ReturnMoney(int uuid, int price, int id, AuctionType type, string message)
@@ -564,8 +586,8 @@ namespace NeptuneEvo.Players.Phone.Auction
             GameLog.Money($"player({uuid})", $"server", price, $"auction [#{id}]: {message} ({type.ToString()})");
             
             var player = Main.GetPlayerByUUID(uuid);
-            var characterData = player.GetCharacterData();
-            if (characterData != null)
+            var characterData = player?.GetCharacterData();
+            if (player != null && characterData != null)
             {
                 var accountId = characterData.Bank;
                 if (Bank.Accounts.ContainsKey(accountId))
