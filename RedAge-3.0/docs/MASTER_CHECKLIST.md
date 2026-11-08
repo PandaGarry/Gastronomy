@@ -171,3 +171,6 @@
 
 
 - [ ] **MONEY-002 hand-off races:** snapshot-time `ActiveMoneyWrites` markers and the SQL-failure-to-requeue marker window are now patched. Test small wallet changes after detach/before SQL and after failed SQL/before retry registration; full-save-vs-worker order both ways; wallet mutation during full save; failed save requeue; partial batch marker cleanup. Remaining direct SQL writers outside coordinator must be reconciled; durable outbox/backoff and C#/MySQL tests remain open.
+
+
+- [ ] **MONEY-002 referral + schema gate:** verify checked-in InnoDB DDL against deployed `SHOW CREATE TABLE`; implement per-referral durable settlement so online/offline VIP, coin, cash, RB and success marker cannot partially commit or duplicate; gate login cache publication with the same per-UUID coordinator. See ECONOMY_REVIEW.md.
