@@ -409,3 +409,11 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - Force buyer debit false/exception and seller credit false/exception; current source still lacks result guards, so these remain required failures for the future durable settlement implementation.
 - Assert ownership is never transferred on failed settlement; verify duplicate/concurrent accept, seller disconnect, buyer disconnect, stale owner/offer and process restart recovery.
 - Static assertions passed for seller validation, positive-price guard and corrected seller UUID source. No C# build, RAGE staging or MySQL fault injection was run.
+
+## 2026-11-08 — MONEY-035 faction/organization cash stock regression additions
+
+- For faction and organization `put_stock`, force wallet debit false/exception; assert cash stock, money logs and success notifications remain unchanged.
+- For faction and organization `take_stock`, force wallet credit false/exception; assert cash stock remains unchanged and no success logs/notifications occur.
+- Test successful deposit/withdrawal at exact balance and wallet upper-bound; test server-stop debit rejection.
+- Test duplicate and concurrent callbacks against a limited stock balance, process restart between wallet and stock mutations, and DB persistence failure. These scenarios must verify exact conservation and exactly-once settlement; current interim patch is not expected to satisfy crash/concurrency guarantees.
+- Static source assertions passed for all four cash branches. No C# build, RAGE staging or MySQL fault injection was run.
