@@ -267,3 +267,9 @@
 - Traced personal and organization tuning entry/exit. Organization exit eventType=1 does not reset CharacterData.TuningShop; the personal server.custom.buy remote trusts that value without active Type==12/location/dimension intent checks. Character position resolution also reads non--1 TuningShop.
 - Registered VEH-010, created TUNING_REMOTE_REVIEW.md and expanded BUSINESS_RETAIL_REVIEW.md / STOCK-002 scope to include LS Customs stock reservation and customization settlement ordering.
 - Updated issue register, checklist, test plan, coverage, roadmap, index and handoff. Static-only; no source patch/build/RAGE/DB tests.
+
+
+## 2026-11-08 — VEH-011 signed mileage wrap
+
+- Continued the taxi mileage trace. server.vehicle.updateMileage casts client-supplied signed int centimeters to uint without a positive/range check; negative values wrap into huge transient VehicleLocalData.Centimeters increments. Client meter also appears to accumulate centimeters/second on a 200ms callback without elapsed-time scaling (runtime cadence needs measurement).
+- Registered VEH-011 separately from MONEY-012/PROG-007; expanded TAXI_MILEAGE_REVIEW, issue register, checklist, regression plan, coverage, index, roadmap and handoff. No source code changed; no runtime/build/DB test.
