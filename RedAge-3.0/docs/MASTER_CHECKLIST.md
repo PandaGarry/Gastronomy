@@ -127,3 +127,5 @@
 - [ ] INV-014 — bind MatWar hack/progress/open to active war generation, exact player/ShapeId and nearby crate; server-authoritative progress; revoke and remove matwar_100 inventory on endWar. See MATWAR_REMOTE_REVIEW.md.
 
 - [ ] INV-015 — replace stale OnFracStock with a short-lived faction-stock intent; revalidate rank, duty, IsOpenGunStock, location/dimension on open and every mutation; revoke on close/context change/disconnect. See FRACTION_STOCK_SESSION_REVIEW.md.
+
+- [ ] INV-016 — revoke Organization inventory intent on RemovePlayer/interior exit; bind every mutation to current organization membership, stock-open state and dimension; test stale remotes and concurrent exit. See ORGANIZATION_STOCK_SESSION_REVIEW.md.
