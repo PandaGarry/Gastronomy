@@ -102,6 +102,8 @@
 
 - [PETSHOP_REMOTE_REVIEW](PETSHOP_REMOTE_REVIEW.md) — pet-shop remote authorization, stale TempBizID, teleport ordering, replay and pet-model allowlist (`PET-001`).
 
+- [TUNING_REMOTE_REVIEW](TUNING_REMOTE_REVIEW.md) — LS Customs tuning intent, organization exit state leak and personal tuning remote authorization (`VEH-010`).
+
 - `BUSINESS_FUEL_REVIEW.md` also tracks `VEH-009`: petrol remote lacks active fuel-station/location context and can reuse a stale/non-fuel BizID.
 
 - [MECHANIC_SERVICE_REVIEW](MECHANIC_SERVICE_REVIEW.md) — AutoMechanic repair/fuel offer settlement, two-sided wallet results, work-vehicle fuel reserve and replay/restart tests (`JOB-005`).
