@@ -421,3 +421,8 @@ Static review found unchecked second legs in regular ATM cash deposit/withdrawal
 
 - `Core/Businesses.cs` `fillCar`: calculate final monetary cost with `long` after quantity normalization, reject out-of-range cost, remove incorrect comparison of liters against monetary FuelLeft, and reject price above allowance before stock/City Hall/vehicle mutations.
 - Durable cross-entity settlement and VEH-009 active fuel-station intent remain open. Static-only; no build/RAGE/MySQL tests.
+
+## 2026-11-08 — VEH-006 / MONEY-013 government vehicle sale guard
+
+- `Main.cs` `CAR_SELL_TOGOV` now revalidates current holder at confirmation, rejects nonpositive/unknown price and requires wallet payout success before logs/message/removal.
+- Async vehicle DB deletion remains separate and not receipt-backed; payout/delete crash consistency, retry and exactly-once recovery remain open. Static-only; no build/RAGE/MySQL tests.
