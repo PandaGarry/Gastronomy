@@ -392,3 +392,12 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - **StreetRace finish payout:** force winner credit rejection after a valid finish; verify durable pending receipt and no loss of payout context. Repeat finish concurrently and after reconnect/restart; assert exactly one payout.
 - **StreetRace abort payout:** force ClearData winner credit rejection on death and vehicle exit; verify race cleanup occurs only after durable payout receipt, and finish/abort cannot both settle the same race. Inject DB failure before/after receipt creation and wallet projection.
 - These are required scenarios; none were executed in this environment.
+
+## 2026-11-08 — MONEY-048 tent input validation regression additions
+
+- Reject negative `ItemBuy` quantity; verify the zero-quantity convention normalizes to one before stock and free-slot checks.
+- Reject zero/negative unit price and totals above `Int32.MaxValue`; exercise multiplication at the exact maximum, one above it, and extreme `int` inputs.
+- Verify no wallet mutation, seller message, BattlePass progress or item transfer occurs for rejected quantity/price.
+- Verify null/offline tent seller state is rejected before wallet effects.
+- Existing required but unexecuted MONEY-048 tests remain: buyer debit false/exception, seller credit false/exception, server-stop race, partial inventory transfer, duplicate/concurrent confirmation, disconnect/restart, and exact conservation of both balances and item counts.
+- Static source assertions passed for the new preflight guards only. No C# build, RAGE staging or MySQL fault-injection test was run.
