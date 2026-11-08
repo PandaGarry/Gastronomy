@@ -139,3 +139,10 @@ Updated call sites: business purchase initial balance (`Core/Businesses.cs`); ho
 The property acquisition call sites were checked after routing bank balance writes through the shared API. Both `HouseManager` and `Core/Businesses` previously continued ownership and success side effects without checking `Wallet.Change`. The paths now initialize the property bank balance first, require `Wallet.Change` to succeed, and only then assign ownership / emit purchase success side effects. If the debit is rejected, they attempt to restore the previous property-account balance and log if that compensation fails.
 
 **Limits:** the bank-balance initialization and player debit are still separate in-memory operations, not one DB transaction. If compensation itself fails, manual reconciliation is required. Auction award paths still need the same ordering review. These changes have not been build/runtime tested.
+
+
+## 2026-11-08 follow-up — synchronized bank API adoption
+
+The audit found several callers directly mutating `Bank.Data.Balance` or `IsSave`, bypassing the new lock/revision contract. Current branch changes route hourly house/business tax through `ApplyBalanceAdjustment`; admin bank grants now use a snapshot lookup and require `Bank.Change` success; house/business auction awards initialize account balances through `Bank.SetBalance` before ownership/auction-state commit; house purchase checks the buyer debit before ownership effects and rolls back the preinitialized bank balance on debit rejection. `Core/Businesses.buyBusinessCommand` already uses `Bank.SetBalance` for business-account initialization.
+
+`Bank.Get(int)`/`Get(string)` return snapshots, not live objects. `Bank.Accounts` remains a public mutable dictionary, so direct external property mutation is still possible and needs a complete call-site audit. The reviewed `Main.cs` tax path no longer writes Balance directly. Cross-ledger settlement (bank + wallet + ownership + faction credits) remains non-atomic.
