@@ -267,3 +267,11 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] Verify valid server-authorized keydown/minigame progress and exactly-once lockpick consumption; forged negative/oversized values and replay reject.
 - [ ] After a failed roll, verify KeyClampData is cleared and cannot be reused for free retries; after success, revoke all sessions for that box.
 - [ ] Exit range, remove/replace box, end event or disconnect during attempt; stale end callback must not mutate the box. Two-player race: only reservation owner can complete. Static review: HELICRASH_KEYCLAMP_REVIEW.md; requires disposable RAGE staging.
+
+
+## INV-019 — weapon/key-ring parent-bound subcontainer (pending staging)
+
+- [ ] Open a weapon attachment pane and move the parent weapon to each supported owner-controlled location; verify access remains only while the parent remains owned by the caller.
+- [ ] Open weapon/key-ring pane, then trade/drop/transfer/delete/replace the parent; direct inventory.move, move.stack and use with `other` must reject after ownership/context revocation.
+- [ ] After transfer, verify the former owner cannot extract or alter child items and the new owner can access them normally.
+- [ ] Test replay, concurrent viewers, same-tick parent/child mutation, disconnect/reconnect, SQL failure and restart. See `WEAPON_KEYRING_SUBCONTAINER_REVIEW.md`; requires disposable RAGE/MySQL staging.
