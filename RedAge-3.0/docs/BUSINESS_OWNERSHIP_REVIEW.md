@@ -33,6 +33,25 @@
 - MONEY-044: duplicate dialog confirmation, simultaneous confirmations, offer replacement/expiry, seller disconnect/reconnect, buyer disconnect, changed owner/price and max-business boundary.
 - Reconcile buyer/seller wallet balances, business Owner, both characters' BizIDs, bank/ledger rows, logs and receipt after restart.
 
-## Scope boundary
+## BUG-002 — admin business deletion removes the DB row before safely cleaning the owner/cache
 
-This pass covers government acquisition and player-to-player business ownership transfer only. Government sale payout/replay remains MONEY-026; retail stock settlement is STOCK-002; phone orders are MONEY-022/MONEY-025; business tax/repossessions are MONEY-040/041. These are not duplicated here.
+**Приоритет: средний; offline-owner null path statically confirmed; runtime/admin workflow not reproduced.**
+
+- deleteBusinessCommand executes DELETE FROM businesses first, then resolves the owner through NAPI.Player.GetPlayerFromName and immediately calls owner.GetCharacterData() without checking whether owner itself is null (Core/Businesses.cs:3180-3248).
+- For an offline owner — including the government owner label when no such player is online — the lookup can return null and the dereference throws. The catch logs the exception, but execution never reaches biz.Destroy() or BizList.TryRemove. The DB row is already deleted, while the in-memory business remains until resource restart; the intended offline character BizIDs cleanup branch is unreachable for a null player object.
+- This can leave runtime cache/world objects and character BizIDs inconsistent with the database. The exact RAGE return behavior of GetPlayerFromName should be confirmed on staging; source has no null guard.
+
+## MONEY-047 — admin business deletion ignores the online owner's refund result
+
+**Приоритет: средний; unchecked refund statically confirmed; runtime failure injection required.**
+
+- In the online-owner branch, deleteBusinessCommand removes the business ID from ownerCharacterData.BizIDs and calls Wallet.Change(owner, biz.SellPrice) without checking the return value, then destroys/removes the business from runtime cache (Core/Businesses.cs:3237-3243).
+- Wallet.Change can return false for a server-stop debit/credit policy path, missing/stale character state or exception (MoneySystem/Wallet.cs:13-38). If the credit fails, the business and BizID are removed but the owner receives no confirmed compensation; no pending refund receipt/retry is created.
+
+**Remediation:** perform owner resolution before destructive DB mutation and explicitly branch online/offline/null; make DB business deletion, character BizIDs removal, refund and runtime cache removal one durable idempotent admin operation. Confirm refund before final delete or persist a pending compensation receipt. For offline owners, update the character by stable UUID in a checked transaction. Keep cache/world objects aligned with DB outcome.
+
+**Regression:** delete government-owned and privately owned businesses with online/offline owners; inject null player lookup, missing character row, Wallet.Change=false/exception, SQL delete/update failure and crash between each write. Assert DB row, BizList, world shapes, owner BizIDs, wallet and refund receipt converge after restart.
+
+## Updated scope boundary
+
+These admin deletion observations are separate from MONEY-043/044 purchase/transfer settlement, MONEY-026 government sale, STOCK-002 retail stock and MONEY-040/041 tax/repossession. No gameplay source was modified.
