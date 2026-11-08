@@ -151,6 +151,7 @@
 
 - [ ] INV-019: bind weapon/key-ring subcontainer access to exact parent SqlId/type/current owner and revoke on parent transfer/drop/delete/replacement; validate every move/stack/use operation. See WEAPON_KEYRING_SUBCONTAINER_REVIEW.md.
 
+- [ ] MONEY-051 — street race two-sided stake settlement: source patch applied; validate both debit legs, refund failure, duplicate/concurrent callbacks and winner payout durability. See `STREET_RACE_REVIEW.md`.
 - [ ] PERF-002 — deterministic CEF production builds; validate production compiler mode, no source maps/HMR, output correctness and measured bundle/startup impact. See `CEF_BUILD_REVIEW.md`.
 - [ ] MONEY-050 — driving-school license grants: source patch applied; verify all six license types, failed wallet debit, quest/faction side effects, shutdown and persistence. See `DRIVING_SCHOOL_REVIEW.md`.
 - [ ] MONEY-049 — Metro ticket price overflow and unchecked debit; source patch added, boundary/failure staging required. See `METRO_REVIEW.md`.
