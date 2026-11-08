@@ -557,3 +557,5 @@
 - 2026-11-08 — Добавлен MONEY-055: auction `ReturnMoney` logs before confirmed credit; offline cash refund uses read-modify-absolute UPDATE without coordinator/receipt/affected-row check and can race login/cache publication. Source unchanged; tests pending.
 
 - 2026-11-08 — Добавлен MONEY-056: account merger aggregates money in signed INT without checked overflow and lacks durable merge checkpoint/idempotency across bank/character/assets/cashback steps. Source unchanged; tests pending.
+
+- 2026-11-08 — Добавлен MONEY-057: offline table-task reward uses SQL-side increment (avoids application-side lost update) but has no stable receipt, affected-row/range handling or login cache gate; replay and partial-award recovery remain unsafe. Source unchanged; tests pending.
