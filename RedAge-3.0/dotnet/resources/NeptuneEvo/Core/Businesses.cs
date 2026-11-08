@@ -1920,12 +1920,14 @@ namespace NeptuneEvo.Core
             try
             {
                 if (!BizList.ContainsKey(bizid)) return false;
-                if (addMoney < 0) return false;
+                if (amount <= 0 || addMoney < 0) return false;
                 Business biz = BizList[bizid];
+                bool productFound = false;
                 foreach (Product p in biz.Products)
                 {
                     if (p.Name != prodname) continue;
-                    if (p.Lefts - amount < 0) return false;
+                    productFound = true;
+                    if (p.Lefts < amount) return false;
                     p.Lefts -= amount;
                     if (!biz.IsOwner()) break;
                     Bank.Data bData = Bank.Get(Main.PlayerBankAccs[biz.Owner]);
@@ -1934,7 +1936,7 @@ namespace NeptuneEvo.Core
                     GameLog.Money($"biz({bizid})", $"bank({bData.ID})", addMoney, "bizProfit");
                     break;
                 }
-                return true;
+                return productFound;
             }
             catch (Exception e)
             {
