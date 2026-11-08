@@ -109,3 +109,10 @@
 - Confirmed login reads cash before later SetCharacterData without the common per-UUID gate. Character creation initializes cash in its INSERT and is not a post-creation delta.
 - Documentation updated: ECONOMY_REVIEW.md, ISSUES.md, TEST_PLAN.md, MASTER_CHECKLIST.md, SESSION_HANDOFF.md, CHANGELOG.md.
 - Static inspection only. No source code changed; no C# compiler, MariaDB, concurrency harness, process-restart test or RAGE runtime was available/run. MONEY-002 remains open.
+
+
+### 2026-11-08 — MONEY-002 receipt schema/API design checkpoint
+
+- Added a design-only candidate for character_cash_operations: globally unique operation ID, UUID/type/delta, resulting signed-INT balance and timestamp; same-transaction receipt + conditional cash delta; duplicate payload validation; uncertain-commit retry with the same ID; login/cache gate and typed outcomes.
+- Reviewed repository SQL delivery shape: checked-in SQL files are database dumps; no established versioned migration runner was identified in the reviewed project structure. Candidate DDL is intentionally documentation-only pending migration/backup/rollback approval.
+- No migration SQL was executed or added, no source coordinator was implemented, and no MariaDB/provider/affected-row/transaction test was run.
