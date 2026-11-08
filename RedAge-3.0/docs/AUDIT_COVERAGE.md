@@ -104,5 +104,6 @@ InHeliCrash installs KeyClampData before GetHealth performs the ArmyLockpick che
 
 Static trace of ItemsUse → LoadOtherItemsData → GetLocationName/GetItemData/SetItemData → shared move/stack/use remotes confirms that the session stores only the parent-derived location string and generic mutations do not revalidate current parent ownership. Registered INV-019; created WEAPON_KEYRING_SUBCONTAINER_REVIEW.md and staging matrix. Practical cross-owner extraction is not runtime-confirmed. Warehouse location policy and HeliCrash range lifecycle remain staging/policy questions.
 
+- 2026-11-08: patched `Core.DrivingSchool.startDrivingCourse` across six active license cases; failed wallet debit now aborts before license/quest/faction/log/success effects. Added MONEY-050; build and runtime validation pending.
 - 2026-11-08: patched `Events.Metro.OnBuyTicket` for long price arithmetic and checked wallet debit before success effects; added MONEY-049. Runtime/build validation pending.
 - 2026-11-08: reviewed `ConfirmTrade` and tent `ItemBuy` wallet/item settlement paths. Added MONEY-048 in `PLAYER_TRADE_REVIEW.md`; static only, runtime/fault-injection pending.
