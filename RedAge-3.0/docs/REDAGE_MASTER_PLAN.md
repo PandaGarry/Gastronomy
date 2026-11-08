@@ -474,3 +474,11 @@ This is not a full money-writer migration. The read-then-absolute-write remains 
 Before coding the durable character-cash coordinator, use the contract in `ECONOMY_REVIEW.md` as a hard design gate: stable operation IDs; unique receipt + bounded cash delta in one InnoDB transaction; one transaction owner/context; typed outcomes including duplicate and uncertain commit; shared per-UUID async gate across DB commit, online cache update and login cache publication; no legacy absolute worker/full-save write to `characters.money`; asynchronous caller migration before success side effects. Bank-account balances remain a separate ledger. Do not add a background outbox after an in-memory-first mutation and call it crash-durable.
 
 Implementation sequence: schema/deployed-engine verification → receipt DDL → coordinator and idempotent retry → login/cache handoff → remove legacy cash writers → migrate reward/payout/admin call sites → concurrency/crash/mixed-writer tests. MONEY-002 stays open until build and integration evidence exists.
+
+
+### Контрольная точка MONEY-002 — SQL snapshot inspected (2026-11-08)
+
+- [x] Проверен полный checked-in `database/main.sql`: header MariaDB 10.10.2; целевые `characters`, `money`, `accounts`, `refferals`, `lottery` объявлены InnoDB; `characters.money` — nullable signed INT.
+- [ ] Импортировать snapshot в disposable MariaDB и подтвердить engine/DDL через серверные metadata.
+- [ ] Отдельно подтвердить фактическую schema/engine deployment environment; не выводить это из репозитория.
+- [ ] После этого зафиксировать coordinator schema/API, unique operation ID, cache/login handoff и migration/rollback sequence; затем писать implementation и fault-injection tests.
