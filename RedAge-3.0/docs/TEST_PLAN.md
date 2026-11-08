@@ -382,3 +382,13 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - [ ] Property/auction account initialization: missing bank or out-of-range computed balance must prevent ownership/auction-state changes; normal award sets exact initial balance and dirty revision.
 
 - [ ] **MONEY-053 ATM cash/house settlement:** force Bank.Change rejection after wallet debit on regular and house deposits; wallet refund must occur exactly once and no success sound/log/message may be emitted. Force Wallet.Change rejection after bank debit on regular withdrawal; bank compensation must occur exactly once. Force compensation failure and verify critical reconciliation log. Test DB crash/restart between legs, concurrent/replayed requests, missing account after UI open and wallet/bank INT boundaries. Business deposit remains MONEY-039. Requires disposable DB and RAGE staging.
+
+ 
+## 2026-11-08 — JOB-005 / StreetRace payout regression additions
+
+- **JOB-005 mechanic repair:** inject buyer debit rejection and mechanic credit rejection separately; assert repair/position/quest/skill/log/offer state do not advance unless durable settlement is committed. Test duplicate acceptance, replaced buyer vehicle, replaced mechanic work vehicle, expired/replaced offer and player disconnect.
+- **JOB-005 mechanic fuel service:** inject buyer debit and mechanic credit failures; assert no fuel transfer or loaded-fuel decrement unless settlement is terminal. Test both vehicles swapped, mechanic off duty and distance/dimension changes after offer.
+- **JOB-005 station fuel purchase:** force wallet debit rejection after takeProd; verify business stock, business revenue, buyer balance and VehLoadedFuel reconcile. Test price×quantity overflow and full reserve boundary.
+- **StreetRace finish payout:** force winner credit rejection after a valid finish; verify durable pending receipt and no loss of payout context. Repeat finish concurrently and after reconnect/restart; assert exactly one payout.
+- **StreetRace abort payout:** force ClearData winner credit rejection on death and vehicle exit; verify race cleanup occurs only after durable payout receipt, and finish/abort cannot both settle the same race. Inject DB failure before/after receipt creation and wallet projection.
+- These are required scenarios; none were executed in this environment.
