@@ -399,3 +399,9 @@
 
 - MONEY-053 interim ATM settlement hardening: regular cash deposit/withdrawal and house deposit now check the second balance leg, attempt compensation on rejection, and defer success side effects/logs until both in-memory changes succeed. Durable transaction and runtime validation remain open.
 \n## 2026-11-08 — MONEY-039 interim business ATM settlement patch\n\n- `MoneySystem/Bank.cs`: business ATM deposit now checks `Bank.Change` after the wallet debit; on rejection it attempts wallet compensation, critically logs a failed refund, notifies failure and returns before success log/message/UI refresh.\n- Updated `ISSUES.md`, `BUSINESS_BANK_REVIEW.md`, `ATM_REVIEW.md`, `TEST_PLAN.md`, master plan and checklist.\n- Static assertions passed for second-leg check, compensation call and success-log ordering. No C# build, MySQL fault injection or RAGE runtime test was available; durable settlement, replay and stale BizIDs validation remain open.\n
+ 
+## 2026-11-08 — JOB-005 / StreetRace settlement revalidation
+
+- Re-fetched current branch AutoMechanic and StreetRace sources. Confirmed JOB-005's three unchecked settlement paths remain; intentionally made no unsafe partial patch pending a durable multi-entity settlement API.
+- Confirmed StreetRace normal finish and death/vehicle-exit abort ignore winner payout results; documented receipt/idempotency requirements and cleanup ordering.
+- Updated mechanic and street-race reviews, master plan, checklist, test plan and handoff. Static-only; no build or runtime tests.
