@@ -317,6 +317,7 @@
 - Re-inspected the full `StreetRaceFinished` remote and client colshape trigger.
 - Confirmed source-level authorization gap: server trusted the client-triggered finish remote without requiring `StreetRaceData.Status` and without checking server-side player distance to `StreetRaceData.Position`. A participant could invoke finish during a pending offer and receive the 90% pot payout before either stake was debited.
 - Patched `Events/StreetRace.cs`: finish now requires active race status and caller within 10 metres of the server-side finish point.
+- Also hardened `StreetRacePosition`: rejects NaN/Infinity coordinates, rejects waypoint mutation after race activation and enforces >50m minimum distance server-side (matching intended client UI rule). Map boundary policy remains undefined.
 - Added MONEY-052 to `ISSUES.md`, `STREET_RACE_REVIEW.md`, `MASTER_CHECKLIST.md`, `TEST_PLAN.md`, `CHANGELOG.md`.
 - Residual: client-supplied waypoint coordinates still need server-side validation; winner payout result/durability and `ClearData` payout are unresolved; no C# build, RAGE runtime, DB fault injection or concurrency tests.
 - Do not close MONEY-051/MONEY-052 pending the regression matrix and settlement design.
