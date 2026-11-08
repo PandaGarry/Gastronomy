@@ -39,3 +39,14 @@
 ## Scope boundary
 
 VEH-009 is separate from MONEY-045 (government quota enforcement), STOCK-002 (missing-product success and retail settlement), and CAS-024 (24/7 shop stale BizID).
+
+## 2026-11-08 — MONEY-045 government quota correction
+
+A bounded patch was applied to `Core/Businesses.cs` `fillCar`:
+
+- Normalize special full-tank requests and validate the final requested liters before computing the vehicle's resulting fuel.
+- Compute total price with `long` multiplication and reject nonpositive or out-of-Int32 totals before stock or account mutations.
+- Remove the incorrect clamp that compared liters (`lvl`) directly with the monetary `FuelLeft` allowance.
+- Reject a government refuel when the final monetary price exceeds `fractionData.FuelLeft`, before `takeProd`, City Hall accounting or vehicle fuel mutation.
+
+This corrects the specific unit mismatch, stale pre-clamp price/tfuel and missing quota rejection. It does not make business stock, FuelLeft, City Hall money and vehicle fuel one durable transaction; `takeProd`/caller settlement and VEH-009 active-station authorization remain separate open findings. No C# build, RAGE staging or MySQL fault injection was run.
