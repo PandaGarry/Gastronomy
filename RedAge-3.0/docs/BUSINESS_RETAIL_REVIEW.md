@@ -27,3 +27,13 @@
 ## Scope and confidence
 
 The ordering and ignored return values are visible in source. Whether each failure can be induced in production, exact AddNewItem partial-insert semantics, weapon grant semantics and crash windows require disposable MySQL + RAGE staging. This review does not claim live exploitation or successful runtime reproduction.
+
+## 2026-11-08 — bounded takeProd input/missing-product hardening
+
+Applied a narrow patch to `Core/Businesses.cs`:
+
+- Reject `amount <= 0` before product lookup or stock arithmetic.
+- Use the direct comparison `p.Lefts < amount` after positive-quantity validation.
+- Track whether a matching product was found; return `false` if no product matches instead of reporting success.
+
+This closes the helper's missing-product false-success path and invalid/nonpositive quantity input. It does **not** fix stock decrement before owner-bank credit, missing rollback on bank failure, unchecked customer Wallet.Change, unchecked/partial item or weapon grants, or missing business dirty-save marking. Those remain open under STOCK-002/MONEY-022. No C# build, RAGE staging or MySQL fault injection was run.
