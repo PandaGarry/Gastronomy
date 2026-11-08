@@ -118,3 +118,5 @@
 - [ ] VEH-010 — LS Customs tuning: clear organization tuning state on every exit; require active one-shot Type==12 intent, vehicle identity and location for personal purchase remote; test stale TuningShop and disconnect position resolution. See TUNING_REMOTE_REVIEW.md.
 
 - [ ] VEH-011 — mileage remote: reject negative/oversized client deltas before uint conversion; bind accepted distance to server-measured movement/time and prevent counter wrap. Test int boundaries, replay/cadence and no fare/progression on invalid deltas. See TAXI_MILEAGE_REVIEW.md.
+
+- [ ] INV-012 — vehicle trunk inventory: bind session to exact vehicle and authorized access policy; revalidate distance/dimension/door/ownership/rank on every move, stack, use and drop. Revoke stale sessions and test walk-away/replay. See VEHICLE_TRUNK_ACCESS_REVIEW.md.
