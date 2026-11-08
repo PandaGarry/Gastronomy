@@ -149,3 +149,11 @@ Static trace of ItemsUse → LoadOtherItemsData → GetLocationName/GetItemData/
 - Reviewed `Table.Tasks.Repository` offline money awards: SQL-side increment is atomic at row level but lacks stable reward receipt, explicit NULL/range policy and login publication gate; partial cash/item awards are not resumable. Tracked as MONEY-057.
 - Rechecked `Core.Admin.OffGiveMoney`: it awaits UPDATE and checks affected rows before success side effects, but still uses read/absolute-write and can race a login after the initial online check. This is a bounded acknowledgement fix, not coordinator migration.
 - Source code unchanged in this pass. Static review only; no build, disposable DB, concurrency/fault-injection or RAGE staging tests.
+
+
+### Bank persistence follow-up (2026-11-08)
+
+- Re-read current `MoneySystem/Bank.cs` and `Database/Models/Bank.cs`: `Bank.Transfer` changes both cached balances under `AccountSync`, but persistence worker saves dirty account IDs individually without a shared DB transaction/receipt. Added MONEY-058 for conditional one-sided crash persistence.
+- `Bank.Change`/`Transfer` accept checked `long` results beyond signed SQL `INT`; `Bank.Save` rejects non-convertible snapshots and leaves them dirty. Added MONEY-059 for unpersistable cached balances/restart rollback.
+- Reconciled tax findings: `Main.payDayTrigger` now routes hourly house/business tax through `ApplyBalanceAdjustment`; MONEY-019/MONEY-040's missing-dirty-flag subfinding is partially remediated. Durable tax ledger and repossession settlement/owner persistence remain open.
+- Static source review only. No C# build, disposable MariaDB fault injection, restart test or RAGE staging was run.
