@@ -272,3 +272,8 @@
 - Faction interaction handlers set OnFracStock but no reset was found. openWeaponStock remote only checks current fraction ID and IsFractionAccess rank; no duty, IsOpenGunStock, proximity, dimension or expiring intent. A member with retained rank can attempt remote reopen after prior legitimate access.
 - Registered INV-015; created FRACTION_STOCK_SESSION_REVIEW.md and expanded INVENTORY_REVIEW / TEST_PLAN / checklist / coverage / index / roadmap / changelog.
 - Static-only; no source patch/build/RAGE/DB tests. Continue with furniture, warehouse, organization and HeliCrash container ACL/lifecycle; avoid duplicates with INV-003 and INV-012..015.
+
+## 2026-11-08 continuation — INV-016 organization stock stale context
+
+- OpenWeaponStock validates InsideOrganizationID only at open. RemovePlayer clears it and exits the HQ without calling ItemsClose/OtherClose; generic inventory mutation remotes continue to rely on InventoryOtherLocationName. Added INV-016 and ORGANIZATION_STOCK_SESSION_REVIEW.md.
+- Static-only; no source patch/build/RAGE/DB test. Continue remaining furniture, warehouse and HeliCrash lifecycle checks; avoid duplicates with INV-003, INV-012..016 and VEH-012.
