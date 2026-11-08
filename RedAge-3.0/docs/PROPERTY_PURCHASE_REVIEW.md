@@ -17,3 +17,8 @@
 ## Boundaries
 
 No client-supplied house ID was found on this endpoint. This review does not cover business purchase, auctions, house transfers or bank/tax flows; sale settlement is tracked separately in `PROPERTY_SALE_REVIEW.md` (`MONEY-016`).
+
+
+## 2026-11-08 source remediation update — MONEY-017 (partial)
+
+The current purchase flow now initializes the property bank balance before the debit, checks `Wallet.Change(player, -house.Price)`, and does not transfer ownership or emit purchase success effects when the debit is rejected. If the debit fails, it attempts to restore the previous property-bank balance and logs a failed compensation. Ownership and bank initialization still are not a single durable DB transaction; runtime shutdown/replay/restart tests remain pending.
