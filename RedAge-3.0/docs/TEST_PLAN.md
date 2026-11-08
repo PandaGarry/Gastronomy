@@ -112,7 +112,7 @@
 - [ ] Inject crash after debit, after fraction credit and after officer credit; restart reconciliation must produce exactly one complete settlement.
 - [ ] Verify the actual `targetSessionData.TicketsData` is consumed/cleared after accept or decline.
 
-No runtime tests have been run; execute only on disposable RAGE:MP/MySQL staging accounts.
+Source patch now consumes the pending session intent under a shared session lock before settlement. Runtime tests have not been run; execute only on disposable RAGE:MP/MySQL staging accounts.
 
 
 ## MONEY-034 — gang drug purchase overflow regression (pending staging)
@@ -664,10 +664,10 @@ Static source review only. These tests require a disposable MariaDB database and
 - Статус: статический review; tests не запускались.
 
 
-### MONEY-060 — ticket fine payout must require successful debit
+### MONEY-060 — ticket fine payout must require successful debit (early-return guard patched; tests pending)
 
 - [ ] Open a fine prompt while the target has sufficient funds; spend cash and bank before confirming; force both Wallet.Change and Bank.Change to return false.
 - [ ] Assert failed debit causes immediate return: no city fraction credit, no officer wallet credit, no success notification/event, and no paid GameLog.
 - [ ] Verify wallet success path and bank fallback success path each settle exactly once; force first debit failure and second success.
 - [ ] Replay/concurrently invoke confirmation and test shutdown/DB persistence boundaries; one fine intent must produce at most one debit and one split payout.
-- Статус: статический review; source patch/build/RAGE/DB tests не выполнялись.
+- Статус: source guard внесён и повторно прочитан; C# build, RAGE/DB, replay/concurrency и restart tests не выполнялись.
