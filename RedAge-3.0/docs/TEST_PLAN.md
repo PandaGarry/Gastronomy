@@ -72,7 +72,7 @@
 - **Business government sale (`MONEY-026`):** test direct/replayed dialogCallback("BIZ_SELL_TOGOV", true) with current/stale/non-owner BizIDs. Inject Wallet.Change=false/exception and assert no owner release, BizIDs removal, success log or notification without confirmed proceeds. Inject hard crash after wallet+business owner writes but before character Biz list save; reconnect, load via stale ID, invoke callback, and verify owner check/receipt prevents repeat payout or management access. Fail each wallet/business/character write and compare DB Owner, characters.Biz, wallet and receipt. Static review: BUSINESS_SALE_REVIEW.md; requires disposable MySQL/RAGE staging.
 - **Business bank deposit (`MONEY-039`):** select a business account at ATM, then inject Bank.Change=false/exception after successful Wallet.Change. Assert refund or durable pending receipt, no false success/log, and no duplicate on replay. Test stale BizIDs, invalid index, zero/negative/int boundary values and direct remote away from ATM. Static review: BUSINESS_BANK_REVIEW.md; requires disposable MySQL/RAGE staging.
 - **Business tax/repossessions (`MONEY-040`, `MONEY-041`):** run payday with a solvent business and verify tax debit survives bank-worker flush/restart; inject bank DB failure. For insolvent business inject online Wallet.Change=false/exception and offline character DB update failure/crash; assert owner compensation is durable/exactly once before ownership release and bank reset. Static review: BUSINESS_TAX_REVIEW.md; requires disposable MySQL/RAGE staging.
-- **Player-to-player vehicle sale (`MONEY-042`):** inject seller Wallet.Change=false/exception and seller balance above Int32 range; assert no ownership transfer/success without confirmed seller proceeds. Inject SaveHolder DB failure/delay after buyer debit and seller credit, restart and reconcile holder, wallet, garage and receipt. Replay BUY_CAR before/after every settlement boundary; test disconnect, stale holder, missing vehicle, full garage and concurrent offers. Static review: VEHICLE_PLAYER_SALE_REVIEW.md; requires disposable MySQL/RAGE staging.
+- **Player-to-player vehicle sale (`MONEY-042`):** inject seller Wallet.Change=false/exception and seller balance at/near Int32.MaxValue where a credit may be rejected; assert no ownership transfer/success without confirmed seller proceeds. Inject SaveHolder DB failure/delay after buyer debit and seller credit, restart and reconcile holder, wallet, garage and receipt. Replay BUY_CAR before/after every settlement boundary; test disconnect, stale holder, missing vehicle, full garage and concurrent offers. Static review: VEHICLE_PLAYER_SALE_REVIEW.md; requires disposable MySQL/RAGE staging.
 - **Trucker order lifecycle (`JOB-001`, `JOB-004`):** two Trucker characters, one valid order; test on-duty owner driver, off-duty passenger in another Trucker work vehicle, non-Trucker passenger, no/mismatched rental, on-foot, pickup radius, cancel/disconnect. Invalid cargo pickup must not set Order.Taked or retain OrderData.Order. At delivery inject Wallet.Change=false and exception; order/stock must remain recoverable or a durable pending-payout receipt must be written, with no false success log/notification. Test duplicate checkpoint entry, wallet boundary, restart/retry and exactly-once payout/order completion. Static review: BUSINESS_DELIVERY_REVIEW.md; requires RAGE staging.
 
 29. **Contact BattlePass tasks (`PROG-009`):** activate tasks 76/78, direct-repeat-add an existing contact and update a nonexistent number; neither may advance progress. A valid create/edit should advance only after one successful mutation; repeat/replay must not overcount. Static review: `PHONE_MESSAGES_REVIEW.md`; requires RAGE staging.
@@ -152,10 +152,12 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] Test simultaneous stock requests and organization membership/status changes; verify exactly-once balance/item deltas.
 
 
-## MONEY-036 — shared wallet long-range arithmetic (pending tests)
+## MONEY-036 — wallet / database money-width contract (pending decision and tests)
 
-- [ ] `CharacterData.Money` at Int32.MaxValue-1, Int32.MaxValue and Int32.MaxValue+1; add/subtract small amounts and assert exact long balance.
-- [ ] Test balances around UInt32.MaxValue and Long.MaxValue; overflow must fail without mutation.
+- [ ] Confirm canonical maximum: current generated `characters.money` is `int(11)` while `CharacterData.Money` is `long`.
+- [ ] At Int32.MaxValue-1 and Int32.MaxValue, test positive credits that cross the cap; reject without wrap and require caller compensation/no false success.
+- [ ] Test negative debits at 0, 1 and Int32.MaxValue; no negative balance or integer wrap.
+- [ ] Verify create, normal character save and MoneyUpdate worker round-trip at the selected maximum. If migrating to BIGINT, include >Int32 values through every persistence path.
 - [ ] Test every Wallet.Change call-site category (bank/ATM, faction/org stock, jobs/rewards, player trades, vehicles/business/casino) for ignored false return and side-effect ordering.
 - [ ] Save/restart preserves exact 64-bit balance; DB column and serialization width are verified.
 
@@ -168,7 +170,7 @@ No runtime exploit reproduction or DB test has been performed; use disposable RA
 - [ ] Duplicate/concurrent accept, offer replay, cancellation, disconnect and stale seller ownership are idempotent.
 - [ ] Crash/restart after each settlement step reconciles money and ownership exactly once.
 - [ ] Money log contains distinct buyer/seller UUIDs and settlement correlation ID.
-- [ ] Repeat at MONEY-036 Int32/Int64 balance boundaries.
+- [ ] Repeat at MONEY-036 selected maximum and DB round-trip boundaries.
 
 - **Business government acquisition (`MONEY-043`):** inject `Wallet.Change=false`/exception after `CanIChange` preflight (concurrent balance change, shutdown gate, controlled failure). Assert owner, buyer BizIDs, stock, orders and business bank remain unchanged; no success log/message. Test already-owned/stale business, duplicate/concurrent command, restart after each write boundary.
 - **Player-to-player business transfer (`MONEY-044`):** independently fail buyer debit, seller credit, buyer BizIDs save, seller BizIDs save and business owner save. Assert all-or-nothing settlement or durable pending receipt with exactly-once retry; never report success with partial payment. Replay confirmation, concurrent confirmations, offer replacement/expiry, changed owner, disconnect/restart and buyer business-limit boundaries. Static review: `BUSINESS_OWNERSHIP_REVIEW.md`; requires disposable MySQL/RAGE staging.
