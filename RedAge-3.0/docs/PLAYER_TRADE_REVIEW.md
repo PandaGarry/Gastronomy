@@ -8,7 +8,7 @@
 
 ### Player-to-player inventory trade
 
-`Chars/Repository.cs`, `ConfirmTrade(ExtPlayer player)` (around lines 7680–7900 in this snapshot):
+`Chars/Repository.cs`, `ConfirmTrade(ExtPlayer player)` (around line 7712 in this snapshot):
 
 - The method performs preflight `CanIChange` checks for both players, but these checks are separate from the later wallet mutations.
 - It then iterates the first player's trade container and calls `AddItem` for the counterparty before the money leg.
@@ -18,7 +18,7 @@
 
 ### Tent marketplace purchase
 
-`Chars/Repository.cs`, `ItemBuy(ExtPlayer player, string ArrayName, int Index, int Value)` (around lines 8180–8260):
+`Chars/Repository.cs`, `ItemBuy(ExtPlayer player, string ArrayName, int Index, int Value)` (around line 8190):
 
 - The path calculates `int price = Item.Price * Value` without checked/long arithmetic.
 - It calls `CanIChange`, then ignores both `Wallet.Change(player, -price)` and `Wallet.Change(target, +price)` results.
