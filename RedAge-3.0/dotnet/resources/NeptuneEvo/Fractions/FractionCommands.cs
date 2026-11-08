@@ -781,6 +781,7 @@ namespace NeptuneEvo.Fractions
                     {
                         Notify.Send(target, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.NoMoney), 3000);
                         Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.PlayerNotEnoughMoney), 3000);
+                        return;
                     }
 
                     var fractionData = Fractions.Manager.GetFractionData((int) Fractions.Models.Fractions.CITY);
