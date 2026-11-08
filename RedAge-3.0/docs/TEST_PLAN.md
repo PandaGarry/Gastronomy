@@ -545,3 +545,13 @@ Source assertions only; no C# build or DB fault-injection has run. See `ECONOMY_
 - [ ] Verify superseded snapshots clear their marker while preserving the newer queued snapshot.
 - [ ] Run a high-contention stress test with wallet mutations, full character saves, worker detach, SQL latency and transient exceptions; compare final in-memory and DB balance after queue drains.
 - [ ] Audit/migrate direct SQL cash writers listed in `ECONOMY_REVIEW.md` only after their online/offline semantics and queued-snapshot interaction are resolved.
+
+### MONEY-002 — offline admin grant acknowledgement
+
+- [ ] Normal offline admin grant: verify DB balance changes, then and only then money/admin logs and success notification appear.
+- [ ] Inject DB exception/connection loss before UPDATE completion: no success log or success notification; operator receives failure and the balance remains unchanged.
+- [ ] Delete the target row between SELECT and UPDATE: affected-row count is not one; no success side effects.
+- [ ] Exercise unchanged/zero-delta and floor-at-zero cases; zero affected rows must not be reported as a successful grant.
+- [ ] Run two concurrent offline grants and race an offline grant against login/full save/worker flush; current read-then-absolute-write behavior is expected to remain an open lost-update test until migrated to the shared durable coordinator.
+
+Source patch only; no compiler or disposable DB test has run.
