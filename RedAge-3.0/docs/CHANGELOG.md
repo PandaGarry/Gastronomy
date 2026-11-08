@@ -450,3 +450,8 @@
 
 - `Core/Businesses.cs`: normalize final refuel quantity, calculate bounded price in `long`, remove liters-vs-currency clamp and reject monetary cost above FuelLeft before stock/city/vehicle effects.
 - Static assertions passed. Durable cross-entity receipt and VEH-009 station authorization remain open. No C# build, RAGE or MySQL tests.
+
+## 2026-11-08 — VEH-006 / MONEY-013 government vehicle sale guard
+
+- `Main.cs`: revalidate holder at confirmation; reject nonpositive sale price; check wallet payout before logging/reporting/removing the vehicle.
+- Static assertions passed. Async DB delete/restart exactly-once settlement remains open; no C# build, RAGE or MySQL tests.
