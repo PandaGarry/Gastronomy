@@ -116,3 +116,5 @@
 - [ ] PET-001 — pet-shop remote: require Type==14 active one-shot session, proximity/dimension and allowed pet enum; prevent stale TempBizID teleport/replay and validate wallet/stock settlement. See PETSHOP_REMOTE_REVIEW.md.
 
 - [ ] VEH-010 — LS Customs tuning: clear organization tuning state on every exit; require active one-shot Type==12 intent, vehicle identity and location for personal purchase remote; test stale TuningShop and disconnect position resolution. See TUNING_REMOTE_REVIEW.md.
+
+- [ ] VEH-011 — mileage remote: reject negative/oversized client deltas before uint conversion; bind accepted distance to server-measured movement/time and prevent counter wrap. Test int boundaries, replay/cadence and no fare/progression on invalid deltas. See TAXI_MILEAGE_REVIEW.md.
