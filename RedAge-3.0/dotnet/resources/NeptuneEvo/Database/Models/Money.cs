@@ -17,12 +17,27 @@ namespace NeptuneEvo.Database.Models
         private static readonly SemaphoreSlim[] MoneyLocks = Enumerable.Range(0, 64)
             .Select(_ => new SemaphoreSlim(1, 1))
             .ToArray();
+        private static readonly object[] MoneySyncLocks = Enumerable.Range(0, 64)
+            .Select(_ => new object())
+            .ToArray();
         private static readonly Dictionary<int, long> MoneyVersions = new Dictionary<int, long>();
+        private static readonly HashSet<int> ActiveMoneyWrites = new HashSet<int>();
+        private static readonly HashSet<int> ActiveCharacterSaves = new HashSet<int>();
         private static int _workerStarted;
+
+        private static int GetMoneyLockIndex(int uuid)
+        {
+            return (uuid & int.MaxValue) % MoneyLocks.Length;
+        }
 
         private static SemaphoreSlim GetMoneyLock(int uuid)
         {
-            return MoneyLocks[(uuid & int.MaxValue) % MoneyLocks.Length];
+            return MoneyLocks[GetMoneyLockIndex(uuid)];
+        }
+
+        public static object GetCharacterMoneySyncLock(int uuid)
+        {
+            return MoneySyncLocks[GetMoneyLockIndex(uuid)];
         }
 
         private static long NextMoneyVersion(int uuid)
@@ -41,23 +56,35 @@ namespace NeptuneEvo.Database.Models
         // The full character save and the detached money worker must serialize writes
         // to characters.money. Starting a full save advances the version, invalidating
         // any older detached worker snapshot before its SQL UPDATE can run.
-        public static async Task ExecuteCharacterSave(int uuid, long amount, Func<Task> saveAction)
+        public static async Task ExecuteCharacterSave(int uuid, Func<long> getAmount, Func<long, Task> saveAction)
         {
-            if (uuid <= 0 || amount < 0 || amount > int.MaxValue || saveAction == null)
-                throw new ArgumentOutOfRangeException(nameof(amount), "Invalid character money save.");
+            if (uuid <= 0 || getAmount == null || saveAction == null)
+                throw new ArgumentOutOfRangeException(nameof(uuid), "Invalid character money save.");
 
             var moneyLock = GetMoneyLock(uuid);
             await moneyLock.WaitAsync();
+            long amount;
             long saveVersion;
-            lock (QueueLock)
+            lock (GetCharacterMoneySyncLock(uuid))
             {
-                saveVersion = NextMoneyVersion(uuid);
-                MoneyUpdateList.Remove(uuid);
+                amount = getAmount();
+                if (amount < 0 || amount > int.MaxValue)
+                {
+                    moneyLock.Release();
+                    throw new ArgumentOutOfRangeException(nameof(getAmount), "Character money is outside the signed INT range.");
+                }
+
+                lock (QueueLock)
+                {
+                    saveVersion = NextMoneyVersion(uuid);
+                    MoneyUpdateList.Remove(uuid);
+                    ActiveCharacterSaves.Add(uuid);
+                }
             }
 
             try
             {
-                await saveAction();
+                await saveAction(amount);
             }
             catch
             {
@@ -71,6 +98,8 @@ namespace NeptuneEvo.Database.Models
             }
             finally
             {
+                lock (QueueLock)
+                    ActiveCharacterSaves.Remove(uuid);
                 moneyLock.Release();
             }
         }
@@ -181,11 +210,11 @@ namespace NeptuneEvo.Database.Models
 
         private static readonly Dictionary<int, object[]> MoneyUpdateList = new Dictionary<int, object[]>();
 
-        public static void AddMoneyUpdate(int uuid, long amount)
+        public static void AddMoneyUpdate(int uuid, long amount, bool forceQueue = true)
         {
-            // The current characters.Money column and update mapping are signed INT.
-            // Reject invalid snapshots here instead of poisoning the retry queue with
-            // a Convert.ToInt32 overflow that would fail on every worker pass.
+            // Every wallet mutation advances the version so detached snapshots become
+            // stale. Small changes are queued only when a write/save is already in flight
+            // or a prior snapshot is pending; large changes retain the existing eager-save policy.
             if (uuid <= 0 || amount < 0 || amount > int.MaxValue)
             {
                 Log.Write($"AddMoneyUpdate rejected invalid snapshot (UUID: {uuid}, amount: {amount}).");
@@ -195,7 +224,11 @@ namespace NeptuneEvo.Database.Models
             lock (QueueLock)
             {
                 long version = NextMoneyVersion(uuid);
-                MoneyUpdateList[uuid] = new object[] { uuid, amount, version };
+                if (forceQueue || MoneyUpdateList.ContainsKey(uuid) ||
+                    ActiveMoneyWrites.Contains(uuid) || ActiveCharacterSaves.Contains(uuid))
+                {
+                    MoneyUpdateList[uuid] = new object[] { uuid, amount, version };
+                }
             }
         }
 
@@ -231,17 +264,29 @@ namespace NeptuneEvo.Database.Models
                     {
                         bool isCurrent;
                         lock (QueueLock)
+                        {
                             isCurrent = GetMoneyVersion(uuid) == version;
+                            if (isCurrent)
+                                ActiveMoneyWrites.Add(uuid);
+                        }
 
                         // A full character save or newer wallet mutation superseded this
                         // detached absolute snapshot. Do not let it roll the DB balance back.
                         if (!isCurrent)
                             continue;
 
-                        await db.Characters
-                            .Where(v => v.Uuid == uuid)
-                            .Set(v => v.Money, Convert.ToInt32(saveData[1]))
-                            .UpdateAsync();
+                        try
+                        {
+                            await db.Characters
+                                .Where(v => v.Uuid == uuid)
+                                .Set(v => v.Money, Convert.ToInt32(saveData[1]))
+                                .UpdateAsync();
+                        }
+                        finally
+                        {
+                            lock (QueueLock)
+                                ActiveMoneyWrites.Remove(uuid);
+                        }
                     }
                     finally
                     {
