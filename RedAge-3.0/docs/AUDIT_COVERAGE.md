@@ -116,5 +116,5 @@ Static trace of ItemsUse → LoadOtherItemsData → GetLocationName/GetItemData/
 ### Street race finish authorization — 2026-11-08
 
 - Reviewed client colshape trigger in `src_client/vehicle/race_system.js` and server handler `Events/StreetRace.StreetRaceFinished`.
-- Added server-side active-race and 10m finish-position checks; tracked as MONEY-052.
+- Added server-side active-race and 10m finish-position checks; tracked as MONEY-052. Added finite-coordinate, no-post-start-change and >50m minimum waypoint checks in `StreetRacePosition`.
 - Static source review only. Waypoint input validation, payout durability, abort payout, replay/concurrency and RAGE staging remain open.
