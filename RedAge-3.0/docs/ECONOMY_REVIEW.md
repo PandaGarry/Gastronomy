@@ -353,3 +353,14 @@ The hourly business-tax/repossession path in `Main.payDayTrigger` is another dir
 - The cash + Biz columns are updated in one SQL statement, but business owner/bank state and the referral/lottery/cash receipt are not part of the same transaction. This is not a complete exactly-once settlement.
 
 The house repossession offline path calls `Character.Save.Repository.AddMoney`, so it inherits that method's read-modify-absolute-write and login/cache race. Both property repossession flows must migrate as domain operations with stable property/tax-period identity, confirmed payout, and ownership transition recovery; do not treat them as generic anonymous increments. No source code changed in this pass.
+
+
+### MONEY-002 follow-up — checked-in schema engine and balance type (2026-11-08)
+
+The full checked-in `RedAge-3.0/database/main.sql` blob was retrieved and inspected (1,293,956 characters; dump header identifies MariaDB 10.10.2). In this snapshot:
+
+- `characters.money` is nullable signed `INT(11)`; `characters` table is declared `ENGINE=InnoDB`.
+- Personal/business bank-account table `money.balance` is non-null signed `INT(11)`; `money` table is declared `ENGINE=InnoDB`.
+- `accounts`, `refferals` and `lottery` are also declared InnoDB in this dump.
+
+This is useful evidence that a transaction-backed coordinator is compatible with the **checked-in schema snapshot**, and confirms the nullable cash-column case must be handled explicitly. It does **not** prove the live/deployed database has the same schema or engine, nor that the dump imports cleanly. Before implementation/rollout, import this dump into a disposable MariaDB 10.10-compatible instance, inspect `SHOW CREATE TABLE`/engine and constraints, and separately verify the actual target environment without touching production data. No SQL import or DB transaction test was run in this pass.
