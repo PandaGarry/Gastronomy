@@ -86,3 +86,10 @@
 - Re-fetched the working-branch Money.cs and verified that the worker sets writeCompleted only after successful UpdateAsync; ActiveMoneyWrites is removed only for successful or superseded snapshots after releasing the per-UUID semaphore; SQL failure leaves the marker for RequeueMoney.
 - Verified issue register, economy review, regression plan, master checklist, master plan, roadmap, changelog and session handoff reflect the new behavior and remaining direct SQL writers.
 - Assertions are static source checks only. No C# build, deterministic concurrency test, MySQL fault injection, process restart test or RAGE staging test was run. dotnet, msbuild, csc, mcs, mysql and mariadb remain unavailable in this environment.
+
+
+### 2026-11-08 — MONEY-033 / MONEY-060 ticket guard static assertions
+
+- Re-fetched `FractionCommands.cs` from `redage/audit-continuation` and ran textual assertions for: (1) pending ticket assignment protected by `lock(targetSessionData)`; (2) second pending ticket rejected; (3) `ticketConfirm` detaches the intent under the same lock before settlement; (4) both wallet and bank debit failure branch returns before City Hall split payout.
+- All four assertions passed. Documentation assertions also passed for separate MONEY-033/MONEY-060 issue entries, current INDEX→DOCS_STATUS link, updated handoff, and explicit pending test status.
+- This is static text/source inspection only. No C# compilation, MariaDB transaction/fault-injection, RAGE staging, concurrency or restart test was run. No runtime exploit/reproduction claim is made.
