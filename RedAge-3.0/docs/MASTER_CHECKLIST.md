@@ -106,7 +106,7 @@
 - GitHub repository API currently reports visibility as public; verify and change in GitHub settings only if that is not intended.
 
 - [ ] MONEY-043 — government business purchase: verify successful buyer debit before stock/order reset and owner/BizIDs mutation; durable receipt, rollback and restart tests. See `BUSINESS_OWNERSHIP_REVIEW.md`.
-- [ ] MONEY-044 — player-to-player business transfer: atomic buyer debit + seller credit + owner/BizIDs commit; one-shot offer, idempotency, partial-write compensation and replay/concurrency tests. See `BUSINESS_OWNERSHIP_REVIEW.md`.
+- [ ] MONEY-044 — partial preflight patch: reject missing offer/seller, nonpositive price and missing business ID. Core remains unsafe: owner/BizIDs mutate before unchecked buyer debit/seller credit. Implement durable one-shot settlement and replay/concurrency/restart recovery. See `BUSINESS_OWNERSHIP_REVIEW.md`.
 
 - [ ] MONEY-045 — government refuelling quota: validate currency-based FuelLeft against checked total cost before any stock, city-fund or vehicle-fuel mutation; test exhausted/partial quota, quantity clamp, replay and restart. See BUSINESS_FUEL_REVIEW.md.
 
