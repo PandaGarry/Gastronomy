@@ -153,3 +153,6 @@
 - [ ] BANK-SAVE — verify revision-aware save retry under DB outage, concurrent mutations and INT range boundaries; durable ledger/outbox still required for crash consistency. See BANK_TRANSFER_REVIEW.md.
 
 - [ ] MONEY-003 follow-up — test atomic in-memory bank transfer, one-shot ATM confirmation, synchronized balance reads, checked account creation bounds, DB save retry/revision behavior, and restart recovery limitation. Audit mutable `Bank.Data` references. See `BANK_TRANSFER_REVIEW.md`.
+
+
+- [ ] MONEY-003 follow-up — audit and remove every direct mutable bank balance write; property acquisition/tax/auction settlement must use synchronized bank APIs. Validate buyer debit/ownership ordering and DB failure compensation. See `BANK_TRANSFER_REVIEW.md`.
