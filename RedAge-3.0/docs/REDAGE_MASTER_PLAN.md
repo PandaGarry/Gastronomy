@@ -426,3 +426,8 @@ Static review found unchecked second legs in regular ATM cash deposit/withdrawal
 
 - `Main.cs` `CAR_SELL_TOGOV` now revalidates current holder at confirmation, rejects nonpositive/unknown price and requires wallet payout success before logs/message/removal.
 - Async vehicle DB deletion remains separate and not receipt-backed; payout/delete crash consistency, retry and exactly-once recovery remain open. Static-only; no build/RAGE/MySQL tests.
+
+## 2026-11-08 — VEH-001 self-repair payment guard
+
+- `VehicleManager.RepairCar` now returns success/failure; `RepairMyVeh` checks the $500 debit before repair and attempts refund if repair fails, with critical log on failed refund.
+- This closes the wallet-rejection/free-repair window only. Server-owned dialog intent, location/mechanic policy and durable refund remain open. Static-only; no build/RAGE tests.
