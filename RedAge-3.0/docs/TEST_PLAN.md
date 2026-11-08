@@ -484,3 +484,12 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - Verify success log and notification occur only after successful debit and repair.
 - Direct `dialogCallback("RepairMyVeh", true)` without a server-owned pending intent and from road/interior remains a required policy/security test; current patch does not close this authorization gap.
 - Verify all other RepairCar callers compile with the new bool return ignored; C# build and RAGE staging were not run.
+
+
+## 2026-11-08 — MONEY-002 worker lifecycle and snapshot bounds
+
+- Invoke `Money.Start()` repeatedly and concurrently; assert exactly one worker is started and no duplicate DB flush loops run.
+- Call `AddMoneyUpdate` with UUID `0`/negative and balances negative, `0`, `Int32.MaxValue`, `Int32.MaxValue + 1`, `long.MinValue` and `long.MaxValue`. Invalid snapshots must be rejected before enqueue; valid values must flush.
+- With DB unavailable, enqueue a valid snapshot, restore DB and assert retry persists it. Enqueue a newer absolute value while old batch is in flight; old retry must never overwrite the newer queued value.
+- Inject partial batch failure and confirm retry remains safe because updates are absolute `SET` operations. Kill/restart before flush to document current memory-only loss; this test remains expected to fail until durable outbox is implemented.
+- No C# build, concurrent execution or MySQL fault injection has yet been performed.
