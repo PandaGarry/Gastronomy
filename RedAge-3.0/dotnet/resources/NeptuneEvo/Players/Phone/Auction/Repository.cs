@@ -619,9 +619,19 @@ namespace NeptuneEvo.Players.Phone.Auction
                             }
                             else 
                             {
+                                // Offline fallback writes directly to the signed INT cash column.
+                                // Validate in a wider type before narrowing or issuing the UPDATE.
+                                if (!character.Money.HasValue || price <= 0)
+                                    return;
+
+                                long currentMoney = character.Money.Value;
+                                long updatedMoney = currentMoney + (long)price;
+                                if (currentMoney < 0 || updatedMoney > int.MaxValue)
+                                    return;
+
                                 await db.Characters
                                     .Where(v => v.Uuid == uuid)
-                                    .Set(v => v.Money, (character.Money + price))
+                                    .Set(v => v.Money, (int)updatedMoney)
                                     .UpdateAsync();
                             }
                         }
