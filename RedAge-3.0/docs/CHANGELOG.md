@@ -294,6 +294,11 @@
 - `StreetRace.Accept` previously marked a race active and started it without checking either participant's wallet debit result. Patched it to require both stake debits; if the second fails, the first is refunded and the race is cancelled. Compensation failure is logged for reconciliation.
 - Added MONEY-051 and a failure/concurrency regression matrix. Winner payout result, durable refund receipt and duplicate/concurrent finish semantics remain open; no build or RAGE tests have been run.
 
+## 2026-11-08 — MONEY-052 Street race finish authorization
+
+- `server.streetrace.finished` previously trusted a client-triggered finish event without checking that the race had started or that the caller was near the server-side finish position. Added active-race and 10m server-position checks to prevent pre-start payout and remote finish claims.
+- Added MONEY-052 and regression scenarios. Waypoint validation, payout result/durability, abort payout and concurrency remain open; no build or RAGE staging tests have been run.
+
 ## 2026-11-08 — PERF-002 CEF production build defaults
 
 - CEF build scripts now explicitly set production mode through the already-installed `cross-env`; the dev script explicitly selects development.
