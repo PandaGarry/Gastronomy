@@ -663,17 +663,20 @@ namespace NeptuneEvo.Core
         /// Починка авто
         /// </summary>
         /// <param name="vehicle"></param>
-        public static void RepairCar(ExtVehicle vehicle)
+        public static bool RepairCar(ExtVehicle vehicle)
         {
             try
             {
+                if (vehicle == null) return false;
                 var vehicleLocalData = vehicle.GetVehicleLocalData();
-                if (vehicleLocalData != null) 
-                    vehicle.Repair();
+                if (vehicleLocalData == null) return false;
+                vehicle.Repair();
+                return true;
             }
             catch (Exception e)
             {
                 Log.Write($"RepairCar Exception: {e.ToString()}");
+                return false;
             }
         }
         public static void Create(ExtPlayer player, string Model, Color Color1, Color Color2, int Health = 1000, int Fuel = 100, string Text = "", string Logs = "")
