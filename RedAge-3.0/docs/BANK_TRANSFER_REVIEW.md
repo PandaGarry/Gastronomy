@@ -132,3 +132,10 @@ Updated call sites: business purchase initial balance (`Core/Businesses.cs`); ho
 - [ ] invalid/missing bank ID leaves related side effects unapplied or reconciled;
 - [ ] DB failure during save retains dirty state and eventually persists latest revision;
 - [ ] search all call sites for direct writes to bank Balance, IsSave and Revision.
+
+
+## Property purchase ordering follow-up — business and house
+
+The property acquisition call sites were checked after routing bank balance writes through the shared API. Both `HouseManager` and `Core/Businesses` previously continued ownership and success side effects without checking `Wallet.Change`. The paths now initialize the property bank balance first, require `Wallet.Change` to succeed, and only then assign ownership / emit purchase success side effects. If the debit is rejected, they attempt to restore the previous property-account balance and log if that compensation fails.
+
+**Limits:** the bank-balance initialization and player debit are still separate in-memory operations, not one DB transaction. If compensation itself fails, manual reconciliation is required. Auction award paths still need the same ordering review. These changes have not been build/runtime tested.
