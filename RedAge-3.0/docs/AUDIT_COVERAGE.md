@@ -136,3 +136,5 @@ Static trace of ItemsUse → LoadOtherItemsData → GetLocationName/GetItemData/
 - Static only. No .NET build, MySQL fault injection, concurrency or RAGE staging test. Durable DB transaction/idempotency and crash recovery remain open. See `BANK_TRANSFER_REVIEW.md`.
 
 - Follow-up: synchronized bank balance reads, account holder lookup, cache registration/removal and holder rename with the transfer lock; Create's checked DB INT/TINYINT input validation remains in place. `Bank.Get(int)` mutable Data escape remains under caller audit.
+
+- Bank persistence follow-up: all successful Bank.Change operations now mark dirty; background worker snapshots dirty IDs under AccountSync and uses a ConcurrentQueue with retry for failed account deletes. In-memory queue is not crash-durable; test DB failure, restart and write amplification.
