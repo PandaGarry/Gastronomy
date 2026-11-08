@@ -456,3 +456,8 @@ Added snapshot-time `ActiveMoneyWrites` markers under `QueueLock`. This closes t
 Expanded the previous detached-batch fix: Wallet.Change now mutates balance and advances revision under a shared striped monitor; Character.Save.Repository.SaveSql captures its money snapshot under that same monitor and serializes its SQL write through a per-stripe semaphore. Worker snapshots carry revisions, are marked in-flight at detach time, and are skipped/retried only while their version remains current. Small wallet changes during pending/detached worker or full-save writes are coalesced as the latest snapshot without making every small mutation an unconditional DB write.
 
 Still open: direct cash SQL writers outside this coordinator (including offline rewards/auction refund/admin/merger paths), durable outbox and process-crash recovery, retry backoff/dead-letter, C# build, multithreaded and MySQL fault-injection tests. See ECONOMY_REVIEW.md and TEST_PLAN.md.
+
+
+### MONEY-002 — retry hand-off race fix (2026-11-08)
+
+`MoneyUpdate` previously removed `ActiveMoneyWrites` in `finally` even on SQL exception, before `Worker` requeued the failed batch. A small wallet mutation in that interval could miss queue registration. The code now keeps the marker on failed SQL and lets `RequeueMoney` atomically requeue the current version and clear the marker; successful/superseded rows release it after semaphore release. Static verification only; deterministic concurrency/DB fault tests remain mandatory. Direct SQL money writers are still not serialized by the shared protocol and must be migrated only after online/offline semantics are established.
