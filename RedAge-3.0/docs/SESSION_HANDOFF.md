@@ -4,6 +4,16 @@
 
 Актуально на 2026-11-07. Эта заметка нужна для продолжения аудита из нового чата; актуальный исходник изменений — файлы проекта в этой папке.
 
+## Контрольная точка 2026-11-08 — продолжение MONEY-002
+
+- Активная ветка: `redage/audit-continuation`; Draft PR: `PandaGarry/Gastronomy#4`; `main` не менять и PR не сливать автоматически.
+- `MONEY-002` уже имеет source patch: синхронизированные producer/worker queues, retry/requeue, revision tokens, striped UUID locks, координация worker и полного character save, lifecycle guard и устранённый hand-off gap. Не повторять эти изменения.
+- Статус остаётся открытым до legacy build, concurrency/interleaving tests и disposable MariaDB fault injection. Очередь volatile; crash до flush всё ещё может потерять snapshot.
+- В `ECONOMY_REVIEW.md` зафиксирована архитектурная граница: фоновая запись outbox после in-memory mutation не crash-durable. Exactly-once требует stable operation ID, unique receipt и атомарного balance update в одной InnoDB transaction на исходном mutation boundary.
+- В `TEST_PLAN.md` добавлены offline direct-writer/login-save races, retry/replay, duplicate operation ID, transaction rollback, InnoDB и mixed legacy/new writer migration cases. `CHANGELOG.md` фиксирует этот шаг.
+- Следующий implementation slice: изучить LinqToDB 3.3 transaction/affected-row API и все cash writers, затем выбрать минимальный единый coordinator contract. Не добавлять durable outbox поверх существующего async snapshot worker и не объявлять crash safety.
+- Текущий шаг изменил только документацию; C# build, DB integration, RAGE staging и fault injection не запускались.
+
 ## Рабочая папка и Git
 
 - Каноническая RedAge-копия для продолжения: `/home/user/Gastronomy/RedAge-3.0` — отдельный верхнеуровневый каталог внутри рабочей ветки репозитория Gastronomy. Все RedAge-файлы из прежней отдельной папки скопированы сюда; прежняя рабочая папка сохранена.
