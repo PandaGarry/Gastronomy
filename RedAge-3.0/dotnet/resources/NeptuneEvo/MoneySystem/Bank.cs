@@ -483,18 +483,34 @@ namespace NeptuneEvo.MoneySystem
                 Log.Write($"Remove Exception: {e}");
             }
         }
+        private static Data CreateSnapshot(Data account)
+        {
+            if (account == null) return null;
+            return new Data
+            {
+                ID = account.ID,
+                Type = account.Type,
+                Holder = account.Holder,
+                Balance = account.Balance,
+                IsSave = account.IsSave,
+                IsSaveHolder = account.IsSaveHolder,
+                Revision = account.Revision,
+            };
+        }
+
         public static Data Get(string holder)
         {
             lock (AccountSync)
-                return Accounts.FirstOrDefault(A => A.Value.Holder == holder).Value;
+            {
+                var account = Accounts.FirstOrDefault(A => A.Value.Holder == holder).Value;
+                return CreateSnapshot(account);
+            }
         }
 
         public static Data Get(int bankId)
         {
-            if (Accounts.ContainsKey(bankId))
-                return Accounts[bankId];
-            
-            return null;
+            lock (AccountSync)
+                return Accounts.TryGetValue(bankId, out var account) ? CreateSnapshot(account) : null;
         }
 
         public static void changeHolder(string oldName, string newName)
