@@ -380,3 +380,5 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 
 - [ ] Business hourly tax: force bank adjustment failure and assert no business expense counter, Mafia fraction credit, City Hall credit or tax log is applied; on success assert each leg occurs exactly once.
 - [ ] Property/auction account initialization: missing bank or out-of-range computed balance must prevent ownership/auction-state changes; normal award sets exact initial balance and dirty revision.
+
+- [ ] **MONEY-053 ATM cash/house settlement:** force Bank.Change rejection after wallet debit on regular and house deposits; wallet refund must occur exactly once and no success sound/log/message may be emitted. Force Wallet.Change rejection after bank debit on regular withdrawal; bank compensation must occur exactly once. Force compensation failure and verify critical reconciliation log. Test DB crash/restart between legs, concurrent/replayed requests, missing account after UI open and wallet/bank INT boundaries. Business deposit remains MONEY-039. Requires disposable DB and RAGE staging.
