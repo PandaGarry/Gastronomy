@@ -484,3 +484,9 @@
 - **Новый finding MONEY-056 (2026-11-08):** account merger sums cash/property valuations in signed INT without checked overflow and creates destination bank/character/assets before durable merge checkpoint/account-slot completion. Failure/replay may orphan or duplicate imported records and cashback. Added to economy review, issues, test plan and changelog; no source changes.
 
 - **Новый finding MONEY-057 (2026-11-08):** offline table-task cash award is a SQL-side increment, but no stable reward receipt/affected-row/range handling or login publication gate exists. Replay can duplicate award; login/full-save can overwrite it; exception can leave partial cash/item award set. Added docs/tests; source unchanged.
+
+
+- **MONEY-058 (2026-11-08):** `Bank.Transfer` mutates both cached balances under one lock, but `Database.Models.Bank.Worker` saves each dirty account independently. A crash/DB failure between two updates can leave a one-sided transfer after restart. Add a DB transaction + stable transfer receipt; failure injection pending.
+- **MONEY-059 (2026-11-08):** `Bank.Change`/`Transfer` allow cached balances above signed SQL INT although `Bank.Save` rejects out-of-range snapshots and leaves them dirty. Enforce INT bounds before mutation or migrate the schema to BIGINT; boundary/restart tests pending.
+- Tax status correction: hourly house/business tax now calls `Bank.ApplyBalanceAdjustment`, so missing dirty-flag portion of MONEY-019/MONEY-040 is source-remediated. Durable tax ledger, house PROP-003 owner persistence and business MONEY-041 compensation/repo settlement remain open.
+- No source code changed in this pass; no C# build, DB fault injection or RAGE staging performed.
