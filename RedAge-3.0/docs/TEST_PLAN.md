@@ -612,3 +612,11 @@ Static source review only. These tests require a disposable MariaDB database and
 - [ ] Business repossession: test online owner with Wallet.Change accepted/rejected; test offline owner with DB failure before/after SELECT and UPDATE acknowledgement loss; race login before cash UPDATE; restart between payout scheduling, business bank reset and owner clear. Verify one refund and one repossession or a durable pending state.
 - [ ] House repossession: repeat using AddMoney fallback; verify NULL cash policy, lost-update and login race, and ensure owner clear cannot finalize before payout is confirmed/recoverable.
 - [ ] Retry/replay the same property/tax-period event and verify stable operation identity prevents duplicate cash, duplicate bank reset and duplicate ownership transition.
+
+
+### MONEY-002 — schema/engine verification follow-up
+
+- Checked-in `database/main.sql` declares `characters`, `money`, `accounts`, `refferals` and `lottery` as InnoDB. `characters.money` is nullable signed INT; `money.balance` is non-null signed INT.
+- On a disposable MariaDB 10.10-compatible instance: import the full dump, run `SHOW CREATE TABLE` and `information_schema.tables` checks for every table participating in a cash/referral/lottery settlement; assert InnoDB and expected nullability/types.
+- Verify actual deployment schema separately before rollout; repository dump is not proof of deployed engine/version.
+- Test transaction rollback across receipt + balance update, duplicate unique operation ID, concurrent updates and commit-acknowledgement loss. Current status: static dump inspection only; import/runtime DB tests not run.
