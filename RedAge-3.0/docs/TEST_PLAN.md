@@ -645,3 +645,20 @@ Static source review only. These tests require a disposable MariaDB database and
 - [ ] Проверить NULL, `Int32.MaxValue`, overflow и MariaDB SQL modes (strict/non-strict); проверить affectedRows=0 и DB failure.
 - [ ] Инжектировать сбой между cash award и item awards, затем restart/retry; восстановить только отсутствующие legs без дублирования.
 - Статус: статический review; tests не запускались, source patch отсутствует.
+
+
+### MONEY-058 — bank transfer durable atomicity
+
+- [ ] Inject DB failure/process termination after source account UPDATE but before destination UPDATE; restart and verify transfer is either fully applied or fully absent, never one-sided.
+- [ ] Repeat the same stable transfer operation ID after lost acknowledgement; assert one debit and one credit only.
+- [ ] Run concurrent transfers sharing source/destination accounts; assert no negative balance and total balance conservation.
+- [ ] Verify cache is not reported as durably successful before transaction commit; notification/log effects occur only after commit.
+- Статус: статический review; transaction/receipt не внедрены, tests не запускались.
+
+### MONEY-059 — bank signed INT boundary
+
+- [ ] Credit and transfer destination to exactly `Int32.MaxValue`; operation must persist and reload exactly.
+- [ ] Attempt `Int32.MaxValue + 1` via Change and Transfer; reject before either cached balance changes or success side effects occur.
+- [ ] Inject Save retry/restart after boundary rejection; verify no permanently dirty unpersistable account.
+- [ ] If schema is migrated to BIGINT, verify ORM model, dump, migrations, all conversion sites and client formatting end-to-end.
+- Статус: статический review; tests не запускались.
