@@ -267,7 +267,7 @@ Finding нельзя закрывать только потому, что код
 
 ## 8. Текущие блокеры и необходимые ресурсы
 
-1. Изолированный build-agent с подходящей версией .NET SDK и достаточной RAM.
+1. Изолированный build-agent с подходящей версией .NET SDK и достаточной RAM. Текущий `NeptuneEvo.csproj` таргетирует `netcoreapp3.1`, а `NeptuneEvo.sln` включает gamemode и SDK projects, но не содержит test project; тестовый harness нужно добавить отдельно и согласовать с legacy target без необоснованного upgrade runtime.
 2. Полный разрешённый набор CEF/client assets и закреплённые package lockfiles.
 3. Disposable MySQL/MariaDB instance + возможность fault injection/backup/restore.
 4. Полноценный RAGE:MP test server, корректные resource binaries/assets и несколько тестовых клиентов.
