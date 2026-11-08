@@ -32,3 +32,12 @@ No cross-player source-account ID was found in this call path. ATM location/elig
 Решение: отдельно определить API contract: либо разделить mutation/persistence result и notification, чтобы клиентские уведомления не меняли исход финансовой операции; либо возвращать типизированный результат с однозначными состояниями NotApplied, AppliedPendingPersistence, Committed, Unknown. Перевод должен быть одной DB transaction/ledger operation с idempotency key; in-memory cache и уведомления обновлять только после commit или через outbox.
 
 Дополнительные regression/fault cases: искусственно вызвать исключение на Trigger.ClientEvent/BankNotify после mutation; проверить, что вызывающий код не делает повторный debit/refund; отказ debit до mutation; отказ credit; exception после debit до credit; partial DB persistence; повтор того же operation ID; concurrent confirmations. Эти проверки требуют тестового harness/RAGE staging и disposable DB; они не запускались.
+
+
+## Дополнительный риск: ConcurrentDictionary не защищает баланс счёта от гонок
+
+`Bank.Accounts` объявлен как ConcurrentDictionary, однако значения `Data` — изменяемые объекты с обычными полями `Balance`, `IsSave` и `IsSaveHolder`. В `Bank.Change` выполняются отдельные операции `bank.Balance + amount < 0` и `bank.Balance += amount` без per-account lock/atomic compare-and-swap. Потокобезопасность контейнера защищает операции с ключами/значениями словаря, но не делает составную проверку и изменение полей объекта атомарными.
+
+Параллельные withdrawals/transfer confirmations для одного счёта могут одновременно прочитать один баланс, оба пройти проверку, а затем перезаписать изменения друг друга или допустить итог ниже ожидаемого ограничения. Точный исход зависит от interleaving; runtime reproduction отсутствует. Дополнительно Bank.Transfer состоит из двух независимых вызовов Change, поэтому даже сериализация каждого отдельного изменения не обеспечит атомарность пары debit/credit.
+
+**Решение:** не ограничиваться lock вокруг одного метода без общей settlement-модели. Для runtime cache минимум единый per-account synchronization и единый lock-order для двух счетов; для корректности после restart — DB transaction с row locking/conditional debit, idempotency key и durable ledger/receipt. Cache должен обновляться из committed результата. Нужны тесты 2..100 параллельных withdrawals с балансом на границе, разнонаправленные transfers A→B/B→A, повтор confirmation, DB save concurrently with mutation и invariant: сумма денег между счетами сохраняется, баланс не уходит ниже нуля.
