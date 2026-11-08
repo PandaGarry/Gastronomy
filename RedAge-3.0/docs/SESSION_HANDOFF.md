@@ -11,7 +11,7 @@
 - Статус остаётся открытым до legacy build, concurrency/interleaving tests и disposable MariaDB fault injection. Очередь volatile; crash до flush всё ещё может потерять snapshot.
 - В `ECONOMY_REVIEW.md` зафиксирована архитектурная граница: фоновая запись outbox после in-memory mutation не crash-durable. Exactly-once требует stable operation ID, unique receipt и атомарного balance update в одной InnoDB transaction на исходном mutation boundary.
 - В `TEST_PLAN.md` добавлены offline direct-writer/login-save races, retry/replay, duplicate operation ID, transaction rollback, InnoDB и mixed legacy/new writer migration cases. `CHANGELOG.md` фиксирует этот шаг.
-- Следующий implementation slice: изучить LinqToDB 3.3 transaction/affected-row API и все cash writers, затем выбрать минимальный единый coordinator contract. Не добавлять durable outbox поверх существующего async snapshot worker и не объявлять crash safety.
+- LinqToDB API reconnaissance завершён: pinned `linq2db.MySql` 3.3.0 и `ServerBD : DataConnection` подтверждают async begin/commit/rollback API; `BeginTransactionAsync` в этой версии откатывает уже присоединённую транзакцию перед созданием новой. Следующий slice: проверить реальные DDL/engine и все cash writers, затем определить единый coordinator contract. Не добавлять durable outbox поверх существующего async snapshot worker и не объявлять crash safety.
 - Текущий шаг изменил только документацию; C# build, DB integration, RAGE staging и fault injection не запускались.
 
 ## Рабочая папка и Git
