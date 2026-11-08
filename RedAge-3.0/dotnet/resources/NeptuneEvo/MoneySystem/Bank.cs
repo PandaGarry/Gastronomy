@@ -31,6 +31,8 @@ namespace NeptuneEvo.MoneySystem
         private static Random Rnd = new Random();
 
         public static ConcurrentDictionary<int, Data> Accounts = new ConcurrentDictionary<int, Data>();
+        // Protects compound balance checks and mutations across accounts.
+        private static readonly object AccountSync = new object();
 
         public enum BankNotifyType
         {
@@ -78,45 +80,69 @@ namespace NeptuneEvo.MoneySystem
         #region Changing account balance
         public static bool Change(int bankId, long amount, bool notify = true)
         {
+            Data bank;
+            long newBalance;
             try
             {
-                if (!Accounts.ContainsKey(bankId)) 
-                    return false;
-                
-                var bank = Accounts[bankId];
-                if (bank.Balance + amount < 0)
-                    return false;
-                
-                if (amount < 0 && Admin.IsServerStoping)
-                    return false;
-                
-                bank.Balance += amount;
+                lock (AccountSync)
+                {
+                    if (!Accounts.TryGetValue(bankId, out bank))
+                        return false;
 
-                if (bank.Type == 1 && amount >= 10000)
-                    bank.IsSave = true;
-                else if (bank.Type != 1)
-                    bank.IsSave = true;
+                    if (amount < 0 && Admin.IsServerStoping)
+                        return false;
 
+                    try
+                    {
+                        newBalance = checked(bank.Balance + amount);
+                    }
+                    catch (OverflowException)
+                    {
+                        Log.Write($"Change rejected due to balance overflow [{bankId}:{bank.Balance}+{amount}]", nLog.Type.Warn);
+                        return false;
+                    }
+
+                    if (newBalance < 0)
+                        return false;
+
+                    bank.Balance = newBalance;
+                    if (bank.Type == 1 && amount >= 10000)
+                        bank.IsSave = true;
+                    else if (bank.Type != 1)
+                        bank.IsSave = true;
+                }
+
+                // Notifications are deliberately outside the mutation boundary. A UI failure
+                // must not report an already-applied balance change as rejected.
                 if (bank.Type == 1)
                 {
-                    var target = (ExtPlayer) NAPI.Player.GetPlayerFromName(bank.Holder);
-                    if (target != null)
+                    try
                     {
-                        if (notify)
+                        var target = (ExtPlayer) NAPI.Player.GetPlayerFromName(bank.Holder);
+                        if (target != null)
                         {
-                            if (amount > 0) BankNotify(target, BankNotifyType.PayIn, amount.ToString());
-                            else BankNotify(target, BankNotifyType.PayOut, amount.ToString());
+                            if (notify)
+                            {
+                                if (amount > 0) BankNotify(target, BankNotifyType.PayIn, amount.ToString());
+                                else if (amount < 0) BankNotify(target, BankNotifyType.PayOut, amount.ToString());
+                            }
+                            Trigger.ClientEvent(target, "client.charStore.BankMoney", newBalance);
                         }
-                        Trigger.ClientEvent(target, "client.charStore.BankMoney", bank.Balance);
+                        else
+                        {
+                            lock (AccountSync) bank.IsSave = true;
+                        }
                     }
-                    else
-                        bank.IsSave = true;
+                    catch (Exception e)
+                    {
+                        Log.Write($"Change notification Exception: {e}");
+                    }
                 }
                 return true;
             }
             catch (Exception e)
             {
-                Log.Write($"Change Exception: {e.ToString()}");
+                Log.Write($"Change Exception: {e}");
                 return false;
             }
         }
@@ -124,38 +150,92 @@ namespace NeptuneEvo.MoneySystem
         #region Transfer money from 1-Acc to 2-Acc
         public static bool Transfer(int firstAccID, int lastAccID, long amount)
         {
+            Data firstAcc;
+            Data lastAcc;
+            long firstBalance;
+            long lastBalance;
             try
             {
-                if (firstAccID == 0 || lastAccID == 0)
+                if (firstAccID <= 0 || lastAccID <= 0 || firstAccID == lastAccID || amount <= 0)
                 {
-                    Log.Write($"Account ID error [{firstAccID}->{lastAccID}]", nLog.Type.Error);
+                    Log.Write($"Transfer rejected: invalid account/amount [{firstAccID}->{lastAccID}:{amount}]", nLog.Type.Warn);
                     return false;
                 }
-                Data firstAcc = Accounts[firstAccID];
-                if (!Accounts.ContainsKey(lastAccID))
+
+                // Validate and mutate both cached balances as one critical section. Do not call
+                // Change twice: a transfer is one settlement, not two independent operations.
+                lock (AccountSync)
+                {
+                    if (!Accounts.TryGetValue(firstAccID, out firstAcc) ||
+                        !Accounts.TryGetValue(lastAccID, out lastAcc))
+                    {
+                        Log.Write($"Transfer rejected: account missing [{firstAccID}->{lastAccID}:{amount}]", nLog.Type.Warn);
+                        return false;
+                    }
+
+                    if (Admin.IsServerStoping || firstAcc.Balance < amount)
+                        return false;
+
+                    try
+                    {
+                        firstBalance = checked(firstAcc.Balance - amount);
+                        lastBalance = checked(lastAcc.Balance + amount);
+                    }
+                    catch (OverflowException)
+                    {
+                        Log.Write($"Transfer rejected: balance overflow [{firstAccID}->{lastAccID}:{amount}]", nLog.Type.Warn);
+                        return false;
+                    }
+
+                    firstAcc.Balance = firstBalance;
+                    lastAcc.Balance = lastBalance;
+                    // Persist both sides; small personal-account transfers must not remain cache-only.
+                    firstAcc.IsSave = true;
+                    lastAcc.IsSave = true;
+                }
+
+                // Notifications/logging are post-mutation side effects and cannot turn a completed
+                // in-memory transfer into a reported rejection.
+                try
                 {
                     if (firstAcc.Type == 1)
-                        BankNotify((ExtPlayer) NAPI.Player.GetPlayerFromName(firstAcc.Holder), BankNotifyType.InputError, "Такого счета не существует!");
-                    Log.Write($"Transfer with error. Account does not exist! [{firstAccID.ToString()}->{lastAccID.ToString()}:{amount.ToString()}]", nLog.Type.Warn);
-                    return false;
+                    {
+                        var sourcePlayer = (ExtPlayer) NAPI.Player.GetPlayerFromName(firstAcc.Holder);
+                        if (sourcePlayer != null)
+                        {
+                            BankNotify(sourcePlayer, BankNotifyType.PayOut, (-amount).ToString());
+                            Trigger.ClientEvent(sourcePlayer, "client.charStore.BankMoney", firstBalance);
+                        }
+                    }
+                    if (lastAcc.Type == 1)
+                    {
+                        var destinationPlayer = (ExtPlayer) NAPI.Player.GetPlayerFromName(lastAcc.Holder);
+                        if (destinationPlayer != null)
+                        {
+                            BankNotify(destinationPlayer, BankNotifyType.PayIn, amount.ToString());
+                            Trigger.ClientEvent(destinationPlayer, "client.charStore.BankMoney", lastBalance);
+                            destinationPlayer.Eval($"mp.game.audio.playSoundFrontend(-1, \"LOCAL_PLYR_CASH_COUNTER_COMPLETE\", \"DLC_HEISTS_GENERAL_FRONTEND_SOUNDS\", true);");
+                        }
+                    }
                 }
-                if (!Change(firstAccID, -amount))
+                catch (Exception e)
                 {
-                    if (firstAcc.Type == 1)
-                        BankNotify((ExtPlayer) NAPI.Player.GetPlayerFromName(firstAcc.Holder), BankNotifyType.PayError, "Недостаточно средств!");
-                    Log.Write($"Transfer with error. Insufficient funds! [{firstAccID.ToString()}->{lastAccID.ToString()}:{amount.ToString()}]", nLog.Type.Warn);
-                    return false;
+                    Log.Write($"Transfer notification Exception: {e}");
                 }
-                Change(lastAccID, amount);
-                ExtPlayer target = (ExtPlayer) NAPI.Player.GetPlayerFromName(Accounts[lastAccID].Holder);
-                if (target != null) target.Eval($"mp.game.audio.playSoundFrontend(-1, \"LOCAL_PLYR_CASH_COUNTER_COMPLETE\", \"DLC_HEISTS_GENERAL_FRONTEND_SOUNDS\", true);");
-                
-                GameLog.Money($"bank({firstAccID})", $"bank({lastAccID})", amount, "bankTransfer");
+
+                try
+                {
+                    GameLog.Money($"bank({firstAccID})", $"bank({lastAccID})", amount, "bankTransfer");
+                }
+                catch (Exception e)
+                {
+                    Log.Write($"Transfer log Exception: {e}");
+                }
                 return true;
             }
             catch (Exception e)
             {
-                Log.Write($"Transfer Exception: {e.ToString()}");
+                Log.Write($"Transfer Exception: {e}");
                 return false;
             }
         }
@@ -744,11 +824,30 @@ namespace NeptuneEvo.MoneySystem
             {
                 var sessionData = player.GetSessionData();
                 if (sessionData == null) return;
-                if (sessionData.CurrentBankTransferSumAccBankInfo == 0 || sessionData.CurrentBankTransferBankInfo == 0 || sessionData.CurrentBankTransferSum <= 0) return;
-                Bank.Transfer(sessionData.CurrentBankTransferSumAccBankInfo, sessionData.CurrentBankTransferBankInfo, sessionData.CurrentBankTransferSum);
-                
-                Bank.Data targetAcc = Bank.Accounts[sessionData.CurrentBankTransferBankInfo];
-                if (!Bank.Accounts.ContainsKey(sessionData.CurrentBankTransferBankInfo)) return;
+
+                // Consume the pending confirmation before any transfer work. Replayed generic
+                // dialog callbacks then have no reusable transfer tuple.
+                int sourceAccountId = sessionData.CurrentBankTransferSumAccBankInfo;
+                int destinationAccountId = sessionData.CurrentBankTransferBankInfo;
+                long transferAmount = sessionData.CurrentBankTransferSum;
+                sessionData.CurrentBankTransferSumAccBankInfo = 0;
+                sessionData.CurrentBankTransferBankInfo = 0;
+                sessionData.CurrentBankTransferSum = 0;
+
+                var characterData = player.GetCharacterData();
+                if (characterData == null || sourceAccountId <= 0 ||
+                    sourceAccountId != characterData.Bank || destinationAccountId <= 0 || transferAmount <= 0)
+                    return;
+
+                if (!Bank.Transfer(sourceAccountId, destinationAccountId, transferAmount))
+                {
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter,
+                        LangFunc.GetText(LangType.Ru, DataName.CanNotTransact), 3000);
+                    return;
+                }
+
+                if (!Bank.Accounts.ContainsKey(destinationAccountId)) return;
+                Bank.Data targetAcc = Bank.Accounts[destinationAccountId];
                 
                 // ExtPlayer target = (ExtPlayer) NAPI.Player.GetPlayerFromName(targetAcc.Holder);
                 // if (target.IsCharacterData())
