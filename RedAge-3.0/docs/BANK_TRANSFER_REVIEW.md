@@ -111,3 +111,24 @@ A further persistence gap was fixed in source:
 - [ ] `Bank.Get(int)` and `Bank.Get(string)` return consistent snapshots while concurrent transfer/holder mutation occurs.
 - [ ] Mutating a returned snapshot does not mutate the live account or bypass dirty/revision tracking.
 - [ ] Audit direct `Bank.Accounts[id]` consumers for writes to Balance/Holder/IsSave/Revision outside AccountSync.
+
+
+## 2026-11-08 follow-up — direct bank balance writes routed through synchronized API
+
+A source audit found legacy code bypassing `AccountSync` and dirty revision tracking by mutating `Bank.Data.Balance` directly. Added `Bank.SetBalance` for bounded non-negative absolute balance replacement and `Bank.ApplyBalanceAdjustment` for checked adjustments that preserve the existing temporary-negative-balance property-tax/repossess flow.
+
+Updated call sites: business purchase initial balance (`Core/Businesses.cs`); house purchase initial balance (`Houses/HouseManager.cs`); auction house/business ownership balance initialization; hourly business and house tax deductions and zeroing after repossession (`Main.cs`). Each successful operation now changes balance under `AccountSync`, increments `Revision`, and sets `IsSave`. Tax adjustments preserve the legacy negative-balance check; they are not silently converted to normal `Bank.Change` semantics, which reject overdrafts.
+
+**Limits:** these remain cache mutations with asynchronous DB persistence, not a durable transaction joining property ownership, tax/faction credit, owner refund and bank balance. Property acquisition ordering between buyer debit, owner assignment and bank initialization remains open. The mutable `Bank.Data` escape and any remaining direct writes stay open until all callers are audited.
+
+**Validation:** source-level patch only. No build, MySQL failure injection, concurrent tax/transfer test, auction staging or property purchase staging has run.
+
+### Regression cases
+- [ ] business/house purchase initializes and persists the expected bank balance;
+- [ ] auction house/business award initializes the expected balance;
+- [ ] hourly business/house tax reduces balance once and credits city tax once;
+- [ ] negative post-tax balance follows repossession, then resets bank balance to zero;
+- [ ] concurrent transfer/withdrawal during tax does not lose either mutation;
+- [ ] invalid/missing bank ID leaves related side effects unapplied or reconciled;
+- [ ] DB failure during save retains dirty state and eventually persists latest revision;
+- [ ] search all call sites for direct writes to bank Balance, IsSave and Revision.
