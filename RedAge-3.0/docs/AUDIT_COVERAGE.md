@@ -111,3 +111,10 @@ Static trace of ItemsUse → LoadOtherItemsData → GetLocationName/GetItemData/
 - 2026-11-08: patched `Core.DrivingSchool.startDrivingCourse` across six active license cases; failed wallet debit now aborts before license/quest/faction/log/success effects. Added MONEY-050; build and runtime validation pending.
 - 2026-11-08: patched `Events.Metro.OnBuyTicket` for long price arithmetic and checked wallet debit before success effects; added MONEY-049. Runtime/build validation pending.
 - 2026-11-08: reviewed `ConfirmTrade` and tent `ItemBuy` wallet/item settlement paths. Added MONEY-048 in `PLAYER_TRADE_REVIEW.md`; static only, runtime/fault-injection pending.
+
+
+### Street race finish authorization — 2026-11-08
+
+- Reviewed client colshape trigger in `src_client/vehicle/race_system.js` and server handler `Events/StreetRace.StreetRaceFinished`.
+- Added server-side active-race and 10m finish-position checks; tracked as MONEY-052.
+- Static source review only. Waypoint input validation, payout durability, abort payout, replay/concurrency and RAGE staging remain open.
