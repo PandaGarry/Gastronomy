@@ -199,3 +199,6 @@
 
 
 > **MONEY-002 supplemental evidence (2026-11-08):** `Character.Save.Repository.AddMoney` performs an application-side SELECT/read-modify-absolute-UPDATE without transaction, row lock or per-UUID coordinator lock; concurrent calls can lose increments. It does not enforce offline-only status or synchronize the online character cache/full-save path. No source fix is applied until the online/offline handoff and idempotent retry contract are defined. See `ECONOMY_REVIEW.md` and `TEST_PLAN.md`.
+
+
+> **MONEY-002 supplemental inventory (2026-11-08):** additional bypasses of the wallet coordinator are offline auction refund, offline referral-owner reward and admin offline grant. Auction/referral use read-modify-absolute-write; admin offline grant has a check-then-async-write login race. Account merger is a separate import writer requiring idempotent migration semantics. Generated mapping confirms nullable signed int(11) for characters.money, but not its storage engine. See ECONOMY_REVIEW.md and TEST_PLAN.md.
