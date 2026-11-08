@@ -260,3 +260,10 @@
 - Traced the pet-shop client event and server petshopBuy handler. It trusts any existing TempBizID, does not validate Type==14, active location/session or pet name, teleports before house eligibility checks and leaves the intent reusable after success.
 - Added PET-001 and PETSHOP_REMOTE_REVIEW.md; expanded MONEY-045 with stale pre-clamp tfuel (stock quantity, price and applied fuel can diverge). Updated issue register, test plan, checklist, coverage, roadmap, index and handoff.
 - Static-only. No source patch, build, RAGE/CEF runtime or DB fault injection was performed.
+
+
+## 2026-11-08 — VEH-010 LS Customs tuning session
+
+- Traced personal and organization tuning entry/exit. Organization exit eventType=1 does not reset CharacterData.TuningShop; the personal server.custom.buy remote trusts that value without active Type==12/location/dimension intent checks. Character position resolution also reads non--1 TuningShop.
+- Registered VEH-010, created TUNING_REMOTE_REVIEW.md and expanded BUSINESS_RETAIL_REVIEW.md / STOCK-002 scope to include LS Customs stock reservation and customization settlement ordering.
+- Updated issue register, checklist, test plan, coverage, roadmap, index and handoff. Static-only; no source patch/build/RAGE/DB tests.
