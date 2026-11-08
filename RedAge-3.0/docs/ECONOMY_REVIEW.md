@@ -507,3 +507,43 @@ This pass re-read the active-branch source at commit 1979139ea0f4f8fd6cb50212f90
 **Inventory result:** the active cash column has more than one persistence owner. The existing MONEY-002 worker/full-save coordination is only an interim compatibility layer; it does not cover direct writers, merger import, or login publication. No source change was made in this inventory pass because introducing a partial SQL increment without the shared login gate and receipt contract would leave a known race and replay gap.
 
 **Required migration sequence:** (1) finalize receipt key and typed outcomes; (2) implement one ServerBD transaction owner for receipt + bounded cash delta; (3) gate login read through cache publication; (4) remove cash from generic full-save UPDATE and retire worker snapshots; (5) migrate AddMoney, auction, referral, repossession, admin and offline task awards; (6) handle merger as a separate idempotent import; (7) migrate settlement-critical online Wallet callers; (8) prove with duplicate, concurrency, commit-acknowledgement-loss, restart and mixed-version tests.
+
+
+## MONEY-002 — durable receipt schema/API candidate (design only, 2026-11-08)
+
+The source inventory is complete enough to define a first schema candidate, but not to deploy it. The checked-in SQL deliverables are full database dumps; no established versioned migration runner was identified in the reviewed project structure. Do not silently append a new table to a seed dump and assume existing servers will apply it. The migration delivery mechanism, backup/rollback and deployed schema drift must be agreed before DDL rollout.
+
+**Candidate table (not an executable migration):**
+
+```sql
+CREATE TABLE IF NOT EXISTS character_cash_operations (
+    operation_id   VARCHAR(96) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    character_uuid INT(11) NOT NULL,
+    operation_type VARCHAR(48) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    delta          BIGINT NOT NULL,
+    balance_after  INT(11) NOT NULL,
+    created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (operation_id),
+    KEY ix_cash_ops_character_created (character_uuid, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
+Design notes:
+- operation_id is globally unique and stable across retries. Reuse with a different UUID/type/delta is an idempotency conflict, not a second operation.
+- No foreign key is proposed: receipts should remain available for replay/reconciliation even if a character row is later removed or merged.
+- delta is BIGINT to preserve validated arithmetic; balance_after remains signed INT because the current characters.money schema is signed INT. No BIGINT cash-column migration is implied.
+- A committed receipt means the cash delta committed in the same transaction. No externally visible Pending state is needed. Keep receipts for at least the maximum replay/recovery horizon; deleting them without an equivalent durable archive reopens duplicate payout risk.
+- The table is a cash-operation receipt, not a complete domain ledger for bank balances, assets, items, business ownership or referrals. Multi-entity workflows need a domain receipt/outbox or a larger transaction contract.
+
+**Candidate transaction protocol:**
+1. Validate operation ID (nonblank, <=96 ASCII chars), UUID, operation type and nonzero delta; reject values outside the accepted signed-INT delta range before opening the transaction.
+2. Acquire the shared per-UUID async gate. Login must acquire the same gate before its authoritative cash read and hold it until CharacterData is published.
+3. Open one ServerBD context; begin one explicit linq2db transaction on that same context. Insert the receipt first with a temporary balance_after value; the unique key serializes concurrent retries of the same operation ID.
+4. Apply one conditional SQL delta to characters.money, requiring the row to exist, money IS NOT NULL, current balance >= 0, and the resulting balance to remain in 0..Int32.MaxValue. Require exactly one affected row. On rejection, roll back the receipt and classify the reason from the row state inside the transaction.
+5. Read the resulting balance in the same transaction, update receipt.balance_after, then commit. Only after confirmed commit update the online CharacterData cache while still holding the UUID gate.
+6. If commit acknowledgement is lost, do not issue a new operation ID and do not guess whether the delta applied. Return/record an uncertain outcome; retry with the same ID. A duplicate receipt with matching payload returns the stored result; mismatched payload returns IdempotencyConflict.
+7. If commit succeeded but cache publication failed, DB remains authoritative. Do not report a rejected operation or reapply the delta; force/retry cache reconciliation under the same gate.
+
+**Typed outcomes required:** Applied, AlreadyApplied, RejectedInsufficientFunds, RejectedOutOfRange, RejectedInvalidStoredBalance, CharacterNotFound, IdempotencyConflict, and OutcomeUnknown/RetrySameOperationId. A bool return is insufficient for caller migration.
+
+**Open design gates:** exact SQL/LinqToDB expression and affected-row semantics on the pinned provider; transaction isolation/locking; behavior for legacy NULL cash; receipt retention/archival; operation-ID derivation for each caller; cache update behavior when the player disconnects after commit; deployment migration and rollback. No DDL was run, no source implementation was added, and no MariaDB transaction test was performed.
