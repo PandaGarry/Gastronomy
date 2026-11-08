@@ -693,3 +693,16 @@ Static source review only. These tests require a disposable MariaDB database and
 - [ ] Verify generic SaveSql and detached worker cannot overwrite a committed coordinator delta during rollout; after cutover assert neither path writes characters.money.
 - [ ] Verify character creation's initial cash INSERT is treated as initialization, while character load's DB-read-to-SetCharacterData publication interval is protected by the same per-UUID gate.
 - Status: static source revalidation only. No C# build, MariaDB transaction, concurrency, restart or RAGE staging test was run.
+
+
+### MONEY-002 — receipt transaction protocol (design-gate tests, 2026-11-08)
+
+- [ ] Duplicate the same operation_id concurrently: exactly one receipt and one cash delta; the other caller receives AlreadyApplied with the committed balance_after.
+- [ ] Reuse an operation_id with a different UUID, operation_type or delta: return IdempotencyConflict and do not mutate either balance.
+- [ ] Fail after receipt INSERT, after conditional cash UPDATE, after balance read, and before COMMIT: receipt and cash delta must roll back together.
+- [ ] Lose the connection/acknowledgement during COMMIT; retry the same operation_id after reconnect. Resolve to exactly one applied delta or a retryable unknown outcome, never a second delta under a new ID.
+- [ ] Test missing character, SQL NULL cash, negative legacy cash, insufficient funds, exact zero result, exact Int32.MaxValue result, overflow by one and delta extremes. Confirm typed outcome and unchanged state on rejection.
+- [ ] Pause login after cash SELECT and before SetCharacterData while an offline credit attempts the same UUID; assert the shared async gate prevents stale cache publication.
+- [ ] Disconnect after DB commit but before cache update; reconnect and assert DB-authoritative balance with no duplicate operation.
+- [ ] Verify receipt retention/archive policy preserves replay protection across the maximum supported retry horizon.
+- Status: protocol design only. No receipt DDL, code, MariaDB or runtime test exists yet.
