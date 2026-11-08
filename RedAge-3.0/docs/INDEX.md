@@ -95,3 +95,4 @@
 - [CHANGELOG](CHANGELOG.md) — история локальной подготовки и аудита.
 - [SESSION_HANDOFF](SESSION_HANDOFF.md) — перенос текущего статуса RedAge в новый чат и ограничения PR/Git.
 - [INITIAL_AUDIT](../INITIAL_AUDIT.md) — краткий исходный обзор.
+\n- [BUSINESS_OWNERSHIP_REVIEW](BUSINESS_OWNERSHIP_REVIEW.md) — government business acquisition and player-to-player business transfer settlement (`MONEY-043..044`); buyer debit/seller credit and BizIDs/owner consistency.\n
