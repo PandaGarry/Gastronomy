@@ -277,3 +277,8 @@
 
 - OpenWeaponStock validates InsideOrganizationID only at open. RemovePlayer clears it and exits the HQ without calling ItemsClose/OtherClose; generic inventory mutation remotes continue to rely on InventoryOtherLocationName. Added INV-016 and ORGANIZATION_STOCK_SESSION_REVIEW.md.
 - Static-only; no source patch/build/RAGE/DB test. Continue remaining furniture, warehouse and HeliCrash lifecycle checks; avoid duplicates with INV-003, INV-012..016 and VEH-012.
+
+## 2026-11-08 continuation — INV-017 furniture safe stale context
+
+- objectSelected validates safe object, 5m range, InsideHouseID and owner/roommate/burglary access before LoadOtherItemsData. HouseManager.RemovePlayer clears InsideHouseID and exits without ItemsClose/OtherClose; generic item remotes do not revalidate the house/object ACL. Added INV-017 / FURNITURE_SAFE_SESSION_REVIEW.md.
+- Static-only; no source patch/build/RAGE/DB test. Continue warehouse and HeliCrash lifecycle, then remaining vehicle/garage storage; avoid duplicates with INV-003, INV-012..017 and VEH-012.
