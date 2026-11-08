@@ -286,13 +286,10 @@ namespace NeptuneEvo.Database.Models
                         if (!isCurrent)
                             continue;
 
-                        if (isCurrent)
-                        {
-                            await db.Characters
-                                .Where(v => v.Uuid == uuid)
-                                .Set(v => v.Money, Convert.ToInt32(saveData[1]))
-                                .UpdateAsync();
-                        }
+                        await db.Characters
+                            .Where(v => v.Uuid == uuid)
+                            .Set(v => v.Money, Convert.ToInt32(saveData[1]))
+                            .UpdateAsync();
                     }
                     finally
                     {
