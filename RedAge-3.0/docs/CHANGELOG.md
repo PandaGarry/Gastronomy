@@ -592,3 +592,10 @@
 - Clarified that character creation's initial INSERT is initialization, while login's DB-read-to-cache-publication interval is a required serialization point.
 - Confirmed full SaveSql and detached worker remain interim absolute writers and must relinquish cash ownership after coordinator migration.
 - No source patch or runtime test in this pass; MONEY-002 remains open.
+
+
+## 2026-11-08 — MONEY-002 receipt schema/API design checkpoint
+
+- Defined a documentation-only candidate for a globally unique character cash operation receipt and same-transaction bounded cash delta.
+- Specified duplicate payload conflict, uncertain commit acknowledgement retry with the same operation ID, typed outcomes and login/cache publication gate.
+- No executable migration or source implementation was added. Migration delivery/rollback, pinned-provider SQL semantics and disposable MariaDB verification remain prerequisites.
