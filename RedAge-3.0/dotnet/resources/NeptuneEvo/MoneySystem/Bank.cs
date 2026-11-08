@@ -739,7 +739,14 @@ namespace NeptuneEvo.MoneySystem
                         {
                             if (Wallet.Change(player, -myamount))
                             {
-                                Bank.Change(characterData.Bank, +myamount);
+                                if (!Bank.Change(characterData.Bank, +myamount))
+                                {
+                                    if (!Wallet.Change(player, +myamount))
+                                        Bank.Log.Write($"ATM deposit compensation failed [player:{characterData.UUID}, bank:{characterData.Bank}, amount:{myamount}]", nLog.Type.Error);
+                                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.CanNotTransact), 3000);
+                                    return;
+                                }
+
                                 player.Eval($"mp.game.audio.playSoundFrontend(-1, \"Bus_Schedule_Pickup\", \"DLC_PRISON_BREAK_HEIST_SOUNDS\", true);");
                                 if (characterData.AdminLVL <= 7) GameLog.Money($"player({characterData.UUID})", $"bank({characterData.Bank})", myamount, $"atmIn");
                             }
@@ -754,8 +761,15 @@ namespace NeptuneEvo.MoneySystem
                         {
                             if (Bank.Change(characterData.Bank, -myamount))
                             {
+                                if (!Wallet.Change(player, +myamount))
+                                {
+                                    if (!Bank.Change(characterData.Bank, +myamount))
+                                        Bank.Log.Write($"ATM withdrawal compensation failed [player:{characterData.UUID}, bank:{characterData.Bank}, amount:{myamount}]", nLog.Type.Error);
+                                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.CanNotTransact), 3000);
+                                    return;
+                                }
+
                                 player.Eval($"mp.game.audio.playSoundFrontend(-1, \"Bus_Schedule_Pickup\", \"DLC_PRISON_BREAK_HEIST_SOUNDS\", true);");
-                                Wallet.Change(player, +myamount);
                                 if (characterData.AdminLVL <= 7) GameLog.Money($"bank({characterData.Bank})", $"player({characterData.UUID})", myamount, $"atmOut");
                             }
                         }
@@ -806,7 +820,14 @@ namespace NeptuneEvo.MoneySystem
                             Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.NoMoney), 3000);
                             return;
                         }
-                        Bank.Change(house.BankID, +myamount);
+                        if (!Bank.Change(house.BankID, +myamount))
+                        {
+                            if (!Wallet.Change(player, +myamount))
+                                Bank.Log.Write($"House deposit compensation failed [player:{characterData.UUID}, bank:{house.BankID}, amount:{myamount}]", nLog.Type.Error);
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.CanNotTransact), 3000);
+                            return;
+                        }
+
                         GameLog.Money($"player({characterData.UUID})", $"bank({house.BankID})", myamount, $"atmHouse");
                         //BattlePass.Repository.UpdateReward(player, 41);
                         //Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.SucTransact), 3000);
