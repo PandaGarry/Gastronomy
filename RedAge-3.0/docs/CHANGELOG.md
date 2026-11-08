@@ -420,3 +420,8 @@
 
 - `Fractions/Manager.cs` and `Organizations/Manager.cs`: check `Wallet.Change` before cash stock mutation for both `put_stock` and `take_stock`; success logs follow the guard.
 - Static assertions passed for all four cash paths. Durable transaction/receipt, replay/concurrency/restart behavior and STOCK-001 item paths remain open. No C# build, RAGE or MySQL tests.
+
+## 2026-11-08 — STOCK-001 organization and partial-grant revalidation
+
+- Expanded stock audit to `Organizations.Manager.inputStocks` and traced `AddNewItem`/`Remove` contracts. AddNewItem can return a slot after partial insertion; Remove returns void and catches failures internally. Existing item/cargo callers cannot verify exact quantity transfer.
+- No source patch applied to item/cargo paths pending exact-count API and rollback/reconciliation design. MONEY-035 cash branch guards remain separate. No C# build or runtime tests.
