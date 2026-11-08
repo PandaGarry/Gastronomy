@@ -517,3 +517,9 @@
 - This does not remove the read-modify-write race, coordinate with the online money worker, or provide durable idempotency/restart recovery. Static patch only; no C# build or DB test.
 
 - 2026-11-08: Повторно проверены `Wallet.Change`, `Character.Save.Repository.AddMoney`, referral cash reward и payday lottery payout. Зафиксированы lost-update/read-modify-write и online/offline cache handoff constraints; InnoDB для `characters` не подтверждён. Обновлён `ECONOMY_REVIEW.md`; source code/build/runtime tests не менялись/не запускались.
+
+
+## 2026-11-08 — MONEY-002 direct cash writer inventory expansion
+
+- Traced offline auction refund, offline referral-owner reward and admin offline grant paths in addition to AddMoney and lottery payout. Recorded read-modify-absolute-write lost-update risks and login/full-save handoff races; account merger is tracked as a separate migration/import writer.
+- Expanded MONEY-002 regression cases for concurrent offline credits, login races, reward partial failures, retry/idempotency and merger interruption. No source code changed; storage engine for `characters` remains unverified.
