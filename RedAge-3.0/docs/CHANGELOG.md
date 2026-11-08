@@ -477,3 +477,6 @@
 
 
 - 2026-11-08: MONEY-036 follow-up in `Players/Phone/Auction/Repository.cs`: offline auction refund fallback now widens balance addition to `long`, rejects null/negative/out-of-range DB INT balances and narrows only after validation. This prevents overflow in that direct SQL write but does not fix async refund acknowledgement/idempotency. Static only; build/DB/RAGE tests pending.
+
+
+- 2026-11-08: MONEY-002 worker hand-off hardening: mark detached UUID snapshots as in-flight at the same locked snapshot/clear boundary, so small wallet changes during the gap before SQL setup enqueue a newer revision rather than being lost when the old snapshot is skipped. Failed context/batch retry clears the marker and restores only a still-current version. Static only; direct SQL writers and durable outbox remain open.
