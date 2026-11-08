@@ -250,3 +250,10 @@
 - Found vehicleSelected branch 3 opens a vehicle container after one-time 5m/trunk-open check, then generic inventory move/stack/use handlers mutate `other` without rechecking vehicle ACL, proximity, dimension, door state or selected vehicle. ItemsUse can transfer an `other` item to character inventory.
 - Registered INV-012 and created VEHICLE_TRUNK_ACCESS_REVIEW.md. Open-trunk public access remains policy-dependent; no successful theft is claimed. Updated INVENTORY_REVIEW, ISSUES, TEST_PLAN, MASTER_CHECKLIST, AUDIT_COVERAGE, INDEX, ROADMAP, CHANGELOG and SESSION_HANDOFF.
 - Static-only; no source changes/build/RAGE/DB tests. Next: trace vehicle trunk close/session invalidation, storage ownership, and all other `LoadOtherItemsData` endpoints; avoid duplicating INV-003/INV-012.
+
+
+## 2026-11-08 continuation — VEH-012 vehicle trunk reservation cleanup
+
+- CEF `closeOther` clears the other pane and calls `client.inventory.OtherClose`; the client bridge invokes `server.gamemenu.inventory.otherclose`. `Repository.OtherClose` clears InventoryOtherLocationName but not SelectedVeh/BagInUse. Full ItemsClose and disconnect do release BagInUse, so the stale reservation can block another player until one of those paths runs.
+- Registered VEH-012 and created VEHICLE_TRUNK_LIFECYCLE_REVIEW.md. Separate from INV-012 (per-operation authorization); no source patch/build/runtime/DB test.
+- Next: trace all remaining LoadOtherItemsData endpoints and their container-specific open/close ACLs; then continue vehicle control/garage/storage lifecycle. Do not duplicate INV-003/INV-012/VEH-012.
