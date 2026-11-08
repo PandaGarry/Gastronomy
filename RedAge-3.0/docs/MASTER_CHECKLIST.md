@@ -52,7 +52,7 @@
 - [ ] MONEY-038 — Phone auction bid: reject nonpositive/out-of-policy bids; use checked `long` fee arithmetic so client `int` overflow can never turn a debit into a credit; test numeric boundaries, bank failures and replay/concurrency; see `AUCTION_REVIEW.md`.
 - [ ] MONEY-036 — Shared Wallet.Change: preserve long balance; remove int truncation and test every caller at numeric boundaries.
 - [ ] Review organization stock implementation against the same money/item settlement invariants.
-- [ ] MONEY-025/026 — business order arithmetic, dirty-save и sale replay.
+- [ ] MONEY-022/025/026 — business order dirty-save, unchecked cancel-refund result, quantity overflow and sale replay; include `JOB-004` Trucker payout settlement.
 - [ ] MONEY-003/004 — bank transfer replay и ATM policy/location.
 - [ ] MONEY-005, PAY-001..003 — payment receipts, durable idempotency и compensation.
 - [ ] MONEY-001/002/011/012 — money queue, online reward checkpoint, taxi mileage/fare.
