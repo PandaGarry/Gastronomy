@@ -2451,8 +2451,8 @@ namespace NeptuneEvo.Fractions
                             }
                             else if (item == "money")
                             {
+                                if (!MoneySystem.Wallet.Change(player, -amount)) return;
                                 fractionData.Money += amount;
-                                MoneySystem.Wallet.Change(player, -amount);
                                 GameLog.Money($"player({characterData.UUID})", $"frac({fractionData.Id})", amount, $"putStock");
                                 Fractions.Table.Logs.Repository.AddLogs(player, FractionLogsType.TakeMoney, LangFunc.GetText(LangType.Ru, DataName.TakenMoney, MoneySystem.Wallet.Format(amount)));
                                 Manager.sendFractionMessage(fractionData.Id, LangFunc.GetText(LangType.Ru, DataName.FGetMoney, player.Name, player.Value, MoneySystem.Wallet.Format(amount)), true);
@@ -2531,8 +2531,8 @@ namespace NeptuneEvo.Fractions
                             }
                             else if (item == "money")
                             {
+                                if (!MoneySystem.Wallet.Change(player, amount)) return;
                                 fractionData.Money -= amount;
-                                MoneySystem.Wallet.Change(player, amount);
                                 GameLog.Money($"frac({fractionData.Id})", $"player({characterData.UUID})", amount, $"takeStock");
                                 Fractions.Table.Logs.Repository.AddLogs(player, FractionLogsType.TakeMoney, LangFunc.GetText(LangType.Ru, DataName.TakeMoney, MoneySystem.Wallet.Format(amount)));
                                 Manager.sendFractionMessage(fractionData.Id, LangFunc.GetText(LangType.Ru, DataName.FTakenMoney, player.Name, player.Value, MoneySystem.Wallet.Format(amount)), true);
