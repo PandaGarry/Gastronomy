@@ -8199,13 +8199,16 @@ public static IReadOnlyDictionary<ClothesComponent, ItemId> ClothesComponentToIt
             InventoryItemData Item = GetItemData(player, ArrayName, Index);
 
             if (Item.ItemId == ItemId.Debug) return;
-            else if (Item.Price == 0) return;
-            else if (Item.Count < Value) return;
-            else if (isFreeSlots(player, Item.ItemId, Value) != 0) return;
-
+            if (Value < 0) return;
             if (Value == 0) Value = 1;
+            if (Item.Price <= 0 || Item.Count < Value) return;
+            if (isFreeSlots(player, Item.ItemId, Value) != 0) return;
 
-            int price = Item.Price * Value;
+            // Wallet.Change accepts Int32 amounts. Reject overflow before any
+            // wallet, seller-notification, BattlePass or inventory mutation.
+            long totalPrice = (long)Item.Price * Value;
+            if (totalPrice <= 0 || totalPrice > int.MaxValue) return;
+            int price = (int)totalPrice;
 
             string locationName = null;
 
@@ -8222,6 +8225,7 @@ public static IReadOnlyDictionary<ClothesComponent, ItemId> ClothesComponentToIt
                 var tentData = Inventory.Tent.Repository.TentsData[index];
 
                 var target = tentData.player;
+                if (target == null || !target.IsCharacterData()) return;
                 var targetCharacterData = target.GetCharacterData();
                 if (targetCharacterData == null) return;
 
