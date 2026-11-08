@@ -114,3 +114,5 @@
 - [ ] MONEY-047 — admin business deletion refund: verify online owner compensation or persist retryable refund receipt before final delete. See BUSINESS_OWNERSHIP_REVIEW.md.
 
 - [ ] PET-001 — pet-shop remote: require Type==14 active one-shot session, proximity/dimension and allowed pet enum; prevent stale TempBizID teleport/replay and validate wallet/stock settlement. See PETSHOP_REMOTE_REVIEW.md.
+
+- [ ] VEH-010 — LS Customs tuning: clear organization tuning state on every exit; require active one-shot Type==12 intent, vehicle identity and location for personal purchase remote; test stale TuningShop and disconnect position resolution. See TUNING_REMOTE_REVIEW.md.
