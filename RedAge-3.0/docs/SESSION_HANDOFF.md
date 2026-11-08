@@ -310,3 +310,13 @@
 40. Metro ticket settlement (`METRO_REVIEW.md`): added `MONEY-049`; widened client-supplied ticket-count arithmetic and require a successful wallet debit before log/success/dimension transition. Source patch is on branch; no build or RAGE failure test yet.
 38. Player cash/item trade and tent market (`PLAYER_TRADE_REVIEW.md`): added `MONEY-048`. `ConfirmTrade` moves items before both cash `Wallet.Change` results are checked (they are ignored); `ItemBuy` ignores buyer debit/seller credit and uses unchecked `Item.Price * Value` before item transfer/BattlePass progress. Source-level ordering confirmed; failure/race/overflow impact requires RAGE/MySQL staging. No source patch/build/runtime tests.
 37. Phone auction source patch (`AUCTION_REVIEW.md`): `Players/Phone/Auction/Repository.cs` now rejects nonpositive and expired/ended bids, uses widened `long` fee arithmetic, serializes `OnBet` / `End` on the auction object, skips the UUID-zero no-bid refund, and uses a null-safe player lookup so offline DB fallback can run. MONEY-023/024/038 remain open pending C# build, RAGE/DB boundary, failure, concurrency and restart tests; offline refund/payout still lacks a durable idempotent receipt. No runtime test claimed.
+
+
+## 2026-11-08 continuation — MONEY-052 StreetRace finish authorization
+
+- Re-inspected the full `StreetRaceFinished` remote and client colshape trigger.
+- Confirmed source-level authorization gap: server trusted the client-triggered finish remote without requiring `StreetRaceData.Status` and without checking server-side player distance to `StreetRaceData.Position`. A participant could invoke finish during a pending offer and receive the 90% pot payout before either stake was debited.
+- Patched `Events/StreetRace.cs`: finish now requires active race status and caller within 10 metres of the server-side finish point.
+- Added MONEY-052 to `ISSUES.md`, `STREET_RACE_REVIEW.md`, `MASTER_CHECKLIST.md`, `TEST_PLAN.md`, `CHANGELOG.md`.
+- Residual: client-supplied waypoint coordinates still need server-side validation; winner payout result/durability and `ClearData` payout are unresolved; no C# build, RAGE runtime, DB fault injection or concurrency tests.
+- Do not close MONEY-051/MONEY-052 pending the regression matrix and settlement design.
