@@ -1203,15 +1203,25 @@ namespace NeptuneEvo.Core
                         }
                         int money = (int)updatedMoney;
                         
+                        int affectedRows = await db.Characters
+                            .Where(c => c.Uuid == character.Uuid)
+                            .Set(c => c.Money, money)
+                            .UpdateAsync();
+
+                        // Do not report an offline grant as successful before the DB confirms
+                        // that the target row was updated. A zero-row result can mean the row
+                        // disappeared between the read and write (or the value was unchanged).
+                        if (affectedRows != 1)
+                        {
+                            Log.Write($"OffGiveMoney did not update exactly one character row (UUID: {character.Uuid}, affected: {affectedRows}).");
+                            Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось сохранить баланс игрока", 3000);
+                            return;
+                        }
+
                         GameLog.Money($"player({characterData.UUID})", $"player({character.Uuid})", amount, "admin");
                         GameLog.Admin($"{sessionData.Name}", $"offGiveMoney({amount})", $"{name}");
                         //Players.Phone.Messages.Repository.AddSystemMessage(target, (int)DefaultNumber.Bank, LangFunc.GetText(LangType.Ru, DataName.MoneyIncome, amount), DateTime.Now); //НЕ РАБОТАЕТ
                         Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, $"Вы установили {name} {money}$ (+{amount}$)", 3000);
-                        
-                        await db.Characters
-                            .Where(c => c.Uuid == character.Uuid)
-                            .Set(c => c.Money, money)
-                            .UpdateAsync();
                     }
                     catch (Exception e)
                     {
