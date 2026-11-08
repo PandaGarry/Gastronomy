@@ -136,15 +136,16 @@ The generic `Main.ClientEvent_inputCallback` branch for `put_stock`/`take_stock`
 The corresponding `Organizations.Manager.inputStocks` implementation repeats both settlement defects: organization money is decremented before an unchecked `Wallet.Change`, and organization stock counters are decremented before an unchecked `AddNewItem` result. The deposit paths also mutate organization stock before invoking the wallet/item removal helpers without verifying their outcomes. The same atomicity/idempotency remediation must cover organization stock; do not treat this as a separate duplicate finding.
 
 
-## MONEY-036 — Wallet.Change truncates long character balance to int
+## MONEY-036 — Wallet.Change and persisted money width need one explicit contract
 
-**Приоритет: критичный для аккаунтов с балансом выше Int32.MaxValue; type mismatch and lossy write statically confirmed.**
+**Приоритет: низкий / latent type-contract risk; a reachable balance above Int32.MaxValue is not established.**
 
-- `CharacterData.Money` is declared as `long`.
-- `MoneySystem.Wallet.Change` computes `int temp = (int)characterData.Money + amount`, checks `temp < 0`, then assigns `characterData.Money = temp`.
-- The explicit cast truncates a 64-bit balance to signed 32-bit before applying the delta. For balances outside Int32 range, the method can reject a legitimate operation or return true after replacing the stored long balance with an unrelated 32-bit value. Example: a balance of 4,294,967,296 cast to int becomes 0; adding 100 can store 100 and report success.
-- This is a shared wallet primitive; every caller inherits the defect, including faction/organization stock transfers (MONEY-035), rewards, trades and other economy systems. Whether a given mutation is persisted immediately depends on the call path/save workers; the in-memory corruption is directly implied by the code.
+- `CharacterData.Money` is declared as `long` (`Character/Models/CharacterData.cs`).
+- The generated `characters` DB model declares `money` as nullable `int(11)`. Character creation casts the configured initial balance to `int`; normal character save uses `Convert.ToInt32(characterData.Money)`; the money worker also writes `Convert.ToInt32(saveData[1])`.
+- `Wallet.Change` computes `int temp = (int)characterData.Money + amount` and stores that int back into the long property. The previous example using a balance of 4,294,967,296 demonstrates the cast behavior mathematically, but that balance is not shown to be loadable or persistable under the current schema. No normal code path producing a persisted balance above Int32.MaxValue was found in this bounded pass.
+- A positive credit at/near Int32.MaxValue can overflow the int addition and be rejected; this is relevant to settlement callers that ignore a false result (for example MONEY-035 and CAS-020), but it does not establish that Wallet.Change silently corrupts a valid DB-range balance.
+- Treat this as a latent schema/type-contract inconsistency until a reachable >int producer is identified. Do not prioritize it as a current critical exploit.
 
-**Remediation:** compute using `long` throughout, use `checked(characterData.Money + (long)amount)`, enforce a deliberate nonnegative maximum balance, and ensure persistence uses the same width. Review every `Wallet.Change` caller for ignored return values and ordering; do not silently clamp/truncate.
+**Remediation / decision:** choose one canonical contract. Either explicitly cap character cash at Int32.MaxValue and use checked arithmetic with clear rejection/compensation at the cap, or migrate the DB column, generated model, character create/save, money worker and wallet calculations together to BIGINT/long. Do not change only Wallet.Change.
 
-**Regression:** balances at `int.MaxValue - 1`, `int.MaxValue`, `int.MaxValue + 1`, `uint.MaxValue`, `uint.MaxValue + 1`, `long.MaxValue`; positive/negative deltas, overflow, save/reload, concurrent changes and callers that ignore false. Assert exact balance conservation.
+**Regression:** test Int32.MaxValue-1, Int32.MaxValue and credits/debits crossing the cap; verify no wrap, no false success and correct caller compensation. Test DB save/reload round-trip at the selected maximum. If migrating to BIGINT, test values above Int32.MaxValue through create/load/save and every money worker.
