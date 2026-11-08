@@ -176,3 +176,12 @@ The worker/full-save ordering now has a process-local coordination layer:
 - Worker and full-save writes are still not crash-durable; the queue and revisions are in-memory. No durable outbox, retry backoff or dead-letter policy exists.
 - **Other direct DB cash writers remain outside this coordinator:** `Character.Save.Repository.AddMoney`, `Players.Phone.Auction.Repository` offline refund, `Main.cs` referral reward and business-tax repossession, `Core.Admin.OffGiveMoney`, and `Accounts.Merger.Repository.MergerToOrganization`. These require a coordinated follow-up; do not mark MONEY-002 closed.
 - Static inspection only. Required tests include detach/SQL hand-off, full-save ordering, wallet mutation during save, save failure requeue, DB context failure, partial batch retry, reconnect and process restart. No C# build or MySQL fault injection has run.
+
+
+## MONEY-036 — offline direct cash writers range follow-up (2026-11-08)
+
+- `Character.Save.Repository.AddMoney` now widens the DB balance plus delta to `long`, rejects negative/corrupt current balance and rejects a result above `Int32.MaxValue` before narrowing.
+- `Core.Admin.OffGiveMoney` now computes in `long`, retains the existing floor-at-zero behavior, rejects above-max grants and only then casts to `int`.
+- `Main.CheckMyPromoCode` offline referral reward now widens the sum and rejects negative/out-of-range result before writing the signed INT column.
+- These are range guards only. They do **not** put these direct writers under the Money worker/full-save coordinator; read-modify-write lost-update races and offline→online transition races remain open. Business-tax repossession and Merger direct writes also need range/ordering review.
+- Static review only; test null DB balance, zero/negative reward, exact max, max+1, `int.MinValue` debit and concurrent pending queue/full save. No C# build or MySQL test.
