@@ -111,3 +111,5 @@ Across these families, ItemsMove, ItemsMoveStack and ItemsUse remain shared muta
 - Weapon and CarKey subcontainers: ItemsUse opens weapon_<parent SqlId> and CarKey_<keyring SqlId>. LoadOtherItemsData stores only the location string; it does not store a server-side parent-item intent. Generic mutations do not revalidate that the parent weapon/keyring still exists and remains owned by the player. Trace trade/drop/delete/replacement and close behavior before registering a separate finding.
 
 These remain audit TODOs, not confirmed vulnerabilities. Add owner-approved behavior and direct-remote regression tests before closing the container audit.
+
+- HeliCrash key clamp: InHeliCrash installs KeyClampData before GetHealth checks ArmyLockpick; generic keyClamp.end trusts client value and HeliCrash End can unlock on value 0 without proving a successful keyDown/reservation. This is a distinct high-severity remote bypass tracked as INV-018; see HELICRASH_KEYCLAMP_REVIEW.md.
