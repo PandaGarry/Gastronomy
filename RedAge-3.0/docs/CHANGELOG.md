@@ -289,6 +289,11 @@
 - Registered VEH-011 separately from MONEY-012/PROG-007; expanded TAXI_MILEAGE_REVIEW, issue register, checklist, regression plan, coverage, index, roadmap and handoff. No source code changed; no runtime/build/DB test.
 
 
+## 2026-11-08 — MONEY-051 Street race stake settlement
+
+- `StreetRace.Accept` previously marked a race active and started it without checking either participant's wallet debit result. Patched it to require both stake debits; if the second fails, the first is refunded and the race is cancelled. Compensation failure is logged for reconciliation.
+- Added MONEY-051 and a failure/concurrency regression matrix. Winner payout result, durable refund receipt and duplicate/concurrent finish semantics remain open; no build or RAGE tests have been run.
+
 ## 2026-11-08 — PERF-002 CEF production build defaults
 
 - CEF build scripts now explicitly set production mode through the already-installed `cross-env`; the dev script explicitly selects development.
