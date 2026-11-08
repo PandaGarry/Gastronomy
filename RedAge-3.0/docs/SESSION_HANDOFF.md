@@ -339,6 +339,6 @@
 - Remaining: process-local lock only; no durable transaction/idempotency ledger; crash between cache mutation and DB write can still leave stale/lost state; asynchronous save ordering is not crash-safe. Keep MONEY-003 open.
 - Validation: static source review only. No .NET SDK/MSBuild in current runtime; no build, MySQL fault injection, concurrency or RAGE staging test executed.
 
-- Follow-up: `GetBalance`, `Get(string)`, `Create` cache registration, `Remove` and `changeHolder` now use `AccountSync` so account lifecycle/read paths cannot interleave with locked transfers. `Get(int)` still exposes mutable `Data`; audit its callers before treating lock coverage as complete.
+- Follow-up: `GetBalance`, `Get(string)`, `Create` cache registration, `Remove` and `changeHolder` now use `AccountSync` so account lifecycle/read paths cannot interleave with locked transfers. `Get(int)`/`Get(string)` now return snapshots; public `Bank.Accounts` still exposes mutable values, so direct consumers need audit.
 
 - Bank persistence follow-up: every successful Bank.Change now marks the account dirty (including small personal-account changes); `GetDirtyAccountIds()` snapshots under AccountSync. `Database.Models.Bank` uses ConcurrentQueue for deletes and requeues failed deletes/DB batches. Queue remains memory-only; worker polls every 30s; crash recovery and write-volume profiling remain open.
