@@ -474,3 +474,6 @@
 - Patched `Character.Save.Repository.SaveSql` to reject invalid cash balance before related save side effects and `Convert.ToInt32`.
 - Confirmed `CharacterData.Money` is `long`; generated `characters.money` model is `int?` (`int(11)`). No schema migration performed.
 - Added boundary, UI, round-trip and concurrent worker/full-save tests. Static review only; no C# build, MySQL or RAGE tests.
+
+
+- 2026-11-08: MONEY-036 follow-up in `Players/Phone/Auction/Repository.cs`: offline auction refund fallback now widens balance addition to `long`, rejects null/negative/out-of-range DB INT balances and narrows only after validation. This prevents overflow in that direct SQL write but does not fix async refund acknowledgement/idempotency. Static only; build/DB/RAGE tests pending.
