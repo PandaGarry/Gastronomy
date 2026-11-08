@@ -2548,6 +2548,11 @@ namespace NeptuneEvo
                         case "BUY_CAR":
                             {
                                 ExtPlayer seller = sessionData.SellItemData.Seller;
+                                if (seller == null || !seller.IsCharacterData())
+                                {
+                                    sessionData.SellItemData = new SellItemData();
+                                    return;
+                                }
                                 var sellerSessionData = seller.GetSessionData();
                                 var sellerCharacterData = seller.GetCharacterData();
                                 if (sellerSessionData == null || sellerCharacterData == null)
@@ -2557,6 +2562,12 @@ namespace NeptuneEvo
                                 }
                                 string number = sessionData.SellItemData.Number;
                                 int price = sessionData.SellItemData.Price;
+                                if (price <= 0)
+                                {
+                                    sellerSessionData.SellItemData = new SellItemData();
+                                    sessionData.SellItemData = new SellItemData();
+                                    return;
+                                }
                                 if (player.Position.DistanceTo(seller.Position) > 3)
                                 {
                                     sellerSessionData.SellItemData = new SellItemData();
@@ -2585,8 +2596,17 @@ namespace NeptuneEvo
                                     Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.NoMoney), 3000);
                                     break;
                                 }
+                                if (!MoneySystem.Wallet.Change(seller, price))
+                                {
+                                    if (!MoneySystem.Wallet.Change(player, price))
+                                        Log.Write($"CRITICAL: BUY_CAR buyer refund failed after seller credit rejection. Buyer UUID: {characterData.UUID}, Seller UUID: {sellerCharacterData.UUID}, Vehicle: {number}, Amount: {price}");
+
+                                    sellerSessionData.SellItemData = new SellItemData();
+                                    sessionData.SellItemData = new SellItemData();
+                                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось завершить выплату продавцу. Сделка отменена.", 3000);
+                                    return;
+                                }
                                 vehicleData.Holder = player.Name;
-                                MoneySystem.Wallet.Change(seller, price);
                                 GameLog.Money($"player({characterData.UUID})", $"player({sellerCharacterData.UUID})", price, $"buyCar({vehicleData.Model}, {number})");
                                 House sellerhouse = HouseManager.GetHouse(seller);
                                 var sellerGarage = sellerhouse?.GetGarageData();
