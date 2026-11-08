@@ -382,3 +382,10 @@
 - Patched `Wallet.Change` to use checked `long` arithmetic and reject balances outside `0..Int32.MaxValue` before mutation. Patched full character `SaveSql` to validate the same range before other save work and before narrowing conversion. `Money.AddMoneyUpdate` already rejects invalid snapshots.
 - Updated MONEY-036 issue, master checklist, master plan, changelog and regression tests.
 - Static checks only; no compiler/DB/RAGE validation. New important open question: stale absolute-value batch in `Database.Models.Money` may race full `Character.SaveSql` and overwrite a newer balance; design/verify per-character serialization before closing MONEY-002.
+
+
+## 2026-11-08 — MONEY-002 detached batch hand-off
+
+- Reviewed the existing per-UUID stripe semaphore/revision coordinator (`Money.ExecuteCharacterSave`, `Wallet.Change`, worker). Found a narrow gap: worker detached/cleared queue rows before marking them active; a small Wallet.Change in that interval advanced the version but did not enqueue, so the detached row was skipped and no replacement remained.
+- Patched worker snapshot section to mark all detached UUIDs `ActiveMoneyWrites` under `QueueLock` before clearing. Failed batch/context retry removes markers and restores only current revisions. Removed duplicate marker statements after verifying the final source.
+- Added deterministic interleaving cases and documented direct SQL cash writers that still bypass the coordinator. No build/DB/RAGE test.
