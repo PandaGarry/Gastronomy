@@ -103,3 +103,5 @@
 - `BUSINESS_FUEL_REVIEW.md` also tracks `VEH-009`: petrol remote lacks active fuel-station/location context and can reuse a stale/non-fuel BizID.
 
 - [MECHANIC_SERVICE_REVIEW](MECHANIC_SERVICE_REVIEW.md) — AutoMechanic repair/fuel offer settlement, two-sided wallet results, work-vehicle fuel reserve and replay/restart tests (`JOB-005`).
+
+- `BUSINESS_OWNERSHIP_REVIEW.md` also covers admin deletion consistency (`BUG-002`) and owner refund settlement (`MONEY-047`).
