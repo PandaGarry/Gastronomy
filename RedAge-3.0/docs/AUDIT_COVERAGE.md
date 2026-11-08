@@ -98,3 +98,8 @@ objectSelected validates house/object/range/access at open, but HouseManager.Rem
 ### HeliCrash key-clamp authorization — 2026-11-08
 
 InHeliCrash installs KeyClampData before GetHealth performs the ArmyLockpick check. The generic keyClamp.end remote accepts client value and invokes EndCB without requiring a successful keyDown; HeliCrash End sets health from that value and can perform an unlock roll on zero without verifying the active hacker. Failed attempts leave KeyClampData reusable. Added INV-018 and HELICRASH_KEYCLAMP_REVIEW.md. Static-only; staging reproduction required.
+
+
+### Weapon/key-ring parent subcontainer binding — 2026-11-08
+
+Static trace of ItemsUse → LoadOtherItemsData → GetLocationName/GetItemData/SetItemData → shared move/stack/use remotes confirms that the session stores only the parent-derived location string and generic mutations do not revalidate current parent ownership. Registered INV-019; created WEAPON_KEYRING_SUBCONTAINER_REVIEW.md and staging matrix. Practical cross-owner extraction is not runtime-confirmed. Warehouse location policy and HeliCrash range lifecycle remain staging/policy questions.
