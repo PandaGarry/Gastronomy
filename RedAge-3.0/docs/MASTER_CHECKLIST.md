@@ -189,3 +189,6 @@
 - [ ] Remove Money from generic Character.Save.Repository.SaveSql and retire detached worker absolute snapshots only after all writers have migrated.
 - [ ] Keep character creation's initial cash INSERT as initialization and test it separately from post-creation ledger operations.
 - Evidence and regression matrix: ECONOMY_REVIEW.md, TEST_PLAN.md. Static inventory only; all DB/build/RAGE tests remain pending.
+
+
+- [ ] Before migrating any MONEY-002 caller, define and persist its stable operation identity: lottery draw/ticket/winner, auction bid event, referral row/reward leg, repossession generation, admin grant request, table-task reward generation, merger source/destination mapping. Generic AddMoney/Wallet APIs must receive the identity from the domain caller. See ECONOMY_REVIEW.md.
