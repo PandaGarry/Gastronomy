@@ -180,8 +180,8 @@ namespace NeptuneEvo.Core
                 {
                     case 0:
                         if (Chars.UpdateData.CanIChange(player, Main.LicPrices[0], true) != 255) return;
+                        if (!MoneySystem.Wallet.Change(player, -Main.LicPrices[0])) return;
                         characterData.Licenses[0] = true;
-                        MoneySystem.Wallet.Change(player, -Main.LicPrices[0]);
                         //fractionData.Money += Main.LicPrices[3];
                         //GameLog.Money($"player({characterData.UUID})", $"frac(6)", Main.LicPrices[3], $"buyLic");
                         Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.SucBuyMotoLic), 3000);
@@ -189,10 +189,10 @@ namespace NeptuneEvo.Core
                         return;
                     case 1:
                         if (Chars.UpdateData.CanIChange(player, Main.LicPrices[1], true) != 255) return;
+                        if (!MoneySystem.Wallet.Change(player, -Main.LicPrices[1])) return;
                         characterData.Licenses[1] = true;
                         qMain.UpdateQuestsStage(player, Zdobich.QuestName, (int)zdobich_quests.Stage7, 2, isUpdateHud: true);
                         qMain.UpdateQuestsComplete(player, Zdobich.QuestName, (int)zdobich_quests.Stage7, true);
-                        MoneySystem.Wallet.Change(player, -Main.LicPrices[1]);
                         //fractionData.Money += Main.LicPrices[3];
                         //GameLog.Money($"player({characterData.UUID})", $"frac(6)", Main.LicPrices[3], $"buyLic");
                         Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.SucBuyVehLic), 3000);
@@ -200,8 +200,8 @@ namespace NeptuneEvo.Core
                         return;
                     case 2:
                         if (Chars.UpdateData.CanIChange(player, Main.LicPrices[2], true) != 255) return;
+                        if (!MoneySystem.Wallet.Change(player, -Main.LicPrices[2])) return;
                         characterData.Licenses[2] = true;
-                        MoneySystem.Wallet.Change(player, -Main.LicPrices[2]);
                         //fractionData.Money += Main.LicPrices[3];
                         //GameLog.Money($"player({characterData.UUID})", $"frac(6)", Main.LicPrices[3], $"buyLic");
                         Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.SucBuyGruzLic), 3000);
@@ -281,8 +281,8 @@ namespace NeptuneEvo.Core
                         return;*/
                     case 3:
                         if (Chars.UpdateData.CanIChange(player, Main.LicPrices[3], true) != 255) return;
+                        if (!MoneySystem.Wallet.Change(player, -Main.LicPrices[3])) return;
                         characterData.Licenses[3] = true;
-                        MoneySystem.Wallet.Change(player, -Main.LicPrices[3]);
                         fractionData.Money += Main.LicPrices[3];
                         GameLog.Money($"player({characterData.UUID})", $"frac(6)", Main.LicPrices[3], $"buyLic");
                         Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.SucBuySeaLic), 3000);
@@ -295,8 +295,8 @@ namespace NeptuneEvo.Core
                             Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.LicMustBe20), 3000);
                             return;
                         }
+                        if (!MoneySystem.Wallet.Change(player, -Main.LicPrices[4])) return;
                         characterData.Licenses[4] = true;
-                        MoneySystem.Wallet.Change(player, -Main.LicPrices[4]);
                         fractionData.Money += Main.LicPrices[4];
                         GameLog.Money($"player({characterData.UUID})", $"frac(6)", Main.LicPrices[4], $"buyLic");
                         Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.SucBuyHeliLic), 3000);
@@ -309,8 +309,8 @@ namespace NeptuneEvo.Core
                             Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.LicMustBe20), 3000);
                             return;
                         }
+                        if (!MoneySystem.Wallet.Change(player, -Main.LicPrices[5])) return;
                         characterData.Licenses[5] = true;
-                        MoneySystem.Wallet.Change(player, -Main.LicPrices[5]);
                         fractionData.Money += Main.LicPrices[5];
                         GameLog.Money($"player({characterData.UUID})", $"frac(6)", Main.LicPrices[5], $"buyLic");
                         Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, LangFunc.GetText(LangType.Ru, DataName.SucBuyPlaneLic), 3000);
