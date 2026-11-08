@@ -441,3 +441,10 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - Test seller null/disconnect/missing character and nonpositive pending price before money effects.
 - Retain required unexecuted DB cases: SaveHolder failure/delay, restart after each wallet/holder boundary, duplicate/concurrent BUY_CAR callbacks, stale holder and garage capacity.
 - Static assertions passed for seller validation, price guard, checked seller credit, refund attempt, critical log and holder mutation after seller credit. No C# build, RAGE staging or MySQL fault injection was run.
+
+## 2026-11-08 — MONEY-044 transfer preflight regression additions
+
+- Reject null/missing pending offer, null seller, seller without active character/session, nonpositive pending price and deleted/missing business ID before money or ownership mutation.
+- Force buyer debit false and seller credit false/exception; current source still mutates BizIDs/owner before these unchecked wallet calls, so these remain blocking regression cases for the durable settlement redesign.
+- Inject failures in buyer BizIDs save, seller BizIDs save and business owner persistence; test duplicate/concurrent confirmation, offer replacement, seller/buyer disconnect and restart after each write.
+- Static assertions passed for offer/seller/price/business existence guards. No C# build, RAGE staging or MySQL fault injection was run.
