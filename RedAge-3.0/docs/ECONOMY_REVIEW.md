@@ -277,3 +277,17 @@ The wider repository search found additional paths outside Wallet.Change/the mon
 The login path confirms the cache handoff gap: Character.Load.Repository reads the Characters row and materializes CharacterData.Money near the start of the load, performs additional asynchronous loading work, and only later calls player.SetCharacterData(characterData). The reviewed path does not acquire Money.GetCharacterMoneySyncLock or the money semaphore around the DB read-to-cache-publication interval. An offline direct writer can therefore update the DB after the SELECT but before SetCharacterData; the newly published in-memory cache can start with the stale pre-update balance. The same missing login-side coordination means a future offline atomic increment alone is not sufficient.
 
 **Coordinator requirement:** login must participate in the same per-UUID serialization protocol as offline money operations and full saves, covering the authoritative balance read through cache publication. Offline writers must atomically establish that no login/cache publication is in progress before changing the DB row. Recheck this requirement during implementation; no source change was made here.
+
+
+### MONEY-002 follow-up — repository DDL and referral settlement ordering (2026-11-08)
+
+A direct read of the repository's current `RedAge-3.0/database/main.sql` dump now confirms the **checked-in schema snapshot** defines `characters`, `money`, `accounts` and `refferals` as `ENGINE=InnoDB`. The `characters.money` column is nullable signed `int(11)`; the dump header identifies MariaDB 10.10.2. This supersedes the earlier statement that no repository DDL evidence was available.
+
+Important boundary: this proves only the engine/type in the checked-in dump. It does not prove that the deployed database uses this exact dump or has not drifted. Production/staging `SHOW CREATE TABLE` (or equivalent metadata) and server version are still required before relying on transaction semantics. The generated mapping's older MariaDB 10.4.12 comment is historical build metadata, not proof of the live server version.
+
+The referral owner-reward path was traced further in `Main.CheckMyPromoCode`:
+- For an online referrer, VIP/coin/cash/RedBucks rewards are applied through separate APIs, notification is sent, and only then is the `refferals.success` row updated. Wallet/RedBucks/VIP/item results are not consistently checked as one settlement.
+- For an offline referrer, the referral success row is updated first, then account RedBucks/VIP are updated, then cash is read and written as an absolute value in a separate query. These are not one transaction. A failure after the success marker can permanently suppress retry while one or more reward legs are missing; a retry around an uncertain acknowledgement can also duplicate a leg.
+- The offline cash SELECT/absolute UPDATE remains exposed to concurrent credits and login/cache publication races.
+
+The repository DDL makes an InnoDB receipt+balance transaction technically plausible for these tables, but implementation still requires a single transaction owner/context, unique stable operation IDs, and migration of every cash writer. Do not mark production durability proven from the checked-in dump alone. No C# source was changed and no build/runtime/DB test was run in this pass.
