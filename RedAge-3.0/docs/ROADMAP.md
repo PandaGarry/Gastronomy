@@ -159,3 +159,5 @@
 - [ ] MONEY-050 — driving-school license grants: source patch applied; verify all six license types, failed wallet debit, quest/faction side effects, shutdown and persistence. See `DRIVING_SCHOOL_REVIEW.md`.
 - [ ] MONEY-049 — Metro ticket price overflow and unchecked debit; source patch added, boundary/failure staging required. See `METRO_REVIEW.md`.
 - [ ] MONEY-048 — player cash/item trade and tent-market purchase settlement; checked pricing, exact debit/credit, durable idempotency and compensation. See `PLAYER_TRADE_REVIEW.md`.
+
+- [ ] MONEY-003 — bank transfer source patch applied: one-shot ATM confirmation, source ownership revalidation, synchronized two-account mutation, checked arithmetic, revision-aware retryable save. Validate with build, DB fault injection, concurrency and RAGE replay; design durable transaction/ledger before closure. See BANK_TRANSFER_REVIEW.md.
