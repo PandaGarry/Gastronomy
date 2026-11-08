@@ -108,7 +108,7 @@
 - [ ] MONEY-043 — partial source patch: checked business-bank initialization and buyer debit; previous bank balance is restored if debit rejects, and ownership/stock/BizIDs mutate only after debit. Still implement durable receipt across bank/wallet/ownership writes and restart reconciliation. See `BUSINESS_OWNERSHIP_REVIEW.md`.
 - [ ] MONEY-044 — partial preflight patch: reject missing offer/seller, nonpositive price and missing business ID. Core remains unsafe: owner/BizIDs mutate before unchecked buyer debit/seller credit. Implement durable one-shot settlement and replay/concurrency/restart recovery. See `BUSINESS_OWNERSHIP_REVIEW.md`.
 
-- [ ] MONEY-045 — government refuelling quota: validate currency-based FuelLeft against checked total cost before any stock, city-fund or vehicle-fuel mutation; test exhausted/partial quota, quantity clamp, replay and restart. See BUSINESS_FUEL_REVIEW.md.
+- [ ] MONEY-045 — partial source patch: `fillCar` uses checked wide monetary price after quantity normalization, removes liters-vs-currency clamp and rejects price > FuelLeft before effects. Still implement durable stock/FuelLeft/City Hall/vehicle settlement and test quota boundaries/failure/replay/restart. VEH-009 station authorization separate. See BUSINESS_FUEL_REVIEW.md.
 
 - [ ] VEH-009 — bind petrol remote to active nearby Type==1 fuel station and current vehicle; stale BizID/non-fuel business must not authorize refuelling. Test direct remote, move-away, dimension swap, replay and legitimate station use. See BUSINESS_FUEL_REVIEW.md.
 
