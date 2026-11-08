@@ -58,3 +58,11 @@
 - Re-fetched the working-branch sources and asserted: `Wallet.Change` uses checked `long` addition; rejects negative and above-`Int32.MaxValue` results before mutation; full `Character.SaveSql` rejects invalid balances before bank/other save side effects; generated DB model still maps `characters.money` to signed `int(11)`; `Money.AddMoneyUpdate` validates its snapshot range; offline auction refund validates DB balance and widened result before narrowing.
 - Assertions passed after correcting one documentation-status matcher. These are textual/static assertions, not C# compilation or executable unit tests.
 - Environment check: Node `v22.16.0` present; `dotnet`, `msbuild`, `csc`, `mcs`, `mysql` and `mariadb` unavailable. No build, DB round-trip/fault injection, worker concurrency or RAGE UI test was performed.
+
+
+### 2026-11-08 — MONEY-002 detached worker hand-off static review
+
+- Verified the queue snapshot marks each detached UUID in `ActiveMoneyWrites` under the same `QueueLock` before `MoneyUpdateList.Clear()` and before DB context creation. This ensures a small `Wallet.Change` during the detach→SQL interval queues a newer revision.
+- Verified one snapshot marker loop and one cleanup in `RequeueMoney`; normal `MoneyUpdate` cleanup remains in its per-row `finally`. Revision checks prevent an old detached absolute snapshot from overwriting a newer full-save/wallet version.
+- Verified `SaveSql` uses `ExecuteCharacterSave` and the shared UUID synchronization lock; `Wallet.Change` advances the revision while holding the same monitor.
+- Static source assertions only. No .NET compiler, MySQL instance or RAGE:MP runtime available; no concurrency/fault-injection test executed.
