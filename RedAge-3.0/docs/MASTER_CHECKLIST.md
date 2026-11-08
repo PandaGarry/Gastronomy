@@ -151,3 +151,5 @@
 \n\n- [ ] MONEY-003 — bank transfer: one-shot ATM confirmation; source ownership revalidation; synchronized two-account mutation; positive amount and checked arithmetic; revision-aware retryable persistence. Keep open until build, DB fault-injection, concurrency and RAGE replay tests pass. See BANK_TRANSFER_REVIEW.md.
 - [ ] MONEY-002 — проверить частичный patch очереди денег: C# build; concurrent producers/snapshot; partial DB failure/retry; newer-value-wins; disconnect/reconnect; crash/restart loss. После этого спроектировать durable outbox, retry backoff и dead-letter. См. `ECONOMY_REVIEW.md`.\n
 - [ ] BANK-SAVE — verify revision-aware save retry under DB outage, concurrent mutations and INT range boundaries; durable ledger/outbox still required for crash consistency. See BANK_TRANSFER_REVIEW.md.
+
+- [ ] MONEY-003 follow-up — test atomic in-memory bank transfer, one-shot ATM confirmation, synchronized balance reads, checked account creation bounds, DB save retry/revision behavior, and restart recovery limitation. Audit mutable `Bank.Data` references. See `BANK_TRANSFER_REVIEW.md`.
