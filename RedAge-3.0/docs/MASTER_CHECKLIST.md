@@ -165,3 +165,6 @@
 - [ ] VEH-006 / MONEY-013 — partial government vehicle sale patch: confirmation revalidates current holder, rejects nonpositive price and checks wallet credit before removal. Still implement vehicle SQL delete + payout receipt/outbox, async delete retry/restart recovery, one-shot owner-version intent and replay tests. See VEHICLE_SALE_REVIEW.md.
 
 - [ ] VEH-001 — partial self-repair patch: wallet debit is checked before repair; RepairCar reports success/failure and refund is attempted on repair failure. Still confirm gameplay policy and implement server-owned one-shot repair intent/location/mechanic checks; test direct callback, wallet/repair/refund failure. See VEHICLE_REPAIR_REVIEW.md.
+
+
+- [ ] **MONEY-002 follow-up:** verify repeated/concurrent `Money.Start()` calls create one worker; test valid/invalid UUID and balance boundaries (`0`, negative, `Int32.MaxValue`, above max, `long` extremes); prove DB outage retry and newer-value-wins. Still design durable outbox/restart recovery, bounded retry/backoff/dead-letter and run C# build/MySQL fault tests.
