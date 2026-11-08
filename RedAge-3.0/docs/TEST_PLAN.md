@@ -377,3 +377,6 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - [ ] Review auction award order similarly; DB transaction and restart recovery remain required.
 
 - [ ] House purchase: failed buyer debit must not mutate property bank balance; failed bank initialization after debit must refund exactly once or emit critical reconciliation log; concurrent property-account update must not be overwritten by a failed-debit rollback.
+
+- [ ] Business hourly tax: force bank adjustment failure and assert no business expense counter, Mafia fraction credit, City Hall credit or tax log is applied; on success assert each leg occurs exactly once.
+- [ ] Property/auction account initialization: missing bank or out-of-range computed balance must prevent ownership/auction-state changes; normal award sets exact initial balance and dirty revision.
