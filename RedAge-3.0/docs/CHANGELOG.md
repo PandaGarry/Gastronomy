@@ -546,3 +546,5 @@
 - Revalidated referral online/offline reward ordering, offline auction refund fallback, admin offline grant acknowledgement vs login race, and account merger aggregate cash import.
 - Added regression cases for NULL cash, recipient login during offline writes, partial referral settlement, auction refund identity, merger restart/idempotency and admin login handoff.
 - No source code changed. No C# build, MariaDB fault injection, concurrency or RAGE staging tests ran.
+
+- 2026-11-08 — Добавлен MONEY-054: referral completion/RB/VIP persistence precedes cash reward; out-of-range cash or DB failure can leave a partially settled reward. Статический finding; source не менялся, tests pending.
