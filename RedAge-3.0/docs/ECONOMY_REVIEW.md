@@ -321,3 +321,23 @@ A fresh read of the active branch confirms these remaining bypasses and their ex
 - The admin offline grant has a separate async persistence path. Its recent acknowledgement patch waits for the DB update and checks the affected-row count before success logging/notification, but the online-presence check and DB mutation still need to be serialized with login and the shared cash coordinator. Awaiting an absolute write is not equivalent to an atomic/idempotent grant.
 
 No new C# changes were made. The checked-in DDL evidence and referral ordering recorded above remain valid only for the repository snapshot; deployed schema must still be checked. Do not apply an isolated SQL increment to any of these paths until login publication, online cache, queued snapshots, and stable operation identity share one coordinator boundary.
+
+
+## MONEY-054 — referral cash reward can be marked complete before cash is credited
+
+**Уверенность: высокая по порядку операций; эксплуатация/частота зависят от бизнес-правил и данных. Приоритет: высокий.**
+
+Файл: `Main.cs`, `CheckMyPromoCode` (referral success async block).
+
+Порядок внутри одного async DB task:
+1. Читается account пригласившего и рассчитывается RB/VIP reward.
+2. Строка `Refferals` обновляется на `Success=true` и получает `Successdate`.
+3. Затем обновляется account: `Redbucks`, `Viplvl`, `Vipdate`.
+4. Только после этого читается `characters.money` пригласившего. Если balance отрицательный/некорректный или `currentMoney + refferalData.Money` выходит за signed INT range, код только пишет лог и пропускает cash UPDATE.
+5. Ошибки внешнего DB task ловятся общим catch; нет транзакции, durable pending state или retry receipt.
+
+**Следствие:** referral может стать окончательно отмеченным успешным, RB/VIP могут быть выданы, а денежная часть reward — потеряна. DB exception после записи Success/RB/VIP, но до cash credit, создаёт тот же частичный результат. Это не утверждение о создании денег: конкретный подтверждённый риск — неполная выдача согласованного referral reward и невозможность безопасного автоматического повтора.
+
+**Исправление (не внедрено):** создать referral settlement с уникальным referral/reward ID; в одной DB transaction фиксировать success state, RB/VIP и cash ledger/receipt либо durable pending legs, с чёткими retry/reconciliation semantics. Cash leg должен проходить через общий MONEY-002 coordinator; не использовать SELECT → absolute UPDATE. Проверять результат каждой DB операции и уведомлять об успехе только после durable commit.
+
+**Тесты:** cash delta на границе `Int32.MaxValue`; DB failure после каждого шага; повторная проверка того же referral ID; duplicate/concurrent processing; проверка, что повтор не дублирует RB/VIP и не теряет cash; online/offline inviter и reconnect/restart. Пока только статический анализ; source не менялся, build/DB/RAGE tests не запускались.
