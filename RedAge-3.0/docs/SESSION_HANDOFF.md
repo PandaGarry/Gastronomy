@@ -321,3 +321,11 @@
 - Added MONEY-052 to `ISSUES.md`, `STREET_RACE_REVIEW.md`, `MASTER_CHECKLIST.md`, `TEST_PLAN.md`, `CHANGELOG.md`.
 - Residual: client-supplied waypoint coordinates still need server-side validation; winner payout result/durability and `ClearData` payout are unresolved; no C# build, RAGE runtime, DB fault injection or concurrency tests.
 - Do not close MONEY-051/MONEY-052 pending the regression matrix and settlement design.
+
+
+## 2026-11-08 continuation — MONEY-002 money persistence queue
+
+- Re-read `Database/Models/Money.cs` and `MoneySystem/Wallet.cs`: queue snapshot/clear raced with producers; DB errors were swallowed and pending batches discarded. `Wallet.Change` mutates in-memory balance first and queues absolute DB save for changes >= $10,000; its bool is not a durable-commit receipt.
+- Patched `Money.cs`: common lock around producers and atomic snapshot/clear; failed DB batch requeued; older failed value cannot overwrite newer queued value. DB flush remains absolute SET, so retry of partially successful batch is idempotent with respect to delta duplication.
+- Important limitation: pending queue is still memory-only and lost on process crash; no transaction/outbox/backoff/dead-letter. No build, concurrency or MySQL fault-injection tests.
+- Next: validate this patch and design durable outbox before claiming money persistence reliable. Do not mistake Wallet.Change(true) for DB commit.
