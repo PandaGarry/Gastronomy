@@ -172,6 +172,8 @@
 
 | INV-016 | Высокий | Статически подтверждён; RAGE exploit reproduction required | Organization OpenWeaponStock checks InsideOrganizationID before opening, but RemovePlayer clears InsideOrganizationID and moves the player outside without closing/revoking the open inventory context. Generic ItemsMove/ItemsMoveStack/ItemsUse do not revalidate organization interior, membership, stock-open state or dimension, so an already-open Organization_<ID> container can remain mutable after exit. | Revoke/close organization container on exit; bind it to player/org/interior/dimension and revalidate every item mutation; clear IsOrgStockActive and stale location on all exits/revocation. See ORGANIZATION_STOCK_SESSION_REVIEW.md. |
 
+| INV-017 | Высокий | Статически подтверждён; RAGE/MySQL reproduction required | objectSelected checks furniture object range, InsideHouseID and owner/roommate/burglary access before opening furniture_<houseId>. HouseManager.RemovePlayer clears InsideHouseID and exits the house without ItemsClose/OtherClose; generic ItemsMove/ItemsMoveStack/ItemsUse do not revalidate house/object/access context. A previously opened safe can remain mutable after exit. | Revoke furniture inventory on house exit; bind to exact house/object/access intent; revalidate current house, object, permission, range and dimension on every mutation. См. FURNITURE_SAFE_SESSION_REVIEW.md. |
+
 ## Не выводить из этих наблюдений
 
 - Npm audit по свежему разрешению без upstream lock не является точным отчётом о production runtime.
