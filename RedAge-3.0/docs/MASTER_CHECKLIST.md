@@ -48,7 +48,7 @@
 - [ ] MONEY-042 — player-to-player vehicle sale: check buyer debit and seller credit, durable holder DB commit, sale receipt/idempotency and rollback/reconciliation across restart. See VEHICLE_PLAYER_SALE_REVIEW.md.
 - [ ] MONEY-040/041 — business hourly tax and repossession: mark ordinary tax debit dirty/persistent; durable idempotent online/offline owner compensation before business ownership release. See BUSINESS_TAX_REVIEW.md.
 - [ ] MONEY-039 — ATM business-account deposit: interim second-leg result check and wallet compensation are patched; still implement atomic/idempotent durable settlement, stale BizID/index validation, replay protection and DB/RAGE fault tests. See BUSINESS_BANK_REVIEW.md.
-- [ ] STOCK-002 — business retail stock and customer settlement: takeProd rollback, owner-bank credit, customer Wallet.Change, exact item/weapon grant, missing product rejection, dirty-save and exactly-once behavior. See BUSINESS_RETAIL_REVIEW.md.
+- [ ] STOCK-002 — partial source patch: `takeProd` rejects nonpositive quantity and missing product; still fix stock-before-owner-credit ordering/rollback, customer Wallet.Change, exact item/weapon grant, business dirty-save and durable exactly-once settlement. See BUSINESS_RETAIL_REVIEW.md.
 - [ ] MONEY-030 — EventCoins: точное списание из разрешённого контейнера до начисления RB.
 - [ ] MONEY-031 — Fuel Control: server-side role/fraction authorization и input bounds.
 - [ ] MONEY-032 — Mayor treasury withdrawal: confirm bank credit before treasury debit; transactional/restart-safe settlement.
