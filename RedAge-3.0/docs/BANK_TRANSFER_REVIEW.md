@@ -41,3 +41,33 @@ No cross-player source-account ID was found in this call path. ATM location/elig
 Параллельные withdrawals/transfer confirmations для одного счёта могут одновременно прочитать один баланс, оба пройти проверку, а затем перезаписать изменения друг друга или допустить итог ниже ожидаемого ограничения. Точный исход зависит от interleaving; runtime reproduction отсутствует. Дополнительно Bank.Transfer состоит из двух независимых вызовов Change, поэтому даже сериализация каждого отдельного изменения не обеспечит атомарность пары debit/credit.
 
 **Решение:** не ограничиваться lock вокруг одного метода без общей settlement-модели. Для runtime cache минимум единый per-account synchronization и единый lock-order для двух счетов; для корректности после restart — DB transaction с row locking/conditional debit, idempotency key и durable ledger/receipt. Cache должен обновляться из committed результата. Нужны тесты 2..100 параллельных withdrawals с балансом на границе, разнонаправленные transfers A→B/B→A, повтор confirmation, DB save concurrently with mutation и invariant: сумма денег между счетами сохраняется, баланс не уходит ниже нуля.
+
+
+## 2026-11-08 implementation update — MONEY-003 (partial source patch)
+
+The following bounded changes are now applied in `MoneySystem/Bank.cs`:
+
+1. `Bank.Change` serializes balance check/mutation under a shared account lock, uses checked arithmetic, and isolates notification exceptions from the applied in-memory mutation result.
+2. `Bank.Transfer` rejects non-positive amounts, identical/missing accounts, insufficient funds, server-stop debits and overflow. It validates both resulting balances and mutates both account caches inside one critical section rather than calling `Change` twice. Both accounts are marked dirty, including small personal-account transfers. Notifications and logging run after mutation and cannot report the completed in-memory transfer as rejected.
+3. `ATM.AcceptTransfer` copies and clears the pending confirmation tuple before attempting the transfer, validates that the source account still equals the current character's bank, and reports a failed transfer rather than silently continuing. A replayed generic confirmation no longer has a reusable tuple.
+4. Bank save now snapshots balance/holder/revision under the same lock, does not clear dirty flags before DB success, requeues the account after exceptions, preserves dirty state when a concurrent mutation changes the revision, and refuses a balance outside the current DB `INT` range without silently clearing the pending save.
+
+**Important remaining limits:** this is still an in-memory settlement guarded by a process-local lock. It is not an atomic MySQL transaction and has no durable operation ID/ledger, so crash between memory mutation and DB persistence can still lose or leave one side stale. Concurrent asynchronous saves may temporarily write an older snapshot after a newer one; revision tracking keeps the account dirty for a later save, but does not provide crash-safe ordering. The generic confirmation tuple is one-shot in the session but has no explicit expiry/nonce and no durable idempotency key. Other bank mutation paths and account creation/deletion still need review.
+
+**Validation status:** source-level assertions only. No .NET SDK/MSBuild is installed in the current execution environment; no C# build, MySQL integration/fault injection, RAGE staging, duplicate callback, or concurrency test has run. Keep MONEY-003 open.
+
+### Regression matrix for the patch
+
+- [ ] positive transfer A→B; exact source/destination deltas and total conservation
+- [ ] reject zero/negative amount, same account, missing source/destination, insufficient source
+- [ ] reject source debit during server stop; reject destination overflow and source arithmetic boundary
+- [ ] 2..100 parallel withdrawals at balance boundary; no negative balance or lost update
+- [ ] concurrent A→B and B→A transfers; no deadlock and conserved total
+- [ ] duplicate AcceptBankTransfer callback; exactly one in-memory transfer
+- [ ] callback after cancel/no pending tuple; no transfer
+- [ ] source account changed between request and confirmation; reject
+- [ ] notification and GameLog exceptions after mutation; transfer remains applied and never gets retried as rejected
+- [ ] DB fails before/during save; dirty flag remains and retry succeeds after reconnect
+- [ ] mutate account while async save is in flight; newer revision remains dirty
+- [ ] balance outside DB INT range; no cast wrap/dirty-flag loss; explicit migration/reconciliation required
+- [ ] restart after memory mutation before DB commit; document/recover via future durable ledger/outbox
