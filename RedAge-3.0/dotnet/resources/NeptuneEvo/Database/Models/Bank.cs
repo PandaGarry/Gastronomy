@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Concurrent;
 using System.Threading;
 using Database;
 using LinqToDB;
@@ -23,45 +23,55 @@ namespace NeptuneEvo.Database.Models
         {
             while (true)
             {
+                var pendingDeletes = new List<int>();
                 try
                 {
-                    var banks = MoneySystem.Bank.Accounts
-                        .Where(b => b.Value.IsSave)
-                        .Select(b => b.Key)
-                        .ToList();
+                    var banks = MoneySystem.Bank.GetDirtyAccountIds();
 
-                    var dellList = DellList.ToList();
-                    DellList.Clear();
+                    while (DellList.TryDequeue(out int deletedBankId))
+                        pendingDeletes.Add(deletedBankId);
 
-                    if (banks.Count > 0 || dellList.Count > 0)
+                    if (banks.Count > 0 || pendingDeletes.Count > 0)
                     {
-                        await using var db = new ServerBD("MainDB");//В отдельном потоке 
+                        await using var db = new ServerBD("MainDB");
 
                         foreach (var bankId in banks)
                             await MoneySystem.Bank.Save(db, bankId);
 
-                        //
-                    
-                        foreach (var bankId in dellList)
-                            await db.Money
-                                .Where(m => m.Id == bankId)
-                                .DeleteAsync();
-                    
+                        foreach (var bankId in pendingDeletes)
+                        {
+                            try
+                            {
+                                await db.Money
+                                    .Where(m => m.Id == bankId)
+                                    .DeleteAsync();
+                            }
+                            catch (Exception e)
+                            {
+                                // DELETE is idempotent; retry failed entries on the next worker pass.
+                                DellList.Enqueue(bankId);
+                                Debugs.Repository.Exception(e);
+                            }
+                        }
                     }
                 }
                 catch (Exception e)
                 {
+                    // The connection may fail before the delete batch is processed. Requeueing
+                    // already-deleted IDs is safe because deleting a missing row is idempotent.
+                    foreach (var bankId in pendingDeletes)
+                        DellList.Enqueue(bankId);
                     Debugs.Repository.Exception(e);
                 }
-                
+
                 Thread.Sleep(1000 * 30);
             }
         }
 
-        //Dell
-        private static List<int> DellList = new List<int>();
+        // Concurrent queue prevents account removals racing with the background worker.
+        private static readonly ConcurrentQueue<int> DellList = new ConcurrentQueue<int>();
 
-        public static void OnDell(int id) => DellList.Add(id);
+        public static void OnDell(int id) => DellList.Enqueue(id);
 
     }
 }
