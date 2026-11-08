@@ -367,3 +367,10 @@ Hardened direct business and house purchase flows: initialize the property bank 
 ### MONEY-039 — business ATM deposit interim patch (2026-11-08)\n\nThe business ATM deposit now checks the business-bank credit after wallet debit; on rejection it attempts a wallet refund, logs compensation failure critically, and returns before success log/message. This is an interim in-memory compensation only. BizIDs ownership/index revalidation, durable receipt/idempotency, crash recovery, C# build and RAGE/MySQL tests remain open. See BUSINESS_BANK_REVIEW.md.\n\n### MONEY-053 — ATM cash settlement (2026-11-08)
 
 Static review found unchecked second legs in regular ATM cash deposit/withdrawal and house deposit. A bounded patch now checks both legs and attempts compensation if the second leg rejects; success effects/logging are delayed until both in-memory changes succeed. Business deposit remains MONEY-039. This is not a durable cross-wallet/bank transaction. Keep MONEY-053 open until C# build, compensation/fault injection, concurrent/replay and restart tests pass. See ATM_REVIEW.md and TEST_PLAN.md.
+
+ 
+## 2026-11-08 — money settlement follow-up decisions
+
+- **JOB-005:** revalidated all three AutoMechanic settlement paths. No source patch was applied because a local bool guard or call reorder cannot safely coordinate two wallets, business stock/revenue and vehicle repair/fuel state. Require durable one-shot service intent/receipt and restart reconciliation before applying gameplay effects. See MECHANIC_SERVICE_REVIEW.md.
+- **StreetRace:** revalidated that both StreetRaceFinished and ClearData ignore winner Wallet.Change results; ClearData removes the only in-memory race context even if payout rejects. Do not add a naive return/retry. Implement one durable race settlement receipt shared by finish/abort, idempotent payout and cleanup only after terminal receipt. See STREET_RACE_REVIEW.md.
+- New regression scenarios are in TEST_PLAN.md. These are static source findings; no C# build, RAGE runtime or MySQL failure injection was run.
