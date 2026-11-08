@@ -365,3 +365,23 @@ The full checked-in `RedAge-3.0/database/main.sql` blob was retrieved and inspec
 - `accounts`, `refferals` and `lottery` are also declared InnoDB in this dump.
 
 This is useful evidence that a transaction-backed coordinator is compatible with the **checked-in schema snapshot**, and confirms the nullable cash-column case must be handled explicitly. It does **not** prove the live/deployed database has the same schema or engine, nor that the dump imports cleanly. Before implementation/rollout, import this dump into a disposable MariaDB 10.10-compatible instance, inspect `SHOW CREATE TABLE`/engine and constraints, and separately verify the actual target environment without touching production data. No SQL import or DB transaction test was run in this pass.
+
+
+## MONEY-055 — auction refund bypasses wallet durability and has an online/offline race
+
+**Уверенность: высокая по source path; фактическое проявление зависит от конкуренции/состояния баланса. Приоритет: высокий.**
+
+Файл: `Players/Phone/Auction/Repository.cs`, `ReturnMoney(int uuid, int price, int id, AuctionType type, string message)`.
+
+- GameLog записывается до подтверждения фактического credit.
+- Для online player выбирается `Bank.Change` либо `Wallet.Change`, но результат денежной операции не проверяется до уведомления.
+- Для offline player запускается отдельный async task: SELECT `characters.money/bank`, затем либо dispatch `Bank.Change` в main thread, либо cash read-modify-absolute-UPDATE.
+- Offline cash branch проверяет nullable/negative/overflow, но не использует per-UUID coordinator, не делает conditional atomic increment, не проверяет affected rows и не имеет stable auction refund operation ID.
+- Между первоначальной проверкой online/offline и выполнением DB task игрок может войти. Тогда SQL cash write обходит уже опубликованный in-memory CharacterData; последующий full save или wallet worker может затереть refund устаревшим snapshot.
+- Auction settlement state и refund не фиксируются одной durable transaction. Повторный callback/retry после неопределённого результата не имеет idempotency key.
+
+**Риск:** возврат ставки/средств может быть потерян, отражён в логах/уведомлении без подтверждённого credit либо применён повторно при повторной обработке; online/offline transition добавляет stale-cache overwrite race.
+
+**Исправление (не внедрено):** refund становится settlement leg с уникальным ключом, например `auction:{auctionId}:refund:{uuid}:{reasonCode}`; атомарно фиксировать refund receipt + balance delta и auction state transition. До внедрения определить, какие именно причины/части ставки подлежат возврату, чтобы operation ID отличал независимые legs. Все online/offline paths должны идти через общий coordinator и единый login publication gate.
+
+**Тесты:** online wallet/bank reject; offline NULL/negative/max balance; DB failure до/после UPDATE и потеря commit acknowledgement; affectedRows=0; игрок входит между presence check и write; concurrent/replayed ReturnMoney; auction retry/restart; доказать один refund receipt и одну delta. Static review only; source/build/DB/RAGE tests не менялись/не запускались.
