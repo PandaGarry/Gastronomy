@@ -314,3 +314,9 @@
 - Traced objectSelected furniture-safe access and HouseManager.RemovePlayer. The exit path clears InsideHouseID and moves the player outside without closing/revoking the opened furniture inventory; generic item remotes do not revalidate the house/object/access context.
 - Registered INV-017 and created FURNITURE_SAFE_SESSION_REVIEW.md; added regression matrix and inventory map reference.
 - Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
+
+## 2026-11-08 — INV-018 HeliCrash key-clamp bypass
+
+- Traced KeyClamp.SetKeyClamp → keyClamp.end → HeliCrash End. KeyClampData is installed before ArmyLockpick validation; the end remote trusts client value, and HeliCrash End can roll an unlock at zero without verifying a successful keydown reservation. Failed rolls leave a reusable session.
+- Registered INV-018 and created HELICRASH_KEYCLAMP_REVIEW.md with direct-remote and concurrency regression matrix.
+- Static-only; no source changes, build, RAGE exploit reproduction or DB tests.
