@@ -510,3 +510,11 @@ Implementation sequence: schema/deployed-engine verification → receipt DDL →
 - MONEY-060: `ticketConfirm` now exits immediately when both wallet and bank debit paths reject; no City Hall/officer split credit, success event or paid GameLog follows that failed debit.
 - Both are bounded source mitigations, not a durable settlement implementation. C# build, MariaDB fault injection, RAGE staging, concurrency and restart tests remain pending.
 - Added `DOCS_STATUS.md` to define document ownership, status vocabulary and the mandatory same-task documentation update cycle. It records MONEY-002 as partial in-process coordination, not a completed durable coordinator.
+
+
+### MONEY-002 — DB transaction API reconnaissance (2026-11-08)
+
+- The project pins linq2db 3.3.0 and uses generated `ServerBD : DataConnection` with provider `MySql.Data.MySqlClient`; `MySqlConnector` is a separate legacy helper path.
+- The inspected v3.3.0 API uses synchronous `BeginTransaction(IsolationLevel)` and asynchronous `DataConnectionTransaction.CommitAsync/RollbackAsync`; do not assume a newer `BeginTransactionAsync` API exists.
+- The durable coordinator must use one `ServerBD` context/transaction for receipt + cash delta. Provider/connection mixing is prohibited. Runtime provider verification and rollback/duplicate/commit-ack fault tests remain required.
+- Details: `ECONOMY_REVIEW.md`. This is API reconnaissance, not a coordinator implementation.
