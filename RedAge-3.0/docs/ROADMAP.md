@@ -48,7 +48,7 @@
 - [ ] STOCK-001: fraction stock and vehicle cargo transfers — exact item/cash result, atomic/idempotent settlement, authorization and failure/restart tests; see `FRACTION_STOCK_REVIEW.md`.
 
 - [ ] MONEY-035: make faction/organization cash withdrawals atomic; verify wallet credit before stock commit.
-- [ ] MONEY-036: correct shared Wallet.Change arithmetic to preserve 64-bit balances; audit all call sites.
+- [ ] MONEY-036: decide and enforce one money-width contract (Int32 cap or end-to-end BIGINT); update wallet arithmetic, generated DB model and all save workers consistently.
 - [ ] STOCK-001: make faction/vehicle stock item grants exact and atomic; handle partial/full-slot failures.
 - [ ] STOCK-002: replace business takeProd/customer debit/item grant sequence with idempotent atomic retail settlement; test owner-bank, wallet, item grant, missing-product and restart failures. See BUSINESS_RETAIL_REVIEW.md.
 - [ ] MONEY-039: make ATM business-account deposit an atomic/idempotent player-debit/business-credit transfer with checked result, refund/retry and stale BizID/index protection. See BUSINESS_BANK_REVIEW.md.
