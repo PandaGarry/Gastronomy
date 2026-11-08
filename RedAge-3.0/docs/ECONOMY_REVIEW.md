@@ -211,3 +211,9 @@ A crash-durable design therefore cannot be introduced only inside `Money.cs`. Th
 **Immediate safe follow-up:** the offline `Character.Save.Repository.AddMoney` and referral reward paths still perform read-then-absolute-write. They need an atomic conditional SQL increment to prevent concurrent lost updates and signed-`INT` overflow, but that alone is not idempotent and does not solve payout replay. Keep this as a separately tested transitional fix; do not present it as the durable ledger.
 
 **Decision gate before implementation:** confirm all relevant balance tables use InnoDB; inspect exact LinqToDB 3.3 transaction/affected-row APIs; define operation-ID ownership for lottery/referral/auction payouts; identify online/offline cache handoff; and provide a migration/rollback plan. Do not add a background outbox table and claim crash safety without moving the transaction boundary to the original mutation.
+
+### MONEY-002 follow-up — offline admin payout acknowledgement (2026-11-08)
+
+Core/Admin.cs OffGiveMoney previously emitted the money/admin logs and success notification before awaiting the characters.money UPDATE. A database exception therefore left the operator with a success message for an unpersisted grant. The method now awaits the UPDATE first, requires exactly one affected character row, and only then emits success logs/notification; zero/ambiguous affected-row results are reported as failure.
+
+This is a bounded acknowledgement-order fix only. The method still performs a read-then-absolute-write, so concurrent offline grants and races with the online wallet worker/full character save can lose updates. It has no durable operation ID/receipt and is not crash-idempotent. Static patch only; no C# build or DB test.
