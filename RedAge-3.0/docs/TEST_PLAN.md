@@ -629,3 +629,11 @@ Static source review only. These tests require a disposable MariaDB database and
 - [ ] Конкурентно и повторно вызвать один refund callback, включая restart после commit до ack: одна auction refund receipt и одна delta.
 - [ ] Проверить атомарность auction state transition + refund leg и отдельную идентичность нескольких законных refund legs.
 - Статус: статический review; tests не запускались, source patch отсутствует.
+
+### MONEY-056 — account merger import idempotency and overflow
+
+- [ ] Проверить суммирование character/business/house cash and valuations на границах signed INT; проверить overflow в `order.Amount * Price`, `product.Lefts * Price` и aggregate sum.
+- [ ] Инжектировать DB/process failure после bank creation, destination character insert, customization, vehicle/org import, inventory import, RedBucks cashback и до/после account slot save.
+- [ ] Повторить один source merge ID конкурентно и после restart: не должно появляться дублирующих character/bank/vehicle/asset rows или cashback.
+- [ ] Проверить recovery/reconciliation orphaned destination rows и сохранение slot mapping; убедиться, что ошибка не маскируется как успешный merge.
+- Статус: статический review; source/tests не менялись/не запускались.
