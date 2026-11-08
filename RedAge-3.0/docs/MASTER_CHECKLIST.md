@@ -139,4 +139,5 @@
 
 - [ ] INV-019 — bind `weapon_<SqlId>` / `CarKey_<SqlId>` subcontainer sessions to exact parent item and current owner; revalidate on every move/stack/use and revoke on transfer/drop/delete/replacement. See WEAPON_KEYRING_SUBCONTAINER_REVIEW.md.
 
+- [ ] MONEY-049 — Metro ticket: checked `long` price calculation and require successful wallet debit before logging/success/dimension transition; test negative/zero/overflow inputs and wallet rejection. See `METRO_REVIEW.md`.
 - [ ] MONEY-048 — player cash/item trade and tent-market purchase: checked bounded price; exact item and wallet settlement; durable one-shot receipt/compensation; verify both debit and credit before item movement, BattlePass progress or success; test shutdown/failure/overflow/replay/concurrency/restart. See `PLAYER_TRADE_REVIEW.md`.
