@@ -128,3 +128,5 @@
 - [WEAPON_KEYRING_SUBCONTAINER_REVIEW](WEAPON_KEYRING_SUBCONTAINER_REVIEW.md) — parent-item ownership binding for weapon attachments and CarKey subcontainers (`INV-019`); static finding, staging required.
 
 - [BANK_TRANSFER_REVIEW](BANK_TRANSFER_REVIEW.md) — ATM confirmation replay (`MONEY-003`), non-durable two-account transfer persistence (`MONEY-058`) and signed SQL INT balance boundary (`MONEY-059`).
+
+- Fraction ticket settlement is tracked as `MONEY-060` in `ECONOMY_REVIEW.md`: split payouts currently continue after both debit methods fail; failure/replay tests pending.
