@@ -81,3 +81,8 @@ Static trace found that CEF `closeOther` forwards to server `OtherClose`, which 
 ### Event loot remote authorization — 2026-11-08
 
 AirDrop trace: team registration is not spatial participation; StartedHack has no player-to-crate position/dimension check, AirdropChangeLockStatus trusts client health under a generic IsAirDropHacking Boolean, and OpenInventory checks team registration/unlocked state but not caller proximity/dimension. MatWar trace: start/progress/open handlers lack active-war and spatial/session binding; completion trusts client health; endWar removes client objects but does not clear matwar_100 inventory/lock state. Added INV-013 and INV-014 with separate reviews and staging matrices. Static-only; no exploit reproduction, source patch or runtime test.
+
+
+### Fraction stock session authorization — 2026-11-08
+
+The faction interaction paths set OnFracStock, but no reset was found. The openWeaponStock remote rechecks only current fraction ID and rank; it does not recheck duty, stock-open state, location, dimension or a short-lived interaction. A previously authorized faction member can therefore attempt to reopen the stock remotely while still holding the rank. Added INV-015 and FRACTION_STOCK_SESSION_REVIEW.md. Static-only; staging required.
