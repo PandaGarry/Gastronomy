@@ -375,3 +375,5 @@ Static source patch only. No .NET build, MySQL fault injection, concurrency test
 - [ ] Inject failure in compensation after rejected debit; ensure high-severity reconciliation log/alert and no false success.
 - [ ] Verify successful purchase exact player debit, property bank initial balance, owner and quest/log side effects.
 - [ ] Review auction award order similarly; DB transaction and restart recovery remain required.
+
+- [ ] House purchase: failed buyer debit must not mutate property bank balance; failed bank initialization after debit must refund exactly once or emit critical reconciliation log; concurrent property-account update must not be overwritten by a failed-debit rollback.
