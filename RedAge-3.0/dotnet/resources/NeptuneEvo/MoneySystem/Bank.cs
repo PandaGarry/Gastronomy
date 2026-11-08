@@ -902,29 +902,7 @@ namespace NeptuneEvo.MoneySystem
                     return;
                 }
 
-                if (!Bank.Accounts.ContainsKey(destinationAccountId)) return;
-                Bank.Data targetAcc = Bank.Accounts[destinationAccountId];
-                
-                // ExtPlayer target = (ExtPlayer) NAPI.Player.GetPlayerFromName(targetAcc.Holder);
-                // if (target.IsCharacterData())
-                // {
-                //     var targetSessionData = target.GetSessionData();
-                //     if (targetSessionData != null)
-                //     {
-                //         if (sessionData.CurrentBankTransferSum >= 1000000)
-                //             Admin.AdminsLog(1, $"[ВНИМАНИЕ] Игрок {target.Name}({target.Value}) получил на банковский счет {sessionData.CurrentBankTransferSum}$ от {player.Name}({player.Value})", 1, "#FF0000");
-                //
-                //         if (sessionData.CurrentBankTransferSum >= 10000 && targetSessionData.LastBankOperationSum == sessionData.CurrentBankTransferSum)
-                //         {
-                //             Admin.AdminsLog(1, $"[ВНИМАНИЕ] Игрок {target.Name}({target.Value}) два раза подряд получил на банковский счет по {sessionData.CurrentBankTransferSum}$ от {player.Name}({player.Value})", 1, "#FF0000");
-                //             targetSessionData.LastBankOperationSum = 0;
-                //         }
-                //         else
-                //         {
-                //             targetSessionData.LastBankOperationSum = sessionData.CurrentBankTransferSum;
-                //         }
-                //     }
-                // }
+
             }
             catch (Exception e)
             {
