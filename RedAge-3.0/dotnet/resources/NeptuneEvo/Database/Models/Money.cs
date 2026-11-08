@@ -275,22 +275,21 @@ namespace NeptuneEvo.Database.Models
                         if (!isCurrent)
                             continue;
 
-                        try
+                        if (isCurrent)
                         {
                             await db.Characters
                                 .Where(v => v.Uuid == uuid)
                                 .Set(v => v.Money, Convert.ToInt32(saveData[1]))
                                 .UpdateAsync();
                         }
-                        finally
-                        {
-                            lock (QueueLock)
-                                ActiveMoneyWrites.Remove(uuid);
-                        }
                     }
                     finally
                     {
+                        // Keep the in-flight marker until after the semaphore is released,
+                        // so a wallet mutation in this hand-off window is still queued.
                         moneyLock.Release();
+                        lock (QueueLock)
+                            ActiveMoneyWrites.Remove(uuid);
                     }
                 }
 
