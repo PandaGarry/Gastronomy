@@ -370,3 +370,12 @@
 - Failed absolute-value DB batches are requeued; retry preserves a newer value enqueued during the previous flush.
 - The batch remains in-memory and is not crash-durable; there is no transaction/outbox, bounded backoff or dead-letter policy.
 - Updated MONEY-002 evidence and regression plan. Static review only; no C# build, concurrency test or MySQL fault injection has run.
+
+
+## 2026-11-08 — MONEY-003 bank transfer hardening (source patch)
+
+- ATM transfer confirmation tuple is consumed before processing and source account is revalidated against the current character.
+- Bank.Change now serializes balance mutation and checks overflow; notification failures are isolated from the applied mutation.
+- Bank.Transfer validates positive amount/account identity/existence/funds/overflow and applies both in-memory balance legs under one lock; both accounts are marked dirty.
+- Bank.Save snapshots revision and balance, retains dirty state on DB errors/concurrent mutation, and rejects out-of-range DB INT balances without clearing pending save.
+- Updated bank transfer review, issue registry, master checklist and regression matrix. Static only; no .NET build, MySQL or RAGE tests.
