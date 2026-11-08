@@ -1076,18 +1076,22 @@ namespace NeptuneEvo.Core
                 var characterData = player.GetCharacterData();
 
                 if (characterData == null) return;
-                if (!MoneySystem.Bank.Accounts.ContainsKey(bankid))
+                MoneySystem.Bank.Data data = MoneySystem.Bank.Get(bankid);
+                if (data == null)
                 {
                     Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Игрок с таким ID/номером банк.счёта не найден", 3000);
                     return;
                 }
-                MoneySystem.Bank.Data data = MoneySystem.Bank.Accounts[bankid];
                 if (data.Type != 1)
                 {
                     Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Банковский счёт, который Вы пытаетесь вписать - не принадлежит человеку.", 3000);
                     return;
                 }
-                MoneySystem.Bank.Change(bankid, amount, false);
+                if (!MoneySystem.Bank.Change(bankid, amount, false))
+                {
+                    Notify.Send(player, NotifyType.Error, NotifyPosition.BottomCenter, "Не удалось изменить баланс банковского счёта", 3000);
+                    return;
+                }
                 GameLog.Money($"player({characterData.UUID})", $"bank({bankid})", amount, "admin");
                 GameLog.Admin($"{player.Name}", $"giveBankMoney({amount})", $"{data.Holder}");
                 Notify.Send(player, NotifyType.Success, NotifyPosition.BottomCenter, $"Вы выдали человеку {data.Holder} {amount}$ на банковский счёт {bankid}", 3000);
