@@ -51,3 +51,13 @@ Applied a narrow result-guard/order correction in both `Fractions.Manager.inputS
 - `take_stock`: require `Wallet.Change(player, amount)` to succeed before decreasing faction/organization cash stock or emitting money logs.
 
 This prevents a rejected wallet mutation from changing the corresponding stock cash balance. The operations remain in-memory, separate and non-durable: a process crash or concurrent callbacks can still split or duplicate the two sides, and no transaction/receipt/lock was added. Item cargo branches remain unchanged; ignored `AddNewItem`/`Remove` results remain tracked under STOCK-001. No C# build, MySQL fault injection, concurrency or RAGE staging tests were run.
+
+## STOCK-001 follow-up — organization stock and exact AddNewItem semantics
+
+Current-branch revalidation also covered `Organizations.Manager.inputStocks`:
+
+- Organization material/drug/medkit withdrawals decrement organization stock before calling `Chars.Repository.AddNewItem`; the return value is ignored, as in faction inventory withdrawal.
+- `Chars.Repository.AddNewItem` returns `-1` on some failures, but can also return the last successful slot when its requested count is only partially inserted because available slots run out. A simple `result != -1` guard is therefore insufficient to prove full quantity delivery.
+- `Chars.Repository.Remove` returns `void` and catches its own exceptions, so callers cannot currently confirm exact consumption or safe rollback through its public result.
+
+No item/cargo patch was applied: correct remediation needs exact-count consume/grant APIs or a durable transfer intent with verified quantity delta and rollback/reconciliation. The four cash stock paths are now separately hardened under MONEY-035; STOCK-001 remains open for item and vehicle cargo.
