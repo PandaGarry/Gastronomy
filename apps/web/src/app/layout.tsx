@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
   description: "Кулинарные задания для тех, кто любит готовить и открывать новое.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="ru">
       <body>
