@@ -52,6 +52,7 @@ export function SubmissionComposer({ challengeTitle }: { challengeTitle: string 
 
   return (
     <form className="submission-form" onSubmit={handleSubmit}>
+      <p className="form-disclaimer">Публикация для задания: <strong>{challengeTitle}</strong></p>
       <div className="form-field">
         <label htmlFor="submission-photos">Фотографии результата <span>Обязательно · до 3 фото</span></label>
         <label className="upload-zone" htmlFor="submission-photos">
