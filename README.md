@@ -41,6 +41,11 @@
 - [План проверки рынка и пилота](docs/validation/market-validation-plan-2026-11-16.md)
 - [Скринер и гайд интервью](docs/validation/interview-guide-and-screener-2026-11-16.md)
 
+### Инженерия и разработка
+- [Техническая архитектура и рекомендуемый стек](docs/engineering/technical-architecture-v0.1.md)
+- [Пошаговый план разработки](docs/engineering/development-roadmap-v0.1.md)
+- [GitHub-инструменты и правила разработки](docs/engineering/github-tooling-and-repo-governance-v0.1.md)
+
 ### Бизнес и готовность
 - [Бизнес-модель и unit economics](docs/finance/business-model-and-unit-economics-2026-11-16.md)
 - [Правовой, технический и операционный checklist](docs/operations/legal-technical-readiness-2026-11-16.md)
