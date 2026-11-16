@@ -36,7 +36,7 @@ export default async function ChallengeDetailPage({ params }: { params: Promise<
           <h2>Попробуете?</h2>
           <p>Присоединяйтесь и возвращайтесь, когда результат будет готов.</p>
           <div className="challenge-facts"><span><Clock3 size={16} />Время <strong>{challenge.time}</strong></span><span><Coins size={16} />Бюджет <strong>{challenge.budget}</strong></span><span><Flame size={16} />Награда <strong>{challenge.xp} XP</strong></span><span><Users size={16} />Участники <strong>{challenge.participants}</strong></span></div>
-          <JoinButton className="join-full" />
+          <JoinButton slug={challenge.slug} className="join-full" />
           <small className="prototype-note">Действие демонстрационное: участие не сохраняется на сервере.</small>
         </aside>
       </div>
