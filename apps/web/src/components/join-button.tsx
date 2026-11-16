@@ -1,20 +1,29 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { Check, Plus } from "lucide-react";
+import { ArrowRight, Check, Plus } from "lucide-react";
 
-export function JoinButton({ className = "" }: { className?: string }) {
+export function JoinButton({ slug, className = "" }: { slug: string; className?: string }) {
   const [joined, setJoined] = useState(false);
+
+  if (joined) {
+    return (
+      <div className="join-success">
+        <span><Check size={17} /> Вы участвуете</span>
+        <Link className="text-link" href={`/challenges/${slug}/submit`}>Опубликовать результат <ArrowRight size={15} /></Link>
+      </div>
+    );
+  }
 
   return (
     <button
-      className={`button ${joined ? "button-joined" : "button-primary"} ${className}`}
+      className={`button button-primary ${className}`}
       type="button"
-      onClick={() => setJoined((value) => !value)}
-      aria-pressed={joined}
+      onClick={() => setJoined(true)}
     >
-      {joined ? <Check size={17} /> : <Plus size={17} />}
-      {joined ? "Вы участвуете" : "Присоединиться"}
+      <Plus size={17} />
+      Присоединиться
     </button>
   );
 }
