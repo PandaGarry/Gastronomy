@@ -1,6 +1,6 @@
 # Web prototype
 
-This is the isolated Next.js App Router prototype for the new product concept. The repository name is not the product brand.
+Isolated Next.js App Router prototype for the new product concept. The repository name is not the product brand. The Russian UI label «Кулинарная лига» is a temporary concept placeholder, not approved naming.
 
 ## Requirements
 - Node.js 20.9+
@@ -19,13 +19,18 @@ Open http://localhost:3000.
 - `/` — concept landing page
 - `/challenges` — challenge catalog
 - `/challenges/perfect-breakfast` — challenge details
+- `/challenges/perfect-breakfast/submit` — submission composer demo
 - `/profile` — demo profile placeholder
 
-## Prototype limitations
-- All challenge content is local demo data.
-- Join/leave is client-only state and is not persisted.
-- Search and filters are presentation-only.
-- No authentication, database, storage, email, analytics, moderation backend, or XP ledger is connected.
-- Do not use with real personal data or real user-generated content.
+## Demo flow
+Landing → challenge catalog → challenge detail → join (client state) → submission composer → local demo confirmation.
 
-This prototype exists for UX review and usability testing only. Backend and production implementation require separate validation and security work.
+## Prototype limitations
+- Challenge content is local demo data.
+- Join state is client-only and is not persisted.
+- Search and filter controls are presentation-only.
+- Selected files are not uploaded or persisted.
+- No authentication, database, storage, email, analytics, moderation backend, notifications, or XP ledger is connected.
+- No real user data or UGC should be used.
+
+This prototype is for UX review and usability testing only. Backend and production implementation require separate validation, privacy review, security work, and operational readiness.
